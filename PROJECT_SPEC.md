@@ -7,7 +7,7 @@
 ## 1. システム概要
 - **名称**: TERACO予約システム (PWA)
 - **目的**: スマホ教室TERACOの講座予約・管理を効率化し、生徒と管理者の手間を最小限にする。
-- **公開URL**: [https://anomalocaress.github.io/teraco-labo-website-v2/pwa-reserve/](https://anomalocaress.github.io/teraco-labo-website-v2/pwa-reserve/)
+- **公開URL**: [https://teraco-labo.com/pwa-reserve/](https://teraco-labo.com/pwa-reserve/)
 
 ---
 

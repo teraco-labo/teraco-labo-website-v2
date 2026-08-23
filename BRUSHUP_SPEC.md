@@ -3,7 +3,7 @@
 **作成日**: 2025-02-04  
 **更新日**: 2026-03-01  
 **目的**: 人間とAIの両方が変更内容を把握・復元できるよう記録する  
-**元のURL**: https://anomalocaress.github.io/teraco-labo-website-v2/index.html
+**元のURL**: https://teraco-labo.com/index.html
 
 ---
 
