@@ -59,13 +59,13 @@ fi
 print_status "GitHubにプッシュ中..."
 push_with_token() {
     if [ -n "$GITHUB_TOKEN" ]; then
-        REMOTE_URL=$(git remote get-url --push origin 2>/dev/null || echo "https://github.com/anomalocaress/teraco-labo-website-v2.git")
+        REMOTE_URL=$(git remote get-url --push origin 2>/dev/null || echo "https://github.com/teraco-labo/teraco-labo-website-v2.git")
         case "$REMOTE_URL" in
             https://*) REMOTE_HTTPS="$REMOTE_URL" ;;
             git@github.com:*) REMOTE_HTTPS="https://github.com/${REMOTE_URL#git@github.com:}" ;;
-            *) REMOTE_HTTPS="https://github.com/anomalocaress/teraco-labo-website-v2.git" ;;
+            *) REMOTE_HTTPS="https://github.com/teraco-labo/teraco-labo-website-v2.git" ;;
         esac
-        USERNAME=${GITHUB_USERNAME:-anomalocaress}
+        USERNAME=${GITHUB_USERNAME:-teraco-labo}
         git push "https://${USERNAME}:${GITHUB_TOKEN}@${REMOTE_HTTPS#https://}" main
         return $?
     else
@@ -76,7 +76,7 @@ push_with_token() {
 
 if push_with_token; then
     print_status "✅ GitHubへのプッシュが完了しました！"
-    print_status "🌐 ウェブサイトが更新されました: https://anomalocaress.github.io/teraco-labo-website-v2/"
+    print_status "🌐 ウェブサイトが更新されました: https://teraco-labo.com/"
     print_status "⏳ GitHub Pagesが更新されるまで少しお待ちください..."
     sleep 5
     print_status "🎉 更新完了！ブラウザをリフレッシュしてご確認ください。"
@@ -84,7 +84,7 @@ else
     print_warning "通常のプッシュが失敗しました。リベースを試行中..."
     if git pull --rebase origin main && push_with_token; then
         print_status "✅ リベース後のプッシュが完了しました！"
-        print_status "🌐 ウェブサイトが更新されました: https://anomalocaress.github.io/teraco-labo-website-v2/"
+        print_status "🌐 ウェブサイトが更新されました: https://teraco-labo.com/"
     else
         print_error "GitHubへのプッシュに失敗しました。手動で確認してください。"
         exit 1
