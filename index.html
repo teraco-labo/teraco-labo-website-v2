@@ -265,6 +265,7 @@
     .trust-item { display: flex; flex-direction: column; gap: 2px; }
     .trust-num { font-family: var(--font-serif); font-size: 34px; font-weight: 700; color: var(--forest); }
     .trust-label { font-size: 14px; color: var(--body-text); }
+    .trust-unit { font-size: 19px; margin-left: 2px; letter-spacing: .02em; }
     .trust-sep { width: 1px; height: 40px; background: var(--band-sep); }
 
     /* =========================================================
@@ -348,14 +349,12 @@
         width: 100%; height: 175px; object-fit: cover;
         transition: transform .35s var(--ease);
     }
-    .business-card--featured { border: 2px solid var(--forest); }
     .business-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-card-hover); border-color: #c9d8ce; }
     .business-card:hover img { transform: scale(1.035); }
     .business-card:focus-visible { outline: 3px solid var(--forest); outline-offset: 3px; }
     .business-card-body { padding: 22px 22px 24px; width: 100%; display: flex; flex: 1; flex-direction: column; }
     .business-card-label { display: block; color: var(--forest); font-size: 11px; font-weight: 700; letter-spacing: .08em; margin-bottom: 5px; }
     .business-card h3 { color: var(--tl-text); font-size: 19px; font-weight: 700; margin-bottom: 7px; }
-    .business-card--featured h3 { font-family: var(--font-serif); font-size: 20px; }
     .business-card p { color: var(--body-text); font-size: 13px; line-height: 1.75; }
     .business-card-link { display: block; color: var(--forest); font-size: 13px; font-weight: 700; margin-top: auto; padding-top: 16px; }
     .business-card-status {
@@ -511,6 +510,7 @@
         .trust-bar { gap: 22px; padding: 26px 16px; }
         .trust-num { font-size: 26px; }
         .trust-label { font-size: 12.5px; }
+        .trust-unit { font-size: 15px; }
 
         .audience-gateway .container { grid-template-columns: 1fr; padding: 0; }
         .audience-title { justify-content: center; min-height: 42px; border-right: 0; border-bottom: 1px solid var(--tl-border); }
@@ -525,7 +525,7 @@
         .svc-grid { grid-template-columns: 1fr; }
         .business-grid { grid-template-columns: 1fr; }
         .business-card { min-height: 0; }
-        .business-card img, .business-card--featured img { height: 190px; }
+        .business-card img { height: 190px; }
 
         .about2-grid { grid-template-columns: 1fr; text-align: center; }
         .about2-photo { width: 200px; height: 226px; margin: 0 auto; }
@@ -672,9 +672,9 @@
                         <li>スマホ・タブレット</li>
                         <li>パソコン</li>
                         <li>AI・ChatGPT</li>
-                        <li>個人レッスン</li>
+                        <li>動画編集</li>
                     </ul>
-                    <p class="hero2-lead">はじめての方も、もっと使いこなしたい方も。<br>2〜8名の少人数で、あなたのペースに合わせます。</p>
+                    <p class="hero2-lead">はじめての方も、もっと使いこなしたい方も。<br>2〜8名の少人数で、あなたのペースに合わせます。<br>マンツーマンの個人レッスンも承ります。</p>
                     <p class="hero2-place">宮崎県西都市の教室（駐車場あり）｜県内は出張も承ります</p>
                     <div class="hero2-actions">
                         <a href="#services" class="btn-forest btn-green">教室のご案内を見る</a>
@@ -688,11 +688,11 @@
              実績バー
         =================================================== -->
         <div class="trust-bar" aria-label="指導実績">
-            <div class="trust-item"><span class="trust-num">300</span><span class="trust-label">講座 / 年</span></div>
+            <div class="trust-item"><span class="trust-num">300<span class="trust-unit">講座</span></span><span class="trust-label">年間の実施数</span></div>
             <div class="trust-sep" aria-hidden="true"></div>
-            <div class="trust-item"><span class="trust-num">1,000</span><span class="trust-label">人以上の受講者</span></div>
+            <div class="trust-item"><span class="trust-num">1,000<span class="trust-unit">人以上</span></span><span class="trust-label">延べ受講者</span></div>
             <div class="trust-sep" aria-hidden="true"></div>
-            <div class="trust-item"><span class="trust-num">20</span><span class="trust-label">年の指導・接客経験</span></div>
+            <div class="trust-item"><span class="trust-num">20<span class="trust-unit">年以上</span></span><span class="trust-label">指導・接客の経験</span></div>
         </div>
 
         <!-- ===================================================
@@ -773,11 +773,11 @@
                     <p>AI講座教材を中心に、研修・講師派遣、映像制作まで支援します。</p>
                 </div>
                 <div class="business-grid">
-                    <a href="kit.html" class="business-card business-card--featured detail-link reveal d1" aria-label="AI講座 完全実施キットの詳細を見る">
+                    <a href="kit.html" class="business-card detail-link reveal d1" aria-label="AI講座 完全実施キットの詳細を見る">
                         <img src="images/kit-materials.jpg" alt="AI講座キットの配布資料" loading="lazy">
                         <div class="business-card-body">
                             <span class="business-card-label">学校・塾・自治体向け｜新規事業</span>
-                            <span class="business-card-status">2026年9月以降 正式提供予定</span>
+                            <span class="business-card-status">2027年 正式提供予定</span>
                             <h3>AI講座 教材キット</h3>
                             <p>AIに詳しくない先生でも授業を進められる、スライド・講師台本・ワーク・運営資料をまとめた授業一式です。</p>
                             <span class="business-card-link">先行案内・実証導入を見る →</span>
@@ -815,7 +815,7 @@
                     <div>
                         <p class="about2-label">代表紹介｜講師・映像作家</p>
                         <h2 class="about2-name">藤﨑 秀一</h2>
-                        <p class="about2-bio">通信業界に20年以上従事し、3万人以上の接客・サポートを経験。地域おこし協力隊の任期中に映像制作事業で起業しました。いまは高齢者向けスマホ講座から学生向けのAI研修まで、年間300講座・延べ1,000人以上を指導。「何度聞いても大丈夫」が信条です。</p>
+                        <p class="about2-bio">通信業界に20年以上従事し、年間30,000人以上の接客・サポートを経験。地域おこし協力隊の任期中に映像制作事業で起業しました。いまは高齢者向けスマホ講座から学生向けのAI研修まで、年間300講座・延べ1,000人以上を指導。「何度聞いても大丈夫」が信条です。</p>
                         <div class="about2-chips">
                             <span class="about2-chip">携帯ショップ店長歴22年</span>
                             <span class="about2-chip">接客・サポート年間3万人</span>
