@@ -201,7 +201,7 @@
     .hero2 {
         position: relative;
         margin-top: var(--header-h);
-        height: 540px;
+        height: 640px;
         overflow: hidden;
     }
     .hero2-img {
@@ -216,16 +216,23 @@
     .hero2-content {
         position: relative; z-index: 1;
         height: 100%;
-        display: flex; flex-direction: column; justify-content: center; gap: 0.85rem;
-        max-width: 580px;
+        display: flex; flex-direction: column; justify-content: center; gap: 1.15rem;
+        max-width: 600px;
     }
     .hero2-eyebrow {
         font-family: var(--font-serif); font-size: 15px; font-weight: 700;
         letter-spacing: .18em; color: var(--forest);
     }
+    .hero2-shop {
+        font-family: var(--font-serif); font-size: 26px; line-height: 1.3; font-weight: 700;
+        letter-spacing: .06em; color: var(--tl-text); margin-top: -0.55rem;
+    }
+    .hero2-shop small {
+        font-size: 14px; font-weight: 500; letter-spacing: .14em; color: var(--forest); margin-left: .6em;
+    }
     .hero2-title {
-        font-family: var(--font-serif); font-size: 38px; line-height: 1.55; font-weight: 700;
-        color: var(--tl-text);
+        font-family: var(--font-serif); font-size: 36px; line-height: 1.6; font-weight: 700;
+        color: var(--tl-text); margin-top: .35rem;
     }
     .hero2-topics {
         display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0;
@@ -237,9 +244,9 @@
         font-size: 13.5px; font-weight: 700; color: var(--forest-dark);
         backdrop-filter: blur(2px);
     }
-    .hero2-lead { font-size: 16px; line-height: 2; color: var(--body-text); }
-    .hero2-place { font-size: 13px; color: var(--tl-muted); letter-spacing: .01em; }
-    .hero2-actions { display: flex; gap: 0.85rem; flex-wrap: wrap; margin-top: 0.4rem; }
+    .hero2-lead { font-size: 15.5px; line-height: 2.05; color: var(--body-text); margin-top: .15rem; }
+    .hero2-place { font-size: 13px; color: var(--tl-muted); letter-spacing: .01em; margin-top: -.25rem; }
+    .hero2-actions { display: flex; gap: 0.85rem; flex-wrap: wrap; margin-top: 0.55rem; }
 
     .btn-forest, .btn-line-solid {
         display: inline-flex; align-items: center; justify-content: center;
@@ -499,11 +506,14 @@
         .hero2-img { position: relative; height: 260px; }
         .hero2-gradient { background: linear-gradient(to bottom, rgba(250,247,241,0) 55%, rgba(250,247,241,1) 100%); }
         .hero2-content {
-            position: relative; height: auto; padding: 8px 20px 32px; max-width: 100%;
+            position: relative; height: auto; padding: 14px 10px 38px; max-width: 100%; gap: 1.05rem;
             text-align: left;
         }
-        .hero2-title { font-size: 26px; }
-        .hero2-lead { font-size: 15px; }
+        .hero2-shop { font-size: 22px; }
+        .hero2-title { font-size: 23px; line-height: 1.65; letter-spacing: 0; }
+        .hero2-lead { font-size: 14px; line-height: 2; }
+        .hero2-place span { display: block; }
+        .hero2-place .hero2-place-sep { display: none; }
         .hero2-actions .btn-forest, .hero2-actions .btn-line-solid { width: 100%; }
         .hero2-actions { flex-direction: column; }
 
@@ -558,7 +568,9 @@
     }
 
     @media (max-width: 400px) {
-        .hero2-title { font-size: 23px; }
+        .hero2-shop { font-size: 20px; }
+        .hero2-title { font-size: 21px; }
+        .hero2-lead { font-size: 13px; }
         .trust-bar { gap: 14px; }
     }
     </style>
@@ -667,6 +679,7 @@
             <div class="container">
                 <div class="hero2-content">
                     <p class="hero2-eyebrow">まちのデジタル寺子屋</p>
+                    <p class="hero2-shop">スマホ教室 TERACO<small>てらこ</small></p>
                     <h1 class="hero2-title">わからないこと、<br>何度でも聞いていい教室です。</h1>
                     <ul class="hero2-topics" aria-label="学べる内容">
                         <li>スマホ・タブレット</li>
@@ -675,7 +688,7 @@
                         <li>動画編集</li>
                     </ul>
                     <p class="hero2-lead">はじめての方も、もっと使いこなしたい方も。<br>2〜8名の少人数で、あなたのペースに合わせます。<br>マンツーマンの個人レッスンも承ります。</p>
-                    <p class="hero2-place">宮崎県西都市の教室（駐車場あり）｜県内は出張も承ります</p>
+                    <p class="hero2-place"><span>宮崎県西都市の教室（駐車場あり）</span><span class="hero2-place-sep">｜</span><span>県内は出張も承ります</span></p>
                     <div class="hero2-actions">
                         <a href="#services" class="btn-forest btn-green">教室のご案内を見る</a>
                         <a href="https://lin.ee/WACibGu" class="btn-line-solid btn-line" target="_blank" rel="noopener" aria-label="LINEで気軽に相談する（外部リンク）">LINEで気軽に相談</a>
