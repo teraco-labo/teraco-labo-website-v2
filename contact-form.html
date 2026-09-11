@@ -448,27 +448,27 @@
                         <div class="plan-options">
                             <label class="plan-option">
                                 <input type="radio" name="plan" value="manabi2" required>
-                                <div class="plan-name">まなび2</div>
+                                <div class="plan-name">スマホ入門2</div>
                                 <div class="plan-price">月5,000円</div>
-                                <div class="plan-details">入門クラス（レギュラー会員）／45分 × 月2回</div>
+                                <div class="plan-details">45分 × 月2回</div>
                             </label>
                             <label class="plan-option">
                                 <input type="radio" name="plan" value="manabi4" required>
-                                <div class="plan-name">まなび4</div>
+                                <div class="plan-name">スマホ入門4</div>
                                 <div class="plan-price">月8,000円</div>
-                                <div class="plan-details">入門クラス（レギュラー会員）／45分 × 月4回</div>
+                                <div class="plan-details">45分 × 月4回</div>
                             </label>
                             <label class="plan-option">
                                 <input type="radio" name="plan" value="terako2" required>
-                                <div class="plan-name">てらこ2</div>
+                                <div class="plan-name">スマホ応用2</div>
                                 <div class="plan-price">月8,000円</div>
-                                <div class="plan-details">応用クラス（プレミアム会員）／90分 × 月2回</div>
+                                <div class="plan-details">90分 × 月2回</div>
                             </label>
                             <label class="plan-option">
                                 <input type="radio" name="plan" value="terako4" required>
-                                <div class="plan-name">てらこ4</div>
+                                <div class="plan-name">スマホ応用4</div>
                                 <div class="plan-price">月12,000円</div>
-                                <div class="plan-details">応用クラス（プレミアム会員）／90分 × 月4回</div>
+                                <div class="plan-details">90分 × 月4回</div>
                             </label>
                         </div>
                     </div>
@@ -549,10 +549,10 @@
                 
                 // Collect form data for emails
                 const planNames = {
-                    manabi2: 'まなび2（45分×月2回／5,000円）',
-                    manabi4: 'まなび4（45分×月4回／8,000円）',
-                    terako2: 'てらこ2（90分×月2回／8,000円）',
-                    terako4: 'てらこ4（90分×月4回／12,000円）'
+                    manabi2: 'スマホ入門2（45分×月2回／5,000円）',
+                    manabi4: 'スマホ入門4（45分×月4回／8,000円）',
+                    terako2: 'スマホ応用2（90分×月2回／8,000円）',
+                    terako4: 'スマホ応用4（90分×月4回／12,000円）'
                 };
                 
                 // デバッグ用ログ
@@ -641,10 +641,10 @@
         // 管理アプリへ予約データを送信する関数
         async function sendToManagementApp(data) {
             const planNames = {
-                manabi2: 'まなび2',
-                manabi4: 'まなび4',
-                terako2: 'てらこ2',
-                terako4: 'てらこ4'
+                manabi2: 'スマホ入門2',
+                manabi4: 'スマホ入門4',
+                terako2: 'スマホ応用2',
+                terako4: 'スマホ応用4'
             };
 
             const reservationData = {
