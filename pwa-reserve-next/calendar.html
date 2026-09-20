@@ -23,12 +23,12 @@
   .grid-head { background: var(--green); color: #fff; font-weight: 800; font-size: 3.4mm; text-align: center; }
   .grid-head div { padding: 1.4mm 0; border-left: .2mm solid rgba(255,255,255,.55); }
   .grid-head div:first-child { border-left: 0; }
-  .weeks { flex: 1; border: .25mm solid #444; border-top: 0; }
-  .week-thin { height: 3mm; border-bottom: .25mm solid #444; background: repeating-linear-gradient(0deg, #fff, #fff .9mm, #e3e3e3 .9mm, #e3e3e3 1.1mm); }
-  .week-dates { border-bottom: .25mm solid #444; font-size: 2.9mm; text-align: center; font-family: "Hiragino Sans", sans-serif; }
+  .weeks { flex: 1; border: .25mm solid #444; border-top: 0; display: flex; flex-direction: column; }
+  .week-thin { flex: 0 0 3mm; height: 3mm; border-bottom: .25mm solid #444; background: repeating-linear-gradient(0deg, #fff, #fff .9mm, #e3e3e3 .9mm, #e3e3e3 1.1mm); }
+  .week-dates { flex: 0 0 auto; border-bottom: .25mm solid #444; font-size: 2.9mm; text-align: center; font-family: "Hiragino Sans", sans-serif; }
   .week-dates div { padding: .7mm 0; border-left: .2mm solid #444; }
   .week-dates div:first-child { border-left: 0; font-size: 2.4mm; color: #555; }
-  .week-body { grid-template-rows: repeat(5, var(--rh)); border-bottom: .25mm solid #444; position: relative; }
+  .week-body { flex: 1; grid-template-rows: repeat(5, 1fr); border-bottom: .25mm solid #444; position: relative; }
   .tm { grid-column: 1; font-size: 2.5mm; font-family: "Hiragino Sans", sans-serif; display: flex; align-items: center; justify-content: center; border-top: .15mm dotted #aaa; }
   .tm:first-child { border-top: 0; }
   .col { border-left: .2mm solid #444; display: grid; grid-template-rows: subgrid; grid-row: 1 / span 5; }
