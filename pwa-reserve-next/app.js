@@ -21,6 +21,7 @@ const COURSES = {
   'pc-adv':   { cat: 'pc_ai',      label: 'パソコン応用', short: '応用', min: 45, color: '#A9DCFB', classes: { A: { dow: 3, time: '11:00' }, B: { dow: 5, time: '16:00' } } },
   'private':  { cat: null,         label: '個人レッスン', short: '個人レッスン', min: 50, color: '#FDF3C4', classes: null }
 };
+const FURIKAE = false;   // 生徒が別クラスへ振り替える機能。今は混乱のもとになるため停止（管理者の代理操作では自由に入れられる）
 const OLD_COURSE_KEYS = { intro: 'sp-intro', applied: 'sp-adv', basic: 'pc-intro', advance: 'pc-adv' };
 
 // 講座カレンダー（正本）。いまは試作用にアプリ内に仮置き。次の段階でサーバーに保存し、管理者画面から編集する
@@ -73,11 +74,15 @@ const fmtWhen = (iso) => { const d = new Date(iso); return `${fmtDay(d)} ${fmtTi
 const normName = (s) => String(s || '').replace(/\s+/g, '');
 
 const dowTimeText = (c) => `${DAYS[c.dow]}曜 ${c.time}`;
+// クラス名には必ず分数を入れる（例：スマホ入門 A（45分）／個人レッスン（50分））
+function courseName(course, klass) {
+  const c = COURSES[course]; if (!c) return '';
+  return c.classes && klass ? `${c.label} ${klass}（${c.min}分）` : `${c.label}（${c.min}分）`;
+}
 function classText(p) {
   if (!p || !p.course || !COURSES[p.course]) return '';
   const c = COURSES[p.course];
-  if (!c.classes) return `${c.label}（${c.min}分）`;
-  return `${c.label} ${p.klass || ''}（${p.klass ? dowTimeText(c.classes[p.klass]) : ''}）`;
+  return c.classes && p.klass ? `${courseName(p.course, p.klass)} ${dowTimeText(c.classes[p.klass])}` : courseName(p.course);
 }
 // サーバーに渡すクラス名。予約イベントのタイトル先頭「スマホ 」「パソコンAI 」は他の仕組みが目印にしているので維持する
 function classDetails(p, klass) {
@@ -98,7 +103,7 @@ function inferClass(e) {
   if (course !== 'private') { const m = t.match(/([AB])\s*[\(（]/); klass = m ? m[1] : (new Date(e.start).getDay() === 5 ? 'B' : 'A'); }
   return { course, klass, category: COURSES[course].cat || (pc ? 'pc_ai' : 'smartphone') };
 }
-const rowClassText = (e) => { const g = inferClass(e); return g ? COURSES[g.course].label + (g.klass || '') : ''; };
+const rowClassText = (e) => { const g = inferClass(e); return g ? courseName(g.course, g.klass) : ''; };
 
 // ---------- 通信 ----------
 async function post(payload, timeoutMs = 45000) {
@@ -168,7 +173,7 @@ function lessonsOn(p, date) {
   const mk = monthKeyOf(date); if (!SCHEDULE.published.includes(mk) && mk !== monthKeyOf(new Date())) return [];
   const c = COURSES[p.course];
   if (!c.classes) return [2, 4].includes(dow) ? TIMES_PRIVATE.filter(t => !eventAt(dk, t)).map(t => ({ time: t, klass: null, own: true })) : [];
-  return Object.keys(c.classes).filter(k => c.classes[k].dow === dow).map(k => ({ time: c.classes[k].time, klass: k, own: k === p.klass }));
+  return Object.keys(c.classes).filter(k => c.classes[k].dow === dow && (FURIKAE || k === p.klass)).map(k => ({ time: c.classes[k].time, klass: k, own: k === p.klass }));
 }
 // 生徒が予約・変更・取消できる日か（明日以降。明日分は今日の17時まで）
 function withinDeadline(date) {
@@ -190,7 +195,11 @@ function makeSlot(date, time, extra) {
 }
 function slotsForDay(dayKey) {
   const date = parseDayKey(dayKey);
-  if (isAdmin()) return ADMIN_TIMES.map(t => makeSlot(date, t, { klass: null, own: true }));
+  if (isAdmin()) { const p = me(); const c = p && COURSES[p.course];
+    // 管理者：どの時間でも入れられる。時間割に合う枠はそのクラス名で登録する
+    return ADMIN_TIMES.map(t => { let k = null;
+      if (c && c.classes) k = Object.keys(c.classes).find(x => c.classes[x].dow === date.getDay() && c.classes[x].time === t) || p.klass;
+      return makeSlot(date, t, { klass: k, own: true }); }); }
   return lessonsOn(me(), date).map(l => makeSlot(date, l.time, { klass: l.klass, own: l.own }));
 }
 const existingIds = () => new Set(S.existing.map(e => String(e.slot_id)));
@@ -268,6 +277,7 @@ function render() {
   const v = S.view;
   const html = v === 'loading' ? `<div class="center muted" style="padding:60px 0;">読み込み中…</div>`
     : v === 'ob-name' ? viewName()
+    : v === 'ob-name-confirm' ? viewNameConfirm()
     : v === 'ob-cat' ? viewCategory()
     : v === 'ob-course' ? viewCourse()
     : v === 'ob-class' ? viewKlass()
@@ -280,41 +290,43 @@ function render() {
     : v === 'admin-home' ? viewAdminHome()
     : '';
   $app().innerHTML = html;
-  if (v === 'calendar' && S.mode === 'add' && S.picked.size) {
-    document.getElementById('tray').innerHTML = `<div class="tray"><div class="in"><div class="n">${S.picked.size}件 えらんでいます</div><button class="btn" data-act="to-confirm-picked">予約にすすむ</button></div></div>`;
-  }
   const f = document.querySelector('[data-focus]'); if (f) f.focus();
 }
 
-// --- 初回：名前 → 種別 → クラス ---
+// --- 初回：名前 → 名前の確認 → 講座 → 曜日 ---
 function viewName() {
   const editing = S.edit === 'name';
   return `<h1>${editing ? 'お名前をなおす' : 'はじめに、お名前をおしえてください'}</h1>
   <div class="card">
-    <input class="txt" id="nameInput" data-focus type="text" placeholder="例：田中花子" value="${esc(S.draft.name || '')}" autocomplete="name">
-    <p class="muted" style="margin-top:10px;">姓と名をつづけて入れてください。次からは入力しなくてすみます。</p>
+    <input class="txt" id="nameInput" data-focus type="text" placeholder="例：田中花子" value="${esc(S.draft.name || '')}" autocomplete="name" enterkeyhint="done">
+    <p class="muted" style="margin-top:10px;">姓と名をつづけて入れてください。<br>入れおわったら、下の「つぎへ」をおしてください。</p>
   </div>
   <button class="btn" data-act="name-next">つぎへ</button>
   ${editing ? `<button class="btn quiet" data-act="home">やめる</button>` : ''}`;
 }
-function viewCategory() {
-  return `<h1>どちらを習っていますか？</h1>
-  <button class="choice" data-act="cat" data-v="smartphone"><b>スマホ</b><span>スマートフォンの教室</span></button>
-  <button class="choice" data-act="cat" data-v="pc_ai"><b>パソコン・AI</b><span>パソコンやAIの教室</span></button>
-  <button class="btn quiet" data-act="${S.proxy ? (S.proxy.course ? 'home' : 'admin-home') : (me() && me().course ? 'home' : 'ob-back-name')}">もどる</button>`;
+function viewNameConfirm() {
+  return `<h1>このお名前で登録します</h1>
+  <div class="card center"><p class="muted">お名前</p><p class="big" style="font-size:32px;margin:6px 0 4px;">${esc(S.draft.name)} さん</p></div>
+  <button class="btn" data-act="name-ok">はい、登録する</button>
+  <button class="btn quiet" data-act="ob-back-name">なおす</button>`;
 }
 function viewCourse() {
-  const cat = S.draft.category;
-  const keys = Object.keys(COURSES).filter(k => COURSES[k].cat === cat || COURSES[k].cat === null);
-  return `<h1>コースをえらんでください</h1>
-  ${keys.map(k => `<button class="choice" data-act="course" data-v="${k}" style="border-left:14px solid ${COURSES[k].color};"><b>${esc(COURSES[k].label)}</b><span>${COURSES[k].min}分${k === 'private' ? '・先生と1対1' : ''}</span></button>`).join('')}
+  const back = S.proxy ? (S.proxy.course ? 'home' : 'admin-home') : (S.edit === 'class' ? 'home' : 'ob-back-name');
+  return `<h1>どの講座ですか？</h1>
+  ${Object.keys(COURSES).map(k => `<button class="choice" data-act="course" data-v="${k}" style="border-left:16px solid ${COURSES[k].color};"><b>${esc(courseName(k))}</b>${k === 'private' ? '<span>先生と1対1</span>' : ''}</button>`).join('')}
   <p class="muted center" style="margin:6px 0 14px;">わからないときは、先生におたずねください。<br><a href="tel:${TEL}" style="color:var(--green-deep);font-weight:800;">電話で聞く</a></p>
-  <button class="btn quiet" data-act="ob-cat">もどる</button>`;
+  <button class="btn quiet" data-act="${back}">もどる</button>`;
 }
 function viewKlass() {
   const c = COURSES[S.draft.course];
-  return `<h1>${esc(c.label)}<br>何曜日のクラスですか？</h1>
-  ${Object.keys(c.classes).map(k => `<button class="choice" data-act="klass" data-v="${k}" style="border-left:14px solid ${c.color};"><b>${DAYS[c.classes[k].dow]}曜日 ${esc(c.classes[k].time)}</b><span>${k}クラス</span></button>`).join('')}
+  return `<h1>${esc(courseName(S.draft.course))}<br>何曜日のクラスですか？</h1>
+  ${Object.keys(c.classes).map(k => `<button class="choice" data-act="klass" data-v="${k}" style="border-left:16px solid ${c.color};"><b>${DAYS[c.classes[k].dow]}曜日 ${esc(c.classes[k].time)}</b><span>${k}クラス</span></button>`).join('')}
+  <button class="btn quiet" data-act="ob-course-back">もどる</button>`;
+}
+function viewCategory() {
+  return `<h1>${esc(courseName('private'))}<br>何を習いますか？</h1>
+  <button class="choice" data-act="cat" data-v="smartphone"><b>スマホ</b></button>
+  <button class="choice" data-act="cat" data-v="pc_ai"><b>パソコン・AI</b></button>
   <button class="btn quiet" data-act="ob-course-back">もどる</button>`;
 }
 
@@ -330,8 +342,7 @@ function rsvRow(e) {
 function viewHome() {
   const p = me(); if (!p) return '';
   const list = S.existing.slice().sort((a, b) => new Date(a.start) - new Date(b.start));
-  const u = usualOf(p); const groups = S.loaded ? proposals() : [];
-  const nChecked = groups.length ? checkedProposalSlots().length : 0;
+  initHomePicks();
   let h = `<h1>${S.proxy ? esc(p.name) + 'さんの予約を操作' : esc(p.name) + 'さん、こんにちは'}</h1><div class="sync">${S.syncing ? '最新の予約状況をたしかめています…' : ''}</div>`;
   if (S.error) h += `<div class="note" style="margin-bottom:16px;">${esc(S.error)}</div>`;
 
@@ -343,30 +354,26 @@ function viewHome() {
   if (S.proxy) h += `<div style="margin-top:12px;"><button class="link" data-act="history">過去の予約を見る</button></div>${viewHistory()}`;
   h += `</div>`;
 
-  const group = !!(COURSES[p.course] && COURSES[p.course].classes);
-  const calLabel = group ? '行けない日を ほかの日にふりかえる' : 'ほかの日・時間をえらぶ';
-  h += `<div class="card"><h2>つぎの予約をとる</h2>
-        <p style="font-weight:800;border-left:12px solid ${COURSES[p.course].color};padding-left:10px;">${esc(classText(p))}</p>`;
-  if (u && groups.length) {
-    h += `<p class="muted" style="margin-top:8px;">行けない日は、おして外してください。</p>`;
-    groups.forEach(g => {
-      h += `<div class="month-label">${esc(g.label)}（${g.items.length}回）</div>` + g.items.map(s => {
-        const on = proposalChecked(g, s); const d = parseDayKey(s.day_key); const n = Number(s.reserved_count) || 0;
-        return `<button class="pick ${on ? 'on' : ''}" data-act="prop" data-id="${esc(s.slot_id)}" data-pre="${defaultOn(g, s) ? 1 : 0}">
-          <span class="box"></span><span>${fmtDay(d)}${group ? '' : ' ' + esc(s.start_time)}</span>${n > 0 ? `<span class="cnt">${n}人</span>` : ''}</button>`;
-      }).join('');
-    });
-    h += `<button class="btn" style="margin-top:8px;" data-act="to-confirm-prop" ${nChecked ? '' : 'disabled'}>${nChecked ? `この${nChecked}回を予約する` : '日にちをえらんでください'}</button>
-          <button class="btn ghost" data-act="open-cal">${calLabel}</button>`;
-  } else {
-    const pm = pendingMonthLabel();
-    if (S.loaded && pm) h += `<p class="muted" style="margin:8px 0 12px;">${pm}の日程は、まだ決まっていません。決まりしだい、ここに出ます。</p>`;
-    h += `<button class="btn" style="margin-top:8px;" data-act="open-cal">日にちをえらぶ</button>`;
+  const group = !!(COURSES[p.course] && COURSES[p.course].classes) && !isAdmin();
+  h += `<div class="card" id="next"><h2>つぎの予約をとる</h2>
+        <p style="font-weight:800;border-left:14px solid ${COURSES[p.course].color};padding-left:10px;margin-bottom:12px;">${esc(classText(p))}</p>`;
+  if (!S.loaded) h += `<p class="muted">予約できる日をしらべています…</p>`;
+  else {
+    h += calendarBlock();
+    const picked = Array.from(S.picked.values());
+    const rows = (group ? monthCandidates(S.viewMonth).concat(picked.filter(x => x.month_key !== S.viewMonth)) : picked)
+      .sort((x, y) => Number(x.slot_id) - Number(y.slot_id));
+    if (rows.length) h += `<div class="month-label">${group ? 'えらべる日' : 'えらんだ日時'}</div>` + rows.map(sl => {
+      const on = S.picked.has(String(sl.slot_id)); const n = Number(sl.reserved_count) || 0;
+      return `<button class="pick ${on ? 'on' : ''}" data-act="toggle-slot" data-id="${esc(sl.slot_id)}" data-day="${esc(sl.day_key)}">
+        <span class="box"></span><span>${fmtDay(parseDayKey(sl.day_key))}${group ? '' : ' ' + esc(sl.start_time)}</span>${n > 0 ? `<span class="cnt">${n}人</span>` : ''}</button>`; }).join('');
+    const n = S.picked.size;
+    h += `<button class="btn" style="margin-top:10px;" data-act="to-confirm-picked" ${n ? '' : 'disabled'}>${n ? `この${n}回を予約する` : '日にちをえらんでください'}</button>`;
   }
   h += `</div>`;
 
   h += `<div class="links"><button class="link" data-act="edit-class">クラスを変える</button>
-        ${S.proxy ? '' : `<button class="link" data-act="edit-name">お名前をなおす</button>`}
+        ${S.proxy ? '' : `<button class="link" data-act="edit-name">お名前をなおす</button><button class="link" data-act="reset-all">登録をやりなおす</button>`}
         <a class="link" href="tel:${TEL}">電話で聞く</a></div>
         <div class="links" style="margin-top:26px;"><button class="link" style="font-size:14px;color:#9AA8A0;" data-act="${isAdmin() ? 'admin-home' : 'admin-login'}">管理者</button></div>`;
   return h;
@@ -399,10 +406,24 @@ function dayStatus(date) {
   const open = slots.some(s => slotState(s) === 'open');
   return { cls: open ? 'ok' : (mine ? 'view' : 'full'), mine, total, own };
 }
-function viewCalendar() {
+// はじめてホームを出すとき、確定している月の「自分のクラスの日」を最初からえらんだ状態にする
+function initHomePicks() {
+  if (!S.loaded || S.pickInit || S.mode === 'change') return;
+  S.pickInit = true;
+  const g = proposals()[0];
+  if (g) { g.items.forEach(sl => S.picked.set(String(sl.slot_id), sl)); S.viewMonth = g.mk; }
+  else S.viewMonth = monthKeyOf(new Date());
+}
+// その月の、自分が予約できる日（グループ講座用）
+function monthCandidates(mk) {
+  const [y, m] = mk.split('-').map(Number); const dim = new Date(y, m, 0).getDate(); const taken = existingDays(); const out = [];
+  for (let d = 1; d <= dim; d++) { const date = new Date(y, m - 1, d); if (!withinDeadline(date)) continue;
+    const dk = dayKeyOf(date); if (taken.has(dk)) continue;
+    slotsForDay(dk).filter(sl => sl.own && slotState(sl) === 'open').forEach(sl => out.push(sl)); }
+  return out;
+}
+function calendarBlock() {
   if (!S.viewMonth) S.viewMonth = monthKeyOf(new Date());
-  if (!isAdmin() && !S.slots.length) return `<h1>日にちをえらんでください</h1><div class="card center muted" style="padding:40px 0;">予約できる日をしらべています…<br>少しおまちください</div>
-    <button class="btn quiet" data-act="home">はじめの画面にもどる</button>`;
   const [minM, maxM] = monthRange(); const [y, m] = S.viewMonth.split('-').map(Number);
   const first = new Date(y, m - 1, 1); const dim = new Date(y, m, 0).getDate();
   let cells = ''; for (let i = 0; i < first.getDay(); i++) cells += '<td class="off"></td>';
@@ -411,24 +432,29 @@ function viewCalendar() {
     const date = new Date(y, m - 1, d); const st = dayStatus(date);
     const tap = ['ok', 'view', 'picked'].includes(st.cls);
     const tint = (!isAdmin() && st.own && ['ok', 'view'].includes(st.cls)) ? ` style="background:${COURSES[me().course].color};"` : '';
-    cells += `<td class="${st.cls}${st.mine ? ' mine' : ''}${!isAdmin() && st.cls === 'ok' && !st.own ? ' alt' : ''}"${tint} ${tap ? `data-act="day" data-day="${dayKeyOf(date)}"` : ''}>${d}${isAdmin() && st.total ? `<span class="daycnt">${st.total}人</span>` : ''}</td>`;
+    cells += `<td class="${st.cls}${st.mine ? ' mine' : ''}"${tint} ${tap ? `data-act="day" data-day="${dayKeyOf(date)}"` : ''}>${d}${isAdmin() && st.total ? `<span class="daycnt">${st.total}人</span>` : ''}</td>`;
     if ((first.getDay() + d) % 7 === 0) { rows += `<tr>${cells}</tr>`; cells = ''; }
   }
   if (cells) { while ((cells.match(/<td/g) || []).length < 7) cells += '<td class="off"></td>'; rows += `<tr>${cells}</tr>`; }
-  const title = S.mode === 'change' ? '新しい日にちをえらんでください' : '日にちをえらんでください';
-  return `<h1>${title}</h1>
-  ${S.mode === 'change' && S.changing ? `<div class="info" style="margin:0 0 14px;">いまの予約：${esc(fmtWhen(S.changing.start))}</div>` : ''}
-  <div class="card">
-    <div class="cal-head"><button class="nav" data-act="month" data-d="-1" ${monthDiff(minM, S.viewMonth) <= 0 ? 'disabled' : ''} aria-label="前の月">‹</button>
+  const cur = monthKeyOf(new Date());
+  const undecided = !isAdmin() && !SCHEDULE.published.includes(S.viewMonth) && S.viewMonth !== cur;
+  const group = !isAdmin() && COURSES[me().course].classes;
+  const legend = isAdmin() ? 'どの日でも選べます。数字はその日の予約人数です。'
+    : group ? '<b>色のついた日</b>が、あなたのクラスの日です。<br>おすと、えらぶ・はずすができます。<b>緑の日</b>が、えらんでいる日です。'
+    : '緑のわくの日をおして、時間をえらんでください。';
+  return `<div class="cal-head"><button class="nav" data-act="month" data-d="-1" ${monthDiff(minM, S.viewMonth) <= 0 ? 'disabled' : ''} aria-label="前の月">‹</button>
       <div class="ttl">${y}年${m}月</div>
       <button class="nav" data-act="month" data-d="1" ${monthDiff(S.viewMonth, maxM) <= 0 ? 'disabled' : ''} aria-label="次の月">›</button></div>
     <table class="cal"><thead><tr>${DAYS.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
-    <div class="legend">${isAdmin() ? 'どの日でも選べます。数字はその日の予約人数です。'
-      : (COURSES[me().course].classes ? '<b>色のついた日</b>が、あなたのクラスの日です。<br>点線のわくの日は、同じコースの別クラスです（ふりかえ用）。' : '緑のわくの日が、予約できる日です。')}
-      <br>下に点がある日は、もう予約が入っています。</div>
-  </div>
-  <p class="muted center" style="margin-bottom:14px;">${esc(classText(me()))}</p>
-  <button class="btn quiet" data-act="home">はじめの画面にもどる</button>`;
+    ${undecided ? `<div class="note">${m}月の日程は、まだ決まっていません。決まりしだい、ここに出ます。</div>` : ''}
+    <div class="legend">${legend}<br>下に点がある日は、もう予約が入っています。</div>`;
+}
+// 「日時を変える」で新しい日をえらぶ画面
+function viewCalendar() {
+  return `<h1>新しい日にちをえらんでください</h1>
+  ${S.changing ? `<div class="info" style="margin:0 0 14px;">いまの予約：${esc(fmtWhen(S.changing.start))}<br>${esc(rowClassText(S.changing))}</div>` : ''}
+  <div class="card">${calendarBlock()}</div>
+  <button class="btn quiet" data-act="home">やめて、はじめの画面にもどる</button>`;
 }
 function viewTimes() {
   const dk = S.pickDay; const date = parseDayKey(dk); const slots = slotsForDay(dk);
@@ -443,7 +469,7 @@ function viewTimes() {
   return `<h1>${fmtDay(date)}<br>${viewOnly ? 'の予約のようす' : '何時にしますか？'}</h1>
   ${viewOnly ? `<div class="note" style="margin:0 0 14px;">この日は、もう予約の受付がおわっています。お急ぎのときはお電話ください。</div>` : ''}
   <div class="card"><div class="times">${btns}</div></div>
-  <button class="btn quiet" data-act="back-cal">カレンダーにもどる</button>`;
+  <button class="btn quiet" data-act="back-cal">もどる</button>`;
 }
 
 // --- 確認・完了 ---
@@ -510,7 +536,7 @@ function persistPerson() {
   if (S.proxy) { const all = store.get('tr_admin_people', {}); all[S.proxy.name] = { category: S.proxy.category, course: S.proxy.course, klass: S.proxy.klass || null, usual: S.proxy.usual || null }; store.set('tr_admin_people', all); }
   else store.set('tr_profile', S.profile);
 }
-function resetPicks() { S.picked.clear(); S.propOff.clear(); S.propOn.clear(); S.pending = null; S.changing = null; S.mode = 'add'; S.pickDay = null; }
+function resetPicks() { S.pickInit = false; S.picked.clear(); S.propOff.clear(); S.propOn.clear(); S.pending = null; S.changing = null; S.mode = 'add'; S.pickDay = null; }
 
 async function doReserve(slots) {
   const p = me();
@@ -590,7 +616,7 @@ async function pickPerson(raw) {
   if (!S.proxy.course) { const g = S.existing.map(inferClass).find(Boolean);
     if (g) { S.proxy.category = g.category; S.proxy.course = g.course; S.proxy.klass = g.klass; persistPerson(); } }
   const pc = S.proxy.course && COURSES[S.proxy.course];
-  if (!pc) { S.draft = {}; go('ob-cat'); }
+  if (!pc) { S.draft = {}; go('ob-course'); }
   else if (pc.classes && !S.proxy.klass) { S.draft = { category: pc.cat, course: S.proxy.course }; go('ob-class'); }
   else go('home');
 }
@@ -606,8 +632,8 @@ document.addEventListener('input', (e) => {
   if (e.target.id === 'nameInput') S.draft.name = e.target.value;
 });
 document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter') return;
-  if (e.target.id === 'nameInput') act('name-next', e.target);
+  if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+  if (e.target.id === 'nameInput') { e.preventDefault(); e.target.blur(); return; }   // 変換確定のエンターで登録が進まないよう、キーボードを閉じるだけ
   if (e.target.id === 'passInput') act('admin-do-login', e.target);
 });
 document.addEventListener('click', (e) => { const el = e.target.closest('[data-act]'); if (el) act(el.dataset.act, el); });
@@ -621,41 +647,46 @@ function applyClass(klass) {
   S.edit = null; resetPicks(); go('home'); if (!S.loaded) loadData();
 }
 
+function renderKeepScroll() { const y = window.scrollY; render(); window.scrollTo(0, y); }
+function goHomeNext() { S.view = 'home'; render(); const el = document.getElementById('next'); if (el) el.scrollIntoView(); }
+
 function act(a, el) {
   const d = el.dataset || {};
   if (a === 'home') { S.edit = null; resetPicks(); if (isAdmin() && !S.proxy) return go('admin-home'); return go(me() && me().course ? 'home' : 'ob-name'); }
   if (a === 'name-next') { const n = normName((document.getElementById('nameInput') || {}).value); if (!n) { alert('お名前を入れてください。'); return; }
-    if (S.edit === 'name') { S.profile.name = n; S.profile.usual = S.profile.usual || null; store.set('tr_profile', S.profile); S.edit = null; S.loaded = false; S.existing = []; go('home'); return loadData(); }
-    S.draft.name = n; return go('ob-cat'); }
+    S.draft.name = n; return go('ob-name-confirm'); }
+  if (a === 'name-ok') {
+    if (S.edit === 'name') { S.profile.name = S.draft.name; store.set('tr_profile', S.profile); S.edit = null; S.loaded = false; S.existing = []; resetPicks(); go('home'); return loadData(); }
+    return go('ob-course'); }
   if (a === 'ob-back-name') return go('ob-name');
-  if (a === 'ob-cat') return go('ob-cat');
-  if (a === 'cat') { S.draft.category = d.v; return go('ob-course'); }
+  if (a === 'cat') { S.draft.category = d.v; return applyClass(null); }
   if (a === 'ob-course-back') return go('ob-course');
-  if (a === 'course') { S.draft.course = d.v; if (COURSES[d.v].classes) return go('ob-class'); return applyClass(null); }
+  if (a === 'course') { S.draft.course = d.v; S.draft.category = COURSES[d.v].cat; return go(COURSES[d.v].classes ? 'ob-class' : 'ob-cat'); }
   if (a === 'klass') return applyClass(d.v);
-  if (a === 'edit-class') { S.edit = 'class'; S.draft = {}; return go('ob-cat'); }
+  if (a === 'edit-class') { S.edit = 'class'; S.draft = {}; return go('ob-course'); }
+  if (a === 'reset-all') { if (!confirm('お名前とクラスの登録を消して、最初からやりなおします。よろしいですか？\n（入っている予約は消えません）')) return;
+    try { Object.keys(localStorage).filter(k => k === 'tr_profile' || k.indexOf('tr_cache_') === 0).forEach(k => localStorage.removeItem(k)); } catch (e) {}
+    S.profile = null; S.loaded = false; S.existing = []; S.slots = []; resetPicks(); S.draft = {}; go('ob-name'); return prefetchSlots(); }
   if (a === 'edit-name') { S.edit = 'name'; S.draft = { name: S.profile.name }; return go('ob-name'); }
 
-  if (a === 'prop') { const id = String(d.id); const set = d.pre === '1' ? S.propOff : S.propOn; set.has(id) ? set.delete(id) : set.add(id); const y = window.scrollY; render(); window.scrollTo(0, y); return; }
-  if (a === 'to-confirm-prop') { const slots = checkedProposalSlots(); if (!slots.length) return; S.pending = { type: 'reserve', slots }; return go('confirm'); }
-  if (a === 'open-cal') { S.mode = 'add'; S.changing = null; S.viewMonth = monthKeyOf(new Date()); return go('calendar'); }
-  if (a === 'month') { S.viewMonth = addMonths(S.viewMonth, Number(d.d)); return render(); }
+  if (a === 'month') { S.viewMonth = addMonths(S.viewMonth, Number(d.d)); return renderKeepScroll(); }
   if (a === 'day') { S.pickDay = d.day; const date = parseDayKey(d.day); const list = slotsForDay(d.day);
     const open = list.filter(x => slotState(x) === 'open');
     if (!isAdmin() && withinDeadline(date) && list.length === 1 && open.length === 1) return act('time', { dataset: { id: open[0].slot_id } });
     return go('times'); }
-  if (a === 'back-cal') return go('calendar');
-  if (a === 'time') { const slot = slotsForDay(S.pickDay).find(s => String(s.slot_id) === String(d.id)); if (!slot) return;
+  if (a === 'back-cal') return S.mode === 'change' ? go('calendar') : goHomeNext();
+  if (a === 'toggle-slot') { S.pickDay = d.day; return act('time', { dataset: { id: d.id } }); }
+  if (a === 'time') { const slot = slotsForDay(S.pickDay).find(x => String(x.slot_id) === String(d.id)) || S.picked.get(String(d.id)); if (!slot) return;
     if (S.mode === 'change') { S.pending = { type: 'change', from: S.changing, to: slot }; return go('confirm'); }
     const id = String(slot.slot_id);
     if (S.picked.has(id)) S.picked.delete(id);
     else { if (!isAdmin() && monthCount(slot.month_key) + 1 > MONTHLY_LIMIT) { alert(`${Number(slot.month_key.split('-')[1])}月の予約は${MONTHLY_LIMIT}回までです。`); return; } S.picked.set(id, slot); }
-    return go('calendar'); }
+    return S.view === 'home' ? renderKeepScroll() : goHomeNext(); }
   if (a === 'to-confirm-picked') { const slots = Array.from(S.picked.values()).sort((x, y) => Number(x.slot_id) - Number(y.slot_id)); S.pending = { type: 'reserve', slots }; return go('confirm'); }
   if (a === 'change') { const e = S.existing.find(x => x.event_id === d.id); if (!e) return; S.mode = 'change'; S.changing = e; S.picked.clear(); S.viewMonth = monthKeyOf(new Date(e.start)); return go('calendar'); }
   if (a === 'cancel') { const e = S.existing.find(x => x.event_id === d.id); if (!e) return; S.pending = { type: 'cancel', items: [e] }; return go('confirm'); }
   if (a === 'cancel-past') { const e = (Array.isArray(S.admin.history) ? S.admin.history : []).find(x => x.event_id === d.id); if (!e) return; S.pending = { type: 'cancel', items: [e] }; return go('confirm'); }
-  if (a === 'cancel-pending') { const back = S.pending && S.pending.type === 'change' ? 'times' : 'home'; S.pending = null; if (back === 'home') resetPicks(); return go(back); }
+  if (a === 'cancel-pending') { const t = S.pending && S.pending.type; S.pending = null; if (t === 'change') return go('calendar'); if (t === 'cancel') resetPicks(); return go('home'); }
   if (a === 'do') return runPending();
   if (a === 'history') return loadHistory();
 

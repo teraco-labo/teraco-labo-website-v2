@@ -17,6 +17,8 @@
        background:var(--bg);color:var(--ink);font-size:20px;line-height:1.6;}
   header.bar{position:sticky;top:0;z-index:20;background:var(--green);color:#fff;text-align:center;
              font-size:24px;font-weight:800;padding:14px 12px;letter-spacing:.04em;}
+  .restart{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:inherit;font-size:15px;font-weight:800;padding:8px 12px;border-radius:999px;border:2px solid #fff;background:transparent;color:#fff;}
+  .restart:active{background:rgba(255,255,255,.25);}
   .band{padding:10px 14px;font-size:17px;font-weight:700;text-align:center;}
   .band.demo{background:#FFF4D6;color:#7A5B00;}
   .band.proxy{background:var(--admin);color:#fff;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;}
@@ -117,11 +119,11 @@
 </style>
 </head>
 <body>
-<header class="bar">TERACO予約</header>
+<header class="bar">TERACO予約<button class="restart" data-act="home">最初から</button></header>
 <div id="bands"></div>
 <main id="app"></main>
 <div id="tray"></div>
 <div id="busy"><div class="spin"></div><div id="busyText">おまちください</div></div>
-<script src="app.js?v=n5"></script>
+<script src="app.js?v=n6"></script>
 </body>
 </html>
