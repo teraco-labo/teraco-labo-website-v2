@@ -413,13 +413,18 @@ function dayStatus(date) {
   const open = slots.some(s => slotState(s) === 'open');
   return { cls: open ? 'ok' : (mine ? 'view' : 'full'), mine, total, own };
 }
+// カレンダーを最初に開く月：生徒は「公開されている、いちばん近い月」。管理者は今月
+function firstBookableMonth() {
+  const cur = monthKeyOf(new Date()); if (isAdmin()) return cur;
+  return [cur, addMonths(cur, 1), addMonths(cur, 2)].find(k => SCHEDULE.published.includes(k)) || cur;
+}
 // はじめてホームを出すとき、確定している月の「自分のクラスの日」を最初からえらんだ状態にする
 function initHomePicks() {
   if (!S.loaded || S.pickInit || S.mode === 'change') return;
   S.pickInit = true;
   const g = proposals()[0];
   if (g) { g.items.forEach(sl => S.picked.set(String(sl.slot_id), sl)); S.viewMonth = g.mk; }
-  else S.viewMonth = monthKeyOf(new Date());
+  else S.viewMonth = firstBookableMonth();
 }
 // その月の、自分が予約できる日（グループ講座用）
 function monthCandidates(mk) {
@@ -848,7 +853,7 @@ function act(a, el) {
   if (a === 'my-history') return loadMyHistory(Number(d.m) || 3);
   if (a === 'toggle-cal') { S.addToCal = !S.addToCal; store.set('tr_add_to_cal', S.addToCal); return renderKeepScroll(); }
   if (a === 'g-logout') { S.google = null; S.myHistory = null; try { localStorage.removeItem('teraco_google_user'); } catch (e) {} return renderKeepScroll(); }
-  if (a === 'extra-private') { resetPicks(); S.override = { course: 'private', klass: null, usual: null }; S.pickInit = true; S.viewMonth = monthKeyOf(new Date()); return go('extra'); }
+  if (a === 'extra-private') { resetPicks(); S.override = { course: 'private', klass: null, usual: null }; S.pickInit = true; S.viewMonth = firstBookableMonth(); return go('extra'); }
   if (a === 'edit-name') { S.edit = 'name'; S.draft = { name: S.profile.name }; return go('ob-name'); }
 
   if (a === 'month') { S.viewMonth = addMonths(S.viewMonth, Number(d.d)); return renderKeepScroll(); }
