@@ -51,18 +51,18 @@
   <span class="msg" id="msg">読み込み中…</span>
 </div>
 <div class="sheet" id="sheet"><div class="err">講座カレンダーを読み込んでいます…</div></div>
+<script src="timetable.js?v=1"></script>
 <script>
 'use strict';
 const API_BASE = 'https://script.google.com/macros/s/AKfycbz2_NXN-VuAo2iCFu-jQ-nT5k9Bk3eCoIYBGXAtfDtneNJS7La8vLxS5T7p4Xo3iUIy/exec';
 const ROWS = ['10:00', '11:00', '14:00', '15:00', '16:00'];                 // 紙面の時間の行
-// 時間割（予約アプリ app.js の COURSES と同じ内容。変えるときは両方そろえる）
-const COLORS = { spIntro: '#F8DDB0', spAdv: '#C9E2C0', pcIntro: '#E6CDF5', pcAdv: '#8FD3FA', solo: '#FDF6D3' };
-const TIMETABLE = {
-  3: [ { time: '10:00', span: 1, label: 'パソコン入門 A（45分）', color: COLORS.pcIntro }, { time: '11:00', span: 1, label: 'パソコン応用 A（45分）', color: COLORS.pcAdv },
-       { time: '14:00', span: 2, label: 'スマホ応用 A（90分）', color: COLORS.spAdv },   { time: '16:00', span: 1, label: 'スマホ入門 A（45分）', color: COLORS.spIntro } ],
-  5: [ { time: '10:00', span: 2, label: 'スマホ応用 B（90分）', color: COLORS.spAdv },   { time: '14:00', span: 1, label: 'スマホ入門 B（45分）', color: COLORS.spIntro },
-       { time: '15:00', span: 1, label: 'パソコン入門 B（45分）', color: COLORS.pcIntro }, { time: '16:00', span: 1, label: 'パソコン応用 B（45分）', color: COLORS.pcAdv } ]
-};
+// 時間割は timetable.js が正本（予約アプリと共通）
+const TT = window.TERACO_TIMETABLE;
+const SOLO = TT.courses['private'];
+const TIMETABLE = {};
+Object.values(TT.courses).forEach(c => { if (!c.classes) return;
+  Object.keys(c.classes).forEach(k => { const cl = c.classes[k];
+    (TIMETABLE[cl.dow] = TIMETABLE[cl.dow] || []).push({ time: cl.time, span: c.min > 60 ? 2 : 1, label: `${c.label} ${k}（${c.min}分）`, color: c.color }); }); });
 const pad = n => String(n).padStart(2, '0');
 const dk = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -70,8 +70,8 @@ const qs = new URLSearchParams(location.search);
 let month = /^\d{4}-\d{2}$/.test(qs.get('m') || '') ? qs.get('m') : (() => { const d = new Date(); d.setMonth(d.getMonth() + 1, 1); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; })();
 let schedule = null;
 
-const soloBlock = (span, startRow) => `<div class="blk" style="grid-row:${startRow} / span ${span};background:${COLORS.solo};">
-  <div>【個人レッスン】</div><small>マンツーマン（50分）</small>${span >= 3 ? '<div class="gap"></div>' : ''}<div>【オンライン】</div><small>グループ / マンツーマン</small></div>`;
+const soloBlock = (span, startRow) => `<div class="blk" style="grid-row:${startRow} / span ${span};background:${SOLO.color};">
+  <div>【個人レッスン】</div><small>マンツーマン（${SOLO.min}分）</small>${span >= 3 ? '<div class="gap"></div>' : ''}<div>【オンライン】</div><small>グループ / マンツーマン</small></div>`;
 
 function dayColumn(date, inMonth) {
   const key = dk(date), dow = date.getDay();
@@ -82,7 +82,7 @@ function dayColumn(date, inMonth) {
   if (!evs.length) return `<div class="col">${soloBlock(5, 1)}</div>`;
   let html = ''; let last = 0;
   evs.forEach((e, i) => { const r = ROWS.indexOf(e.time) + 1; last = Math.max(last, r);
-    html += `<div class="blk" style="grid-row:${r};background:${/パソコン|PC/.test(e.label) ? COLORS.pcAdv : COLORS.spAdv};">${esc(e.label)}（${e.min}分）</div>`; });
+    html += `<div class="blk" style="grid-row:${r};background:${/パソコン|PC/.test(e.label) ? TT.courses['pc-adv'].color : TT.courses['sp-adv'].color};">${esc(e.label)}（${e.min}分）</div>`; });
   if (evs.some(e => /体験会/.test(e.label)) && last < 5) { last++; html += `<div class="blk note" style="grid-row:${last};">↑↑↑<br>体験会は初回無料です<br>※2回目以降は有料となります</div>`; }
   if (last < 5) html += soloBlock(5 - last, last + 1);
   return `<div class="col">${html}</div>`;

@@ -11,16 +11,11 @@ const ADMIN_RANGE_MONTHS = 12;
 const DAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
 // 時間割（2026年10月からの正式版）。グループ講座は曜日と時間が固定。A=水曜／B=金曜
-const TIMES_PRIVATE = ['10:00', '11:00', '14:00', '15:00', '16:00', '17:00']; // 個人レッスン（火・木）
-const ADMIN_TIMES   = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
-const CATEGORIES = { smartphone: 'スマホ', pc_ai: 'パソコンAI' };
-const COURSES = {
-  'sp-intro': { cat: 'smartphone', label: 'スマホ入門',   short: '入門', min: 45, color: '#F8DDB0', classes: { A: { dow: 3, time: '16:00' }, B: { dow: 5, time: '14:00' } } },
-  'sp-adv':   { cat: 'smartphone', label: 'スマホ応用',   short: '応用', min: 90, color: '#C9E2C0', classes: { A: { dow: 3, time: '14:00' }, B: { dow: 5, time: '10:00' } } },
-  'pc-intro': { cat: 'pc_ai',      label: 'パソコン入門', short: '入門', min: 45, color: '#E6CDF5', classes: { A: { dow: 3, time: '10:00' }, B: { dow: 5, time: '15:00' } } },
-  'pc-adv':   { cat: 'pc_ai',      label: 'パソコン応用', short: '応用', min: 45, color: '#A9DCFB', classes: { A: { dow: 3, time: '11:00' }, B: { dow: 5, time: '16:00' } } },
-  'private':  { cat: null,         label: '個人レッスン', short: '個人レッスン', min: 50, color: '#FDF3C4', classes: null }
-};
+const TT = window.TERACO_TIMETABLE;
+const TIMES_PRIVATE = TT.privateTimes;   // 個人レッスン（火・木）
+const ADMIN_TIMES   = TT.adminTimes;
+const CATEGORIES    = TT.categories;
+const COURSES       = TT.courses;
 const FURIKAE = false;   // 生徒が別クラスへ振り替える機能。今は混乱のもとになるため停止（管理者の代理操作では自由に入れられる）
 const OLD_COURSE_KEYS = { intro: 'sp-intro', applied: 'sp-adv', basic: 'pc-intro', advance: 'pc-adv' };
 
@@ -40,6 +35,7 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
 
+const GOOGLE_CLIENT_ID = '962051135287-af9qpio58l2qt7cu3avip6qvk9269sl2.apps.googleusercontent.com';
 const S = {
   view: 'loading',
   profile: store.get('tr_profile', null),   // {name, category, course, usual:{dow,time}}
@@ -50,12 +46,16 @@ const S = {
   picked: new Map(), viewMonth: null, pickDay: null,
   mode: 'add', changing: null, pending: null, done: null, error: null,
   edit: null,                                // 'name' | 'class'（設定変更中）
+  google: store.get('teraco_google_user', null),   // {name,email,picture}：ログインしている人だけ
+  addToCal: store.get('tr_add_to_cal', true),
+  myHistory: null, myHistoryMonths: 3,
   override: null,                            // {course:'private'}：個人レッスン「も」予約するとき
   draft: {},                                 // 初回登録の途中経過
   admin: { summary: null, names: [], query: '', history: null, historyMonths: 3 },
   demo: { added: [], removed: new Set() }
 };
 
+const myEmail = () => (!S.proxy && S.google && S.google.email) ? S.google.email : null;
 const adminCode = () => sessionStorage.getItem('teraco_admin_code') || '';
 const isAdmin = () => !!adminCode();
 const baseMe = () => S.proxy || S.profile;
@@ -154,7 +154,7 @@ async function loadData({ quiet = false } = {}) {
   }
   S.syncing = true; if (!quiet) render();
   try {
-    const d = await post({ action: 'next_data', name: name, days: 75, email: null });
+    const d = await post({ action: 'next_data', name: name, days: 75, email: myEmail() });
     if (!d || !d.ok) throw new Error('load');
     if (me() && me().name !== name) return;            // 途中で人が切り替わった
     S.slots = d.slots || []; S.existing = d.existing || []; applySchedule(d.schedule); indexSlots(); applyDemo(); S.loaded = true;
@@ -180,7 +180,7 @@ function lessonsOn(p, date) {
   // 日程がまだ決まっていない先の月は、生徒からは予約できない（今月は従来どおり可）
   const mk = monthKeyOf(date); if (!SCHEDULE.published.includes(mk) && mk !== monthKeyOf(new Date())) return [];
   const c = COURSES[p.course];
-  if (!c.classes) return [2, 4].includes(dow) ? TIMES_PRIVATE.filter(t => !eventAt(dk, t)).map(t => ({ time: t, klass: null, own: true })) : [];
+  if (!c.classes) return TT.privateDows.includes(dow) ? TIMES_PRIVATE.filter(t => !eventAt(dk, t)).map(t => ({ time: t, klass: null, own: true })) : [];
   return Object.keys(c.classes).filter(k => c.classes[k].dow === dow && (FURIKAE || k === p.klass)).map(k => ({ time: c.classes[k].time, klass: k, own: k === p.klass }));
 }
 // 生徒が予約・変更・取消できる日か（明日以降。明日分は今日の17時まで）
@@ -297,6 +297,7 @@ function render() {
     : v === 'times' ? viewTimes()
     : v === 'confirm' ? viewConfirm()
     : v === 'done' ? viewDone()
+    : v === 'more' ? viewMore()
     : v === 'admin-login' ? viewAdminLogin()
     : v === 'admin-home' ? viewAdminHome()
     : v === 'admin-schedule' ? viewAdminSchedule()
@@ -305,6 +306,7 @@ function render() {
   if (v === 'admin-schedule' && S.sched && S.sched.dirty) {
     document.getElementById('tray').innerHTML = `<div class="tray"><div class="in"><div class="n">まだ保存していない変更があります</div><button class="btn dark" data-act="sched-save">保存する</button></div></div>`;
   }
+  if (v === 'more') mountGoogleButton();
   const f = document.querySelector('[data-focus]'); if (f) f.focus();
 }
 
@@ -366,7 +368,7 @@ function viewHome() {
   else if (!list.length) h += `<p class="muted">いま入っている予約はありません。</p>`;
   else { h += list.map(rsvRow).join('');
          if (!isAdmin()) h += `<p class="muted" style="margin-top:8px;">変更・取り消しは前日の17時までできます。</p>`; }
-  if (S.proxy) h += `<div style="margin-top:12px;"><button class="link" data-act="history">過去の予約を見る</button></div>${viewHistory()}`;
+  if (S.proxy) h += `<div style="margin-top:12px;"><button class="link" data-act="history" data-m="${S.admin.historyMonths}">過去の予約を見る</button></div>${S.admin.history ? periodButtons('history', S.admin.historyMonths) : ''}${viewHistory()}`;
   h += `</div>`;
 
   const group = !!(COURSES[p.course] && COURSES[p.course].classes) && !isAdmin();
@@ -391,7 +393,7 @@ function viewHome() {
     <button class="btn ghost" data-act="extra-private">${esc(courseName('private'))}も予約する</button></div>`;
 
   h += `<div class="links"><button class="link" data-act="edit-class">クラスを変える</button>
-        ${S.proxy ? '' : `<button class="link" data-act="edit-name">お名前をなおす</button><button class="link" data-act="reset-all">登録をやりなおす</button>`}
+        ${S.proxy ? '' : `<button class="link" data-act="edit-name">お名前をなおす</button><button class="link" data-act="more">受講履歴・そのほか</button>`}
         <a class="link" href="tel:${TEL}">電話で聞く</a></div>
         <div class="links" style="margin-top:26px;"><button class="link" style="font-size:14px;color:#9AA8A0;" data-act="${isAdmin() ? 'admin-home' : 'admin-login'}">管理者</button></div>`;
   return h;
@@ -530,7 +532,59 @@ function viewDone() {
   return `<div class="card center" style="padding-top:26px;"><div class="okmark"></div><h1 style="margin-bottom:6px;">${esc(d.title)}</h1>
       <ul class="list-big">${d.lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
       ${d.note ? `<div class="info">${esc(d.note)}</div>` : ''}</div>
+      ${d.share ? `<a class="btn ghost" style="text-decoration:none;text-align:center;line-height:40px;margin-bottom:12px;" href="https://line.me/R/share?text=${encodeURIComponent(d.share)}" target="_blank" rel="noopener">LINEに控えを送る</a>` : ''}
       <button class="btn" data-act="home">はじめの画面にもどる</button>`;
+}
+
+// --- そのほか：受講履歴・Googleログイン・登録のやりなおし ---
+function historyListHtml(list) {
+  if (!list.length) return `<p class="muted">この期間の記録はありません。</p>`;
+  const by = {}; list.forEach(e => { const k = e.start.slice(0, 7); (by[k] = by[k] || []).push(e); });
+  return Object.keys(by).sort().reverse().map(k => `<div class="month-label">${Number(k.slice(0, 4))}年${Number(k.slice(5))}月（${by[k].length}回）</div>` +
+    by[k].map(e => { const d = new Date(e.start); return `<div class="sum-row"><span style="flex:1;font-weight:800;">${fmtDay(d)} ${fmtTime(d)}</span><span class="muted">${esc(rowClassText(e))}</span></div>`; }).join('')).join('');
+}
+function periodButtons(act, cur) {
+  return `<div style="display:flex;gap:8px;margin:0 0 12px;">${[[1, '1か月'], [3, '3か月'], [6, '6か月'], [12, '1年']].map(([n, t]) =>
+    `<button class="mini" style="flex:1;min-width:0;${n === cur ? 'background:var(--green);color:#fff;' : ''}" data-act="${act}" data-m="${n}">${t}</button>`).join('')}</div>`;
+}
+function viewMore() {
+  const g = S.google;
+  let h = `<h1>受講履歴・そのほか</h1>`;
+  h += `<div class="card"><h2>これまでの受講履歴</h2>`;
+  if (!g) h += `<p class="muted" style="margin-bottom:12px;">受講履歴は、Googleでログインすると見られます。<br>（予約や取り消しは、ログインしなくてもできます）</p><div id="gBtn" class="center"></div>`;
+  else { h += periodButtons('my-history', S.myHistoryMonths);
+    h += S.myHistory === 'loading' ? `<p class="muted">読み込み中…</p>` : Array.isArray(S.myHistory) ? historyListHtml(S.myHistory) : `<button class="btn ghost" data-act="my-history" data-m="${S.myHistoryMonths}">受講履歴を見る</button>`; }
+  h += `</div>`;
+  if (g) h += `<div class="card"><h2>Googleアカウント</h2><p style="font-weight:800;">${esc(g.name || '')}</p><p class="muted">${esc(g.email || '')}</p>
+      <button class="pick ${S.addToCal ? 'on' : ''}" style="margin-top:12px;font-size:19px;" data-act="toggle-cal"><span class="box"></span><span>予約をGoogleカレンダーにも入れる</span></button>
+      <button class="btn quiet" data-act="g-logout">Googleからログアウトする</button></div>`;
+  h += `<div class="card"><h2>登録のやりなおし</h2><p class="muted" style="margin-bottom:12px;">お名前とクラスを、最初から登録しなおします。入っている予約は消えません。</p>
+      <button class="btn quiet" data-act="reset-all">登録をやりなおす</button></div>
+      <button class="btn" data-act="home">はじめの画面にもどる</button>`;
+  return h;
+}
+function decodeJwt(token) {
+  const b = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+  return JSON.parse(decodeURIComponent(atob(b).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+}
+function onGoogleCredential(resp) {
+  try { const p = decodeJwt(resp.credential); S.google = { sub: p.sub, name: p.name, email: p.email, picture: p.picture };
+    store.set('teraco_google_user', S.google); S.myHistory = null; S.loaded = false; render(); loadData({ quiet: true }); } catch (e) {}
+}
+function mountGoogleButton() {
+  const box = document.getElementById('gBtn'); if (!box) return;
+  const draw = () => { try { google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onGoogleCredential });
+    google.accounts.id.renderButton(box, { type: 'standard', size: 'large', theme: 'outline', text: 'signin_with', shape: 'rectangular', logo_alignment: 'left' }); } catch (e) {} };
+  if (window.google && google.accounts && google.accounts.id) return draw();
+  if (document.getElementById('gsiScript')) return;
+  const sc = document.createElement('script'); sc.id = 'gsiScript'; sc.src = 'https://accounts.google.com/gsi/client'; sc.async = true; sc.onload = () => { if (S.view === 'more') draw(); };
+  document.head.appendChild(sc);
+}
+async function loadMyHistory(months) {
+  S.myHistoryMonths = months; S.myHistory = 'loading'; render();
+  try { const d = await post({ action: 'attendance_history', name: S.profile.name, months, email: S.google.email, passcode: null });
+    S.myHistory = d && d.ok ? (d.history || []) : []; } catch (e) { S.myHistory = []; }
+  render();
 }
 
 // --- 管理者 ---
@@ -656,7 +710,7 @@ async function doReserve(slots) {
   const byKlass = new Map(); slots.forEach(s => { const k = s.klass || ''; if (!byKlass.has(k)) byKlass.set(k, []); byKlass.get(k).push(s); });
   let last = { ok: true };
   for (const [k, list] of byKlass) {
-    last = await post({ action: 'batch_reserve', name: p.name, email: null, add_to_calendar: false,
+    last = await post({ action: 'batch_reserve', name: p.name, email: myEmail(), add_to_calendar: !!(myEmail() && S.addToCal),
       slots: list.map(s => String(s.slot_id)), class_details: classDetails(p, k || null), passcode: adminCode() || null });
     if (!last || !last.ok) return last;
   }
@@ -667,7 +721,7 @@ async function doCancel(items) {
   if (DEMO) { await new Promise(r => setTimeout(r, 700));
     items.forEach(e => { if (String(e.event_id).startsWith('demo_')) S.demo.added = S.demo.added.filter(x => x.event_id !== e.event_id); else S.demo.removed.add(e.event_id); });
     return { ok: true }; }
-  return await post({ action: 'batch_cancel', name: p.name, email: null, event_ids: items.map(e => e.event_id), passcode: adminCode() || null });
+  return await post({ action: 'batch_cancel', name: p.name, email: myEmail(), event_ids: items.map(e => e.event_id), passcode: adminCode() || null });
 }
 async function runPending() {
   const pd = S.pending; if (!pd) return;
@@ -676,7 +730,9 @@ async function runPending() {
       busy(true, '予約しています…'); const r = await doReserve(pd.slots);
       if (!r || !r.ok) throw new Error((r && r.message) || '予約できませんでした。');
       saveUsual(pd.slots);
-      S.done = { title: '予約できました', lines: pd.slots.map(s => `${fmtDay(parseDayKey(s.day_key))} ${s.start_time}`), note: `クラス：${classText(me())}` };
+      const lines = pd.slots.map(s => `${fmtDay(parseDayKey(s.day_key))} ${s.start_time}`);
+      S.done = { title: '予約できました', lines, note: `クラス：${classText(me())}`,
+        share: `【スマホ教室TERACO 予約の控え】\n${me().name} さん\n${classText(me())}\n${lines.join('\n')}` };
     } else if (pd.type === 'cancel') {
       busy(true, '取り消しています…'); const r = await doCancel(pd.items);
       if (!r || !r.ok) throw new Error((r && r.message) || '取り消しできませんでした。');
@@ -801,6 +857,10 @@ function act(a, el) {
   if (a === 'reset-all') { if (!confirm('お名前とクラスの登録を消して、最初からやりなおします。よろしいですか？\n（入っている予約は消えません）')) return;
     try { Object.keys(localStorage).filter(k => k === 'tr_profile' || k.indexOf('tr_cache_') === 0).forEach(k => localStorage.removeItem(k)); } catch (e) {}
     S.profile = null; S.loaded = false; S.existing = []; S.slots = []; resetPicks(); S.draft = {}; go('ob-name'); return prefetchSlots(); }
+  if (a === 'more') return go('more');
+  if (a === 'my-history') return loadMyHistory(Number(d.m) || 3);
+  if (a === 'toggle-cal') { S.addToCal = !S.addToCal; store.set('tr_add_to_cal', S.addToCal); return renderKeepScroll(); }
+  if (a === 'g-logout') { S.google = null; S.myHistory = null; try { localStorage.removeItem('teraco_google_user'); } catch (e) {} return renderKeepScroll(); }
   if (a === 'extra-private') { resetPicks(); S.override = { course: 'private', klass: null, usual: null }; S.pickInit = true; S.viewMonth = monthKeyOf(new Date()); return go('extra'); }
   if (a === 'edit-name') { S.edit = 'name'; S.draft = { name: S.profile.name }; return go('ob-name'); }
 
@@ -823,7 +883,7 @@ function act(a, el) {
   if (a === 'cancel-past') { const e = (Array.isArray(S.admin.history) ? S.admin.history : []).find(x => x.event_id === d.id); if (!e) return; S.pending = { type: 'cancel', items: [e] }; return go('confirm'); }
   if (a === 'cancel-pending') { const t = S.pending && S.pending.type; S.pending = null; if (t === 'change') return go('calendar'); if (t === 'cancel') resetPicks(); return go(S.override ? 'extra' : 'home'); }
   if (a === 'do') return runPending();
-  if (a === 'history') return loadHistory();
+  if (a === 'history') { S.admin.historyMonths = Number(d.m) || 3; return loadHistory(); }
 
   if (a === 'admin-login') return go('admin-login');
   if (a === 'admin-do-login') { const c = (document.getElementById('passInput') || {}).value; if (c) adminLogin(c.trim()); return; }
@@ -844,5 +904,5 @@ function act(a, el) {
   const c = S.profile && COURSES[S.profile.course];
   if (S.profile && S.profile.name && c && (!c.classes || S.profile.klass)) { S.view = 'home'; loadData(); }
   else if (S.profile && S.profile.name && c) { S.edit = 'class'; S.draft = { category: c.cat, course: S.profile.course }; go('ob-class'); prefetchSlots(); }
-  else { S.draft = { name: (S.profile && S.profile.name) || '' }; go('ob-name'); prefetchSlots(); }
+  else { S.draft = { name: (S.profile && S.profile.name) || normName(S.google && S.google.name) || '' }; go('ob-name'); prefetchSlots(); }
 })();
