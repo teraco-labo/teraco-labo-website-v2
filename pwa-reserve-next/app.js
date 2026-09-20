@@ -307,7 +307,7 @@ function viewHome() {
   const list = S.existing.slice().sort((a, b) => new Date(a.start) - new Date(b.start));
   const u = usualOf(p); const groups = S.loaded ? proposals() : [];
   const nChecked = groups.length ? checkedProposalSlots().length : 0;
-  let h = `<h1>${esc(p.name)}さん、こんにちは</h1><div class="sync">${S.syncing ? '最新の予約状況をたしかめています…' : ''}</div>`;
+  let h = `<h1>${S.proxy ? esc(p.name) + 'さんの予約を操作' : esc(p.name) + 'さん、こんにちは'}</h1><div class="sync">${S.syncing ? '最新の予約状況をたしかめています…' : ''}</div>`;
   if (S.error) h += `<div class="note" style="margin-bottom:16px;">${esc(S.error)}</div>`;
 
   h += `<div class="card"><h2>${S.proxy ? esc(p.name) + 'さんの予約' : 'あなたの予約'}</h2>`;
