@@ -1,4 +1,4 @@
-// TERACO予約システム v49 (受講履歴＋今後の予約を1回で取得。予約者はGoogleログインで自分の履歴を閲覧可)
+// TERACO予約システム v50 (新デザイン用に next_data / schedule_get / schedule_set を追加。既存の処理は変更なし。分数はコース名の「(45分)」を優先)
 
 var CONFIG = {
   TIMEZONE: 'Asia/Tokyo',
@@ -23,8 +23,9 @@ function authorizeMe() {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var action = p.action || 'overview';
-  if (action === 'version') return jsonOut({ok: true, version: 'v49', timestamp: new Date().toISOString()});
+  if (action === 'version') return jsonOut({ok: true, version: 'v50', timestamp: new Date().toISOString()});
   if (action === 'overview') return jsonOut(getOverview(p.name || '', Number(p.days) || CONFIG.OVERVIEW_DAYS));
+  if (action === 'schedule_get') return jsonOut({ ok: true, schedule: getSchedule_() });
   if (action === 'admin_summary') return jsonOut(getAdminSummary(p.passcode));
   if (action === 'attendance_history') return jsonOut(getAttendanceHistory(p.passcode, p.name || '', p.email || '', Number(p.months) || 3));
   if (action === 'admin_calendar_events') return jsonOut(getAdminCalendarEvents(p.passcode, p.start || '', p.end || ''));
@@ -204,6 +205,9 @@ function doPost(e) {
   var body = {};
   try { body = JSON.parse(e.postData.contents); } catch (err) { return jsonOut({ok: false, message: 'JSONエラー'}); }
   if (body.action === 'overview') return jsonOut(getOverview(body.name || '', Number(body.days) || CONFIG.OVERVIEW_DAYS, body.email || ''));
+  if (body.action === 'next_data') return jsonOut(getNextData(body.name || '', Number(body.days) || 75, body.email || ''));
+  if (body.action === 'schedule_get') return jsonOut({ ok: true, schedule: getSchedule_() });
+  if (body.action === 'schedule_set') return jsonOut(setSchedule_(body.passcode, body.schedule));
   if (body.action === 'batch_reserve') return jsonOut(reserve(body.name, body.slots, body.class_details, body.email, body.add_to_calendar, body.passcode));
   if (body.action === 'batch_cancel') return jsonOut(cancel(body.name, body.event_ids, body.email, body.passcode));
   if (body.action === 'attendance_history') return jsonOut(getAttendanceHistory(body.passcode, body.name || '', body.email || '', Number(body.months) || 3));
@@ -455,6 +459,8 @@ function makeTitle(details) {
 function getMinutes(details) {
   if (!details || !details.course) return 45;
   var c = details.course;
+  var mm = String(c).match(/(\d+)\s*分/);
+  if (mm) return Number(mm[1]);
   if (c.indexOf('90') >= 0 || c.indexOf('応用') >= 0 || c.indexOf('アドバンス') >= 0) return 90;
   if (c.indexOf('50') >= 0 || c.indexOf('個人') >= 0) return 50;
   return 45;
@@ -630,3 +636,83 @@ function formatSlot(d) { return formatDay(d) + ' ' + pad(d.getHours()) + ':' + p
 function monthKey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1); }
 function monthLabel(k) { var p = k.split('-'); return p[0] + '年' + Number(p[1]) + '月'; }
 function pad(n) { return n < 10 ? '0' + n : String(n); }
+
+// =====================================================================
+// v50 追加：新デザイン（pwa-reserve-next）用。ここから下は新しい処理だけ。
+// 既存の overview / batch_reserve / batch_cancel などは一切変更していない。
+// =====================================================================
+
+// 2026年10月からの時間割（0=日…6=土）。火木=個人レッスン、水金=グループ講座
+var NEXT_TIMES = {
+  2: ['10:00', '11:00', '14:00', '15:00', '16:00', '17:00'],
+  3: ['10:00', '11:00', '14:00', '16:00'],
+  4: ['10:00', '11:00', '14:00', '15:00', '16:00', '17:00'],
+  5: ['10:00', '14:00', '15:00', '16:00']
+};
+
+// 受講の予約イベントか（タイトル先頭で判定。私用の予定を人数に数えないため）
+function isLessonTitle_(title) {
+  return /^(スマホ|パソコンAI|TERACO予約)/.test(title || '');
+}
+
+// 講座カレンダー（正本）。スクリプトプロパティに JSON で保存する
+function getSchedule_() {
+  var empty = { published: [], off: [], events: [], updated: '' };
+  var raw = PropertiesService.getScriptProperties().getProperty('SCHEDULE_JSON');
+  if (!raw) return empty;
+  try { var o = JSON.parse(raw); return { published: o.published || [], off: o.off || [], events: o.events || [], updated: o.updated || '' }; }
+  catch (e) { return empty; }
+}
+
+function setSchedule_(passcode, schedule) {
+  if (passcode !== CONFIG.ADMIN_PASSCODE) return { ok: false, message: 'パスコードが正しくありません' };
+  if (!schedule || typeof schedule !== 'object') return { ok: false, message: '講座カレンダーの内容が空です' };
+  var isDay = function(x) { return /^\d{4}-\d{2}-\d{2}$/.test(String(x)); };
+  var isMonth = function(x) { return /^\d{4}-\d{2}$/.test(String(x)); };
+  var clean = {
+    published: (schedule.published || []).filter(isMonth).sort(),
+    off: (schedule.off || []).filter(isDay).sort(),
+    events: (schedule.events || []).filter(function(ev) { return ev && isDay(ev.day) && /^\d{2}:\d{2}$/.test(String(ev.time)) && ev.label; })
+      .map(function(ev) { return { day: String(ev.day), time: String(ev.time), label: String(ev.label).slice(0, 30), min: Number(ev.min) || 45 }; }),
+    updated: new Date().toISOString()
+  };
+  var json = JSON.stringify(clean);
+  if (json.length > 8500) return { ok: false, message: '講座カレンダーのデータが大きすぎます。古い月の休みを整理してください。' };
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) return { ok: false, message: 'サーバーが混み合っています。少し待ってからもう一度お試しください。' };
+  try { PropertiesService.getScriptProperties().setProperty('SCHEDULE_JSON', json); }
+  finally { lock.releaseLock(); }
+  return { ok: true, schedule: clean };
+}
+
+// 新デザインが1回の通信で必要なものを全部受け取る：空き枠・自分の予約・講座カレンダー
+function getNextData(name, days, email) {
+  var cal = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);
+  var start = todayStart(), now = new Date();
+  days = Math.min(Math.max(days, 7), 100);
+  var end = addDays(start, days), events = cal.getEvents(start, end);
+  var evs = events.map(function(ev) {
+    var title = ev.getTitle() || '';
+    var lesson = isLessonTitle_(title);
+    var names = lesson ? (ev.getDescription() || '').split('\n').filter(function(l) { return l.trim() && !isJunkLine(l.trim()); }).length : 0;
+    return { s: ev.getStartTime().getTime(), e: ev.getEndTime().getTime(), allDay: ev.isAllDayEvent(), names: names };
+  });
+  var slots = [];
+  for (var d = 0; d < days; d++) {
+    var day = addDays(start, d), dow = day.getDay(), times = NEXT_TIMES[dow] || [];
+    var solo = (dow === 2 || dow === 4);                       // 個人レッスンの日は定員1人・50分
+    for (var t = 0; t < times.length; t++) {
+      var st = atTime(day, times[t]); if (st <= now) continue;
+      var s0 = st.getTime(), e0 = s0 + (solo ? 50 : 45) * 60000, count = 0, busy = false;
+      for (var i = 0; i < evs.length; i++) {
+        if (evs[i].s < e0 && evs[i].e > s0) { count += evs[i].names; if (!evs[i].allDay) busy = true; }
+      }
+      slots.push({ slot_id: String(s0), iso: st.toISOString(), day_key: formatDate(st), day_label: formatDay(st), start_time: times[t],
+                   month_key: monthKey(st), capacity: solo ? 1 : CONFIG.CAPACITY, reserved_count: count, busy: solo ? busy : false });
+    }
+  }
+  var existing = [];
+  if (name && name.trim()) existing = findUserEvents(cal, name.trim(), start, addDays(start, days + 31), email || '');
+  return { ok: true, version: 'v50', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_() };
+}
+
