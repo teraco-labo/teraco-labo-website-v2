@@ -7,6 +7,7 @@ const API_BASE = 'https://script.google.com/macros/s/AKfycbz2_NXN-VuAo2iCFu-jQ-n
 const TEL = '090-6738-1469';
 const DEMO = new URLSearchParams(location.search).has('demo');
 const MONTHLY_LIMIT = 8;
+const PRECHECK_MAX = 4;          // 「いつもの」で最初からチェックを入れておく回数（月4回の方が多いため）
 const ADMIN_RANGE_MONTHS = 12;
 const DAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -136,6 +137,11 @@ async function loadData({ quiet = false } = {}) {
     if (!S.loaded) S.error = '予約状況を読み込めませんでした。電波のよい場所で、もう一度ためしてください。';
   } finally { S.syncing = false; render(); }
 }
+// 初めての人が名前を入れている間に、空き枠だけ先に読んでおく
+async function prefetchSlots() {
+  try { const d = await post({ action: 'overview', name: '', days: 60, email: null });
+    if (!S.slots.length && d && d.slots) { S.slots = d.slots; indexSlots(); if (S.view === 'calendar') render(); } } catch (e) {}
+}
 
 // ---------- ルール ----------
 function blockReason(dayKey, time) {
@@ -217,9 +223,10 @@ function proposals() {
   });
   return out;
 }
+function defaultOn(g, slot) { return g.preChecked && g.items.indexOf(slot) < PRECHECK_MAX; }
 function proposalChecked(g, slot) {
   const id = String(slot.slot_id);
-  return g.preChecked ? !S.propOff.has(id) : S.propOn.has(id);
+  return defaultOn(g, slot) ? !S.propOff.has(id) : S.propOn.has(id);
 }
 function checkedProposalSlots() {
   return proposals().flatMap(g => g.items.filter(s => proposalChecked(g, s)));
@@ -318,8 +325,8 @@ function viewHome() {
     groups.forEach(g => {
       h += `<div class="month-label">${esc(g.label)}</div>` + g.items.map(s => {
         const on = proposalChecked(g, s); const d = parseDayKey(s.day_key); const n = Number(s.reserved_count) || 0;
-        return `<button class="pick ${on ? 'on' : ''}" data-act="prop" data-id="${esc(s.slot_id)}" data-pre="${g.preChecked ? 1 : 0}">
-          <span class="box"></span><span>${fmtDay(d)} ${esc(s.start_time)}</span>${n > 0 ? `<span class="cnt">${n}人</span>` : ''}</button>`;
+        return `<button class="pick ${on ? 'on' : ''}" data-act="prop" data-id="${esc(s.slot_id)}" data-pre="${defaultOn(g, s) ? 1 : 0}">
+          <span class="box"></span><span>${fmtDay(d)}</span>${n > 0 ? `<span class="cnt">${n}人</span>` : ''}</button>`;
       }).join('');
     });
     h += `<button class="btn" style="margin-top:8px;" data-act="to-confirm-prop" ${nChecked ? '' : 'disabled'}>${nChecked ? `この${nChecked}回を予約する` : '日にちをえらんでください'}</button>
@@ -366,6 +373,8 @@ function dayStatus(date) {
 }
 function viewCalendar() {
   if (!S.viewMonth) S.viewMonth = monthKeyOf(new Date());
+  if (!isAdmin() && !S.slots.length) return `<h1>日にちをえらんでください</h1><div class="card center muted" style="padding:40px 0;">予約できる日をしらべています…<br>少しおまちください</div>
+    <button class="btn quiet" data-act="home">はじめの画面にもどる</button>`;
   const [minM, maxM] = monthRange(); const [y, m] = S.viewMonth.split('-').map(Number);
   const first = new Date(y, m - 1, 1); const dim = new Date(y, m, 0).getDate();
   let cells = ''; for (let i = 0; i < first.getDay(); i++) cells += '<td class="off"></td>';
@@ -527,7 +536,7 @@ async function adminLogin(code) {
 async function loadAdminNames() {
   try { const t = today0(); const a = new Date(t); a.setDate(t.getDate() - 75); const b = new Date(t); b.setDate(t.getDate() + 60);
     const d = await getJson({ action: 'admin_calendar_events', passcode: adminCode(), start: dayKeyOf(a), end: dayKeyOf(b) });
-    const set = new Set(); (d.events || []).filter(e => /^【(スマホ|パソコンAI)\s*\//.test(e.title || '')).forEach(e => (e.names || []).forEach(n => { const x = normName(n); if (x && x.length <= 12) set.add(x); }));
+    const set = new Set(); (d.events || []).filter(e => /^(スマホ|パソコンAI|TERACO予約)/.test(e.title || '')).forEach(e => (e.names || []).forEach(n => { const x = normName(n); if (x && x.length <= 12) set.add(x); }));
     S.admin.names = Array.from(set).sort((x, y) => x.localeCompare(y, 'ja')); if (S.view === 'admin-home') renderKeepInput();
   } catch (e) {}
 }
@@ -614,5 +623,5 @@ function act(a, el) {
 (function start() {
   if (isAdmin()) { act('admin-home', document.body); return; }
   if (S.profile && S.profile.name && S.profile.course) { S.view = 'home'; loadData(); }
-  else { S.draft = { name: (S.profile && S.profile.name) || '' }; go('ob-name'); }
+  else { S.draft = { name: (S.profile && S.profile.name) || '' }; go('ob-name'); prefetchSlots(); }
 })();
