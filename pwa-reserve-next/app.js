@@ -24,8 +24,8 @@ const COURSES = {
 const FURIKAE = false;   // 生徒が別クラスへ振り替える機能。今は混乱のもとになるため停止（管理者の代理操作では自由に入れられる）
 const OLD_COURSE_KEYS = { intro: 'sp-intro', applied: 'sp-adv', basic: 'pc-intro', advance: 'pc-adv' };
 
-// 講座カレンダー（正本）。いまは試作用にアプリ内に仮置き。次の段階でサーバーに保存し、管理者画面から編集する
-const SCHEDULE = {
+// 講座カレンダー。正本はサーバー（管理者画面「講座カレンダー」で編集）。下はサーバーから受け取る前の予備の値
+let SCHEDULE = {
   published: ['2026-10'],                                                  // 日程が確定している月
   off: ['2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02'],           // 講座のない日
   events: [                                                                // 体験会など特別な予定（その時間は個人レッスン不可）
@@ -60,6 +60,10 @@ const adminCode = () => sessionStorage.getItem('teraco_admin_code') || '';
 const isAdmin = () => !!adminCode();
 const baseMe = () => S.proxy || S.profile;
 // S.override があるあいだは、その人を「個人レッスンの生徒」として扱う（登録してあるクラスは変えない）
+function applySchedule(sc) {
+  if (!sc || !Array.isArray(sc.off)) return;
+  SCHEDULE = { published: sc.published || [], off: sc.off || [], events: sc.events || [], updated: sc.updated || '' };
+}
 const me = () => { const b = baseMe(); return b && S.override ? Object.assign({}, b, S.override) : b; };
 
 // ---------- 小道具 ----------
@@ -146,14 +150,15 @@ async function loadData({ quiet = false } = {}) {
   const cacheKey = 'tr_cache_' + name;
   if (!S.loaded) {
     const c = store.get(cacheKey, null);
-    if (c && c.slots) { S.slots = c.slots; S.existing = c.existing || []; indexSlots(); applyDemo(); S.loaded = true; }
+    if (c && c.slots) { S.slots = c.slots; S.existing = c.existing || []; applySchedule(c.schedule); indexSlots(); applyDemo(); S.loaded = true; }
   }
   S.syncing = true; if (!quiet) render();
   try {
-    const d = await post({ action: 'overview', name: name, days: 60, email: null });
+    const d = await post({ action: 'next_data', name: name, days: 75, email: null });
+    if (!d || !d.ok) throw new Error('load');
     if (me() && me().name !== name) return;            // 途中で人が切り替わった
-    S.slots = d.slots || []; S.existing = d.existing || []; indexSlots(); applyDemo(); S.loaded = true;
-    store.set(cacheKey, { t: Date.now(), slots: S.slots, existing: d.existing || [] });
+    S.slots = d.slots || []; S.existing = d.existing || []; applySchedule(d.schedule); indexSlots(); applyDemo(); S.loaded = true;
+    store.set(cacheKey, { t: Date.now(), slots: S.slots, existing: d.existing || [], schedule: d.schedule || null });
     S.error = null;
   } catch (e) {
     if (!S.loaded) S.error = '予約状況を読み込めませんでした。電波のよい場所で、もう一度ためしてください。';
@@ -161,8 +166,8 @@ async function loadData({ quiet = false } = {}) {
 }
 // 初めての人が名前を入れている間に、空き枠だけ先に読んでおく
 async function prefetchSlots() {
-  try { const d = await post({ action: 'overview', name: '', days: 60, email: null });
-    if (!S.slots.length && d && d.slots) { S.slots = d.slots; indexSlots(); if (S.view === 'calendar') render(); } } catch (e) {}
+  try { const d = await post({ action: 'next_data', name: '', days: 75, email: null });
+    if (!S.slots.length && d && d.slots) { S.slots = d.slots; applySchedule(d.schedule); indexSlots(); if (S.view === 'calendar') render(); } } catch (e) {}
 }
 
 // ---------- ルール ----------
@@ -210,6 +215,7 @@ const existingIds = () => new Set(S.existing.map(e => String(e.slot_id)));
 const existingDays = () => new Set(S.existing.map(e => dayKeyOf(new Date(e.start))));
 function slotState(slot) {
   if (existingIds().has(String(slot.slot_id))) return 'mine';
+  if (Number(slot.capacity) === 1 && slot.busy) return 'full';
   if (Number(slot.reserved_count) >= Number(slot.capacity)) return 'full';
   return 'open';
 }
@@ -293,8 +299,12 @@ function render() {
     : v === 'done' ? viewDone()
     : v === 'admin-login' ? viewAdminLogin()
     : v === 'admin-home' ? viewAdminHome()
+    : v === 'admin-schedule' ? viewAdminSchedule()
     : '';
   $app().innerHTML = html;
+  if (v === 'admin-schedule' && S.sched && S.sched.dirty) {
+    document.getElementById('tray').innerHTML = `<div class="tray"><div class="in"><div class="n">まだ保存していない変更があります</div><button class="btn dark" data-act="sched-save">保存する</button></div></div>`;
+  }
   const f = document.querySelector('[data-focus]'); if (f) f.focus();
 }
 
@@ -484,7 +494,7 @@ function viewTimes() {
     const st = slotState(s); const n = Number(s.reserved_count) || 0; const sel = S.picked.has(String(s.slot_id));
     if (viewOnly) return `<button class="time" disabled>${esc(s.start_time)}<small>${st === 'full' ? (Number(s.capacity) === 1 ? 'うまっています' : '満席') : (n ? n + '人' : '')}</small></button>`;
     if (st === 'mine') return `<button class="time" disabled>${esc(s.start_time)}<small>予約ずみ</small></button>`;
-    if (st === 'full') return `<button class="time" disabled>${esc(s.start_time)}<small>${Number(s.capacity) === 1 ? 'うまっています' : '満席'}</small></button>`;
+    if (st === 'full' && !isAdmin()) return `<button class="time" disabled>${esc(s.start_time)}<small>${Number(s.capacity) === 1 ? 'うまっています' : '満席'}</small></button>`;
     return `<button class="time ${sel ? 'sel' : ''}" data-act="time" data-id="${esc(s.slot_id)}">${esc(s.start_time)}<small>${sel ? 'えらび中' : [s.klass && !s.own ? s.klass + 'クラスにふりかえ' : '', n ? n + '人' : ''].filter(Boolean).join('・')}</small></button>`;
   }).join('');
   return `<h1>${fmtDay(date)}<br>${viewOnly ? 'の予約のようす' : '何時にしますか？'}</h1>
@@ -542,8 +552,84 @@ function viewAdminHome() {
     ${q ? `<button class="btn dark" style="margin-top:14px;" data-act="pick-person" data-name="${esc(a.query)}">「${esc(normName(a.query))}」さんで開く</button>` : ''}
     ${recent.length ? `<p class="muted" style="margin-top:16px;">最近操作した人</p><div class="names">${recent.map(n => `<button data-act="pick-person" data-name="${esc(n)}">${esc(n)}</button>`).join('')}</div>` : ''}
   </div>
+  <div class="card"><h2 style="color:var(--admin);">講座カレンダー</h2>
+    <p class="muted" style="margin-bottom:12px;">休みの日・週と体験会を登録します。生徒さんの予約画面と、印刷用カレンダーの両方に反映されます。</p>
+    <button class="btn dark" data-act="admin-schedule">講座カレンダーを編集する</button></div>
   <div class="card"><h2 style="color:var(--admin);">今日・明日の予約</h2>${sum || '<p class="muted">読み込み中…</p>'}</div>
   <button class="btn quiet" data-act="admin-logout">管理者をおわる</button>`;
+}
+
+// --- 管理者：講座カレンダー（休み・体験会・公開）の編集 ---
+const LESSON_DOWS = [2, 3, 4, 5];   // 火水木金
+function schedInit() {
+  S.sched = { draft: JSON.parse(JSON.stringify(SCHEDULE)), month: addMonths(monthKeyOf(new Date()), 1), dirty: false, form: { day: '', time: '10:00', label: '', min: 45 } };
+}
+function weekDaysOf(date) {           // その週の火〜金の日付キー
+  const sun = new Date(date); sun.setDate(date.getDate() - date.getDay());
+  return LESSON_DOWS.map(w => { const d = new Date(sun); d.setDate(sun.getDate() + w); return dayKeyOf(d); });
+}
+function viewAdminSchedule() {
+  const sc = S.sched; const [y, m] = sc.month.split('-').map(Number);
+  const first = new Date(y, m - 1, 1); const dim = new Date(y, m, 0).getDate();
+  const off = new Set(sc.draft.off); const published = sc.draft.published.includes(sc.month);
+  const cur = monthKeyOf(new Date());
+  let cells = ''; for (let i = 0; i < first.getDay(); i++) cells += '<td class="off"></td>';
+  let rows = ''; const counts = { 2: 0, 3: 0, 4: 0, 5: 0 }; const weeks = [];
+  for (let d = 1; d <= dim; d++) {
+    const date = new Date(y, m - 1, d); const dk = dayKeyOf(date); const dow = date.getDay();
+    if (LESSON_DOWS.includes(dow)) {
+      const isOffDay = off.has(dk); if (!isOffDay) counts[dow]++;
+      const ev = sc.draft.events.filter(e => e.day === dk).length;
+      const bg = isOffDay ? '#E9ECEA' : ([3, 5].includes(dow) ? '#DDF3E3' : '#FDF3C4');
+      cells += `<td data-act="sched-day" data-day="${dk}" style="cursor:pointer;background:${bg};color:${isOffDay ? '#9AA8A0' : 'var(--ink)'};">${d}${isOffDay ? '<span class="daycnt" style="background:#9AA8A0;">休</span>' : (ev ? '<span class="daycnt" style="background:#B0561F;">催</span>' : '')}</td>`;
+      const wk = weekDaysOf(date).join(','); if (!weeks.includes(wk)) weeks.push(wk);
+    } else cells += `<td class="off">${d}</td>`;
+    if ((first.getDay() + d) % 7 === 0) { rows += `<tr>${cells}</tr>`; cells = ''; }
+  }
+  if (cells) { while ((cells.match(/<td/g) || []).length < 7) cells += '<td class="off"></td>'; rows += `<tr>${cells}</tr>`; }
+
+  // 裏で数えて、ひとことで伝える
+  const names = { 2: '火', 3: '水', 4: '木', 5: '金' };
+  const over = [3, 5].filter(w => counts[w] !== 4).map(w => `${names[w]}曜が${counts[w]}回`);
+  const advice = over.length ? `${over.join('、')}です。月4回にするなら、休みにする週をえらんでください。` : '水曜・金曜とも、ちょうど4回です。';
+  const weekRows = weeks.map(wk => { const ds = wk.split(','); const allOff = ds.every(k => off.has(k));
+    const a = parseDayKey(ds[0]), b = parseDayKey(ds[3]);
+    return `<div class="sum-row" style="align-items:center;"><span style="flex:1;font-weight:800;">${a.getMonth() + 1}/${a.getDate()}〜${b.getMonth() + 1}/${b.getDate()} の週${allOff ? '（休み）' : ''}</span>
+      <button class="mini ${allOff ? '' : 'del'}" data-act="sched-week" data-days="${wk}" data-off="${allOff ? 1 : 0}">${allOff ? '講座ありにもどす' : '週ごと休みにする'}</button></div>`; }).join('');
+  const evRows = sc.draft.events.filter(e => e.day.slice(0, 7) === sc.month).sort((a, b) => (a.day + a.time).localeCompare(b.day + b.time))
+    .map(e => `<div class="sum-row" style="align-items:center;"><span style="flex:1;">${fmtDay(parseDayKey(e.day))} ${esc(e.time)}<br><b>${esc(e.label)}（${e.min}分）</b></span><button class="mini del" data-act="sched-ev-del" data-k="${esc(e.day + '|' + e.time + '|' + e.label)}">消す</button></div>`).join('');
+  const dayOpts = Array.from({ length: dim }, (_, i) => new Date(y, m - 1, i + 1)).filter(d => LESSON_DOWS.includes(d.getDay()))
+    .map(d => `<option value="${dayKeyOf(d)}" ${sc.form.day === dayKeyOf(d) ? 'selected' : ''}>${fmtDay(d)}</option>`).join('');
+  const timeOpts = ADMIN_TIMES.map(t => `<option ${sc.form.time === t ? 'selected' : ''}>${t}</option>`).join('');
+  const sel = 'style="font-size:20px;padding:12px;border:2px solid #B9C6BE;border-radius:12px;font-family:inherit;width:100%;margin-bottom:10px;background:#fff;"';
+
+  return `<h1>講座カレンダー</h1>
+  <div class="card">
+    <div class="cal-head"><button class="nav" data-act="sched-month" data-d="-1" ${monthDiff(addMonths(cur, -2), sc.month) <= 0 ? 'disabled' : ''}>‹</button>
+      <div class="ttl">${y}年${m}月</div><button class="nav" data-act="sched-month" data-d="1" ${monthDiff(sc.month, addMonths(cur, 12)) <= 0 ? 'disabled' : ''}>›</button></div>
+    <table class="cal"><thead><tr>${DAYS.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
+    <div class="legend">日にちをおすと、<b>休み ⇄ 講座あり</b>が切りかわります。<br>緑＝グループ講座（水・金）／黄＝個人レッスン（火・木）／灰＝休み</div>
+    <div class="${over.length ? 'note' : 'info'}">${esc(advice)}<br><span style="font-weight:600;">火${counts[2]}回・水${counts[3]}回・木${counts[4]}回・金${counts[5]}回</span></div>
+    <div style="margin-top:14px;">${weekRows}</div>
+  </div>
+  <div class="card"><h2 style="color:var(--admin);">生徒さんへの公開</h2>
+    <p style="font-weight:800;margin-bottom:10px;">${m}月の日程：${published ? '公開中（生徒さんが予約できます）' : 'まだ公開していません'}</p>
+    <button class="btn ${published ? 'quiet' : 'dark'}" data-act="sched-publish">${published ? '公開をとりやめる' : `${m}月の日程を確定して公開する`}</button>
+  </div>
+  <div class="card"><h2 style="color:var(--admin);">体験会などの特別な予定</h2>
+    ${evRows || '<p class="muted">この月の特別な予定はありません。</p>'}
+    <p class="muted" style="margin:14px 0 8px;">予定をたす（個人レッスンの日のその時間は、予約できなくなります）</p>
+    <select id="evDay" ${sel}><option value="">日にちをえらぶ</option>${dayOpts}</select>
+    <select id="evTime" ${sel}>${timeOpts}</select>
+    <input class="txt" id="evLabel" type="text" placeholder="例：体験会スマホ" value="${esc(sc.form.label)}" style="font-size:20px;padding:12px;margin-bottom:10px;">
+    <select id="evMin" ${sel}>${[45, 50, 90].map(n => `<option value="${n}" ${Number(sc.form.min) === n ? 'selected' : ''}>${n}分</option>`).join('')}</select>
+    <button class="btn ghost" data-act="sched-ev-add">この予定をたす</button>
+  </div>
+  <div class="card"><h2 style="color:var(--admin);">印刷用カレンダー</h2>
+    <p class="muted" style="margin-bottom:12px;">保存した内容から、配布用のカレンダーを作ります。ひらいた画面で「印刷」をえらぶと、PDFにもできます。</p>
+    <a class="btn ghost" style="text-decoration:none;text-align:center;line-height:40px;" target="_blank" href="calendar.html?m=${sc.month}">${m}月の印刷用カレンダーをひらく</a>
+  </div>
+  <button class="btn quiet" data-act="sched-back">管理者の画面にもどる</button>`;
 }
 
 // ---------- 操作 ----------
@@ -668,6 +754,31 @@ function applyClass(klass) {
   S.edit = null; resetPicks(); go('home'); if (!S.loaded) loadData();
 }
 
+function schedKeepForm() { const g = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+  if (document.getElementById('evDay')) S.sched.form = { day: g('evDay'), time: g('evTime') || '10:00', label: g('evLabel'), min: Number(g('evMin')) || 45 }; }
+async function schedAct(a, d) {
+  const sc = S.sched; schedKeepForm();
+  if (a === 'sched-month') { sc.month = addMonths(sc.month, Number(d.d)); sc.form.day = ''; return renderKeepScroll(); }
+  if (a === 'sched-day') { const i = sc.draft.off.indexOf(d.day); if (i >= 0) sc.draft.off.splice(i, 1); else sc.draft.off.push(d.day); sc.dirty = true; return renderKeepScroll(); }
+  if (a === 'sched-week') { const ds = d.days.split(','); const set = new Set(sc.draft.off);
+    ds.forEach(k => d.off === '1' ? set.delete(k) : set.add(k)); sc.draft.off = Array.from(set).sort(); sc.dirty = true; return renderKeepScroll(); }
+  if (a === 'sched-publish') { const i = sc.draft.published.indexOf(sc.month); if (i >= 0) sc.draft.published.splice(i, 1); else sc.draft.published.push(sc.month); sc.dirty = true; return renderKeepScroll(); }
+  if (a === 'sched-ev-add') { const f = sc.form; if (!f.day || !f.label.trim()) { alert('日にちと、予定の名前を入れてください。'); return; }
+    sc.draft.events.push({ day: f.day, time: f.time, label: f.label.trim(), min: f.min }); sc.form.label = ''; sc.dirty = true; return renderKeepScroll(); }
+  if (a === 'sched-ev-del') { sc.draft.events = sc.draft.events.filter(e => (e.day + '|' + e.time + '|' + e.label) !== d.k); sc.dirty = true; return renderKeepScroll(); }
+  if (a === 'sched-back') { if (sc.dirty && !confirm('保存していない変更があります。保存せずにもどりますか？')) return; return act('admin-home', document.body); }
+  if (a === 'sched-save') {
+    // 3か月より前の休みは整理する（保存サイズを小さく保つ）
+    const limit = dayKeyOf(new Date(new Date().getFullYear(), new Date().getMonth() - 3, 1));
+    const body = { published: sc.draft.published.filter(mk => mk + '-31' >= limit), off: sc.draft.off.filter(k => k >= limit), events: sc.draft.events.filter(e => e.day >= limit) };
+    if (DEMO) { applySchedule(body); sc.draft = JSON.parse(JSON.stringify(SCHEDULE)); sc.dirty = false; alert('おためしモードのため、この画面の中だけで反映しました（サーバーには保存していません）。'); return renderKeepScroll(); }
+    busy(true, '保存しています…');
+    try { const r = await post({ action: 'schedule_set', passcode: adminCode(), schedule: body });
+      busy(false); if (!r || !r.ok) { alert((r && r.message) || '保存できませんでした。'); return; }
+      applySchedule(r.schedule); sc.draft = JSON.parse(JSON.stringify(SCHEDULE)); sc.dirty = false; S.loaded = false; alert('保存しました。生徒さんの予約画面に反映されます。'); renderKeepScroll();
+    } catch (e) { busy(false); alert('通信できませんでした。もう一度ためしてください。'); }
+  }
+}
 function renderKeepScroll() { const y = window.scrollY; render(); window.scrollTo(0, y); }
 function goHomeNext() { S.view = S.override ? 'extra' : 'home'; render(); const el = document.getElementById('next'); if (el) el.scrollIntoView(); }
 
@@ -718,6 +829,8 @@ function act(a, el) {
     getJson({ action: 'admin_summary', passcode: adminCode() }).then(x => { if (x.ok) { S.admin.summary = x.days; if (S.view === 'admin-home') renderKeepInput(); } }).catch(() => {});
     if (!S.admin.names.length) loadAdminNames(); return; }
   if (a === 'pick-person') return pickPerson(d.name);
+  if (a === 'admin-schedule') { schedInit(); return go('admin-schedule'); }
+  if (a && a.indexOf('sched-') === 0) return schedAct(a, d);
   if (a === 'admin-logout') { sessionStorage.removeItem('teraco_admin_code'); S.proxy = null; resetPicks(); S.loaded = false; S.existing = [];
     if (S.profile && S.profile.course) { go('home'); loadData(); } else go('ob-name'); return; }
 }

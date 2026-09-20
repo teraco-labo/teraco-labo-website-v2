@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>スマホ教室TERACOカレンダー</title>
+<style>
+  @page { size: A4 portrait; margin: 7mm; }
+  :root { --green:#3E8E2B; --title:#55AE3A; --rh: 9mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif; color: #111; background: #8a8f8b; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .tools { position: sticky; top: 0; z-index: 5; background: #2B3136; color: #fff; padding: 10px 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-family: "Hiragino Sans", sans-serif; }
+  .tools button, .tools a { font: inherit; font-size: 16px; font-weight: 700; padding: 9px 16px; border-radius: 999px; border: 2px solid #fff; background: transparent; color: #fff; cursor: pointer; text-decoration: none; }
+  .tools button.main { background: #06C755; border-color: #06C755; }
+  .tools .msg { font-size: 14px; opacity: .85; }
+  .sheet { width: 196mm; min-height: 283mm; margin: 14px auto; background: #fff; padding: 4mm 3mm 3mm; box-shadow: 0 6px 24px rgba(0,0,0,.35); display: flex; flex-direction: column; }
+  .head { display: flex; align-items: flex-end; gap: 14mm; padding: 0 2mm 3mm; }
+  .ym { color: var(--green); font-weight: 800; line-height: 1; }
+  .ym .y { font-size: 6.2mm; } .ym .m { font-size: 10.5mm; }
+  .title { color: var(--title); font-size: 12.5mm; font-weight: 800; letter-spacing: .02em; line-height: 1.05; white-space: nowrap; }
+  .grid-head, .week-dates, .week-body { display: grid; grid-template-columns: 8mm repeat(4, 1fr); }
+  .grid-head { background: var(--green); color: #fff; font-weight: 800; font-size: 3.4mm; text-align: center; }
+  .grid-head div { padding: 1.4mm 0; border-left: .2mm solid rgba(255,255,255,.55); }
+  .grid-head div:first-child { border-left: 0; }
+  .weeks { flex: 1; border: .25mm solid #444; border-top: 0; }
+  .week-thin { height: 3mm; border-bottom: .25mm solid #444; background: repeating-linear-gradient(0deg, #fff, #fff .9mm, #e3e3e3 .9mm, #e3e3e3 1.1mm); }
+  .week-dates { border-bottom: .25mm solid #444; font-size: 2.9mm; text-align: center; font-family: "Hiragino Sans", sans-serif; }
+  .week-dates div { padding: .7mm 0; border-left: .2mm solid #444; }
+  .week-dates div:first-child { border-left: 0; font-size: 2.4mm; color: #555; }
+  .week-body { grid-template-rows: repeat(5, var(--rh)); border-bottom: .25mm solid #444; position: relative; }
+  .tm { grid-column: 1; font-size: 2.5mm; font-family: "Hiragino Sans", sans-serif; display: flex; align-items: center; justify-content: center; border-top: .15mm dotted #aaa; }
+  .tm:first-child { border-top: 0; }
+  .col { border-left: .2mm solid #444; display: grid; grid-template-rows: subgrid; grid-row: 1 / span 5; }
+  .blk { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 3.6mm; font-weight: 700; letter-spacing: .04em; border-top: .15mm solid rgba(0,0,0,.12); line-height: 1.35; }
+  .blk small { font-size: 2.6mm; font-weight: 600; letter-spacing: .02em; }
+  .blk .gap { height: 3.2mm; }
+  .note { font-size: 2.7mm; font-weight: 600; background: #fff; }
+  .foot { display: flex; gap: 4mm; align-items: center; padding: 2.5mm 1mm 0; }
+  .foot .txt { flex: 1; font-size: 2.55mm; line-height: 1.75; font-weight: 600; }
+  .foot .tel { color: #2E86DE; } .foot .line { color: #55AE3A; }
+  .foot img.qr { width: 19mm; height: 19mm; } .foot img.logo { width: 27mm; height: auto; }
+  .err { padding: 30mm 10mm; text-align: center; font-size: 5mm; }
+  @media print { body { background: #fff; } .tools { display: none; } .sheet { margin: 0; box-shadow: none; width: auto; min-height: 0; height: 283mm; padding: 0; } }
+</style>
+</head>
+<body>
+<div class="tools">
+  <button id="prev">‹ 前の月</button><button id="next">次の月 ›</button>
+  <button class="main" onclick="window.print()">印刷する／PDFにする</button>
+  <span class="msg" id="msg">読み込み中…</span>
+</div>
+<div class="sheet" id="sheet"><div class="err">講座カレンダーを読み込んでいます…</div></div>
+<script>
+'use strict';
+const API_BASE = 'https://script.google.com/macros/s/AKfycbz2_NXN-VuAo2iCFu-jQ-nT5k9Bk3eCoIYBGXAtfDtneNJS7La8vLxS5T7p4Xo3iUIy/exec';
+const ROWS = ['10:00', '11:00', '14:00', '15:00', '16:00'];                 // 紙面の時間の行
+// 時間割（予約アプリ app.js の COURSES と同じ内容。変えるときは両方そろえる）
+const COLORS = { spIntro: '#F8DDB0', spAdv: '#C9E2C0', pcIntro: '#E6CDF5', pcAdv: '#8FD3FA', solo: '#FDF6D3' };
+const TIMETABLE = {
+  3: [ { time: '10:00', span: 1, label: 'パソコン入門 A（45分）', color: COLORS.pcIntro }, { time: '11:00', span: 1, label: 'パソコン応用 A（45分）', color: COLORS.pcAdv },
+       { time: '14:00', span: 2, label: 'スマホ応用 A（90分）', color: COLORS.spAdv },   { time: '16:00', span: 1, label: 'スマホ入門 A（45分）', color: COLORS.spIntro } ],
+  5: [ { time: '10:00', span: 2, label: 'スマホ応用 B（90分）', color: COLORS.spAdv },   { time: '14:00', span: 1, label: 'スマホ入門 B（45分）', color: COLORS.spIntro },
+       { time: '15:00', span: 1, label: 'パソコン入門 B（45分）', color: COLORS.pcIntro }, { time: '16:00', span: 1, label: 'パソコン応用 B（45分）', color: COLORS.pcAdv } ]
+};
+const pad = n => String(n).padStart(2, '0');
+const dk = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const qs = new URLSearchParams(location.search);
+let month = /^\d{4}-\d{2}$/.test(qs.get('m') || '') ? qs.get('m') : (() => { const d = new Date(); d.setMonth(d.getMonth() + 1, 1); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; })();
+let schedule = null;
+
+const soloBlock = (span, startRow) => `<div class="blk" style="grid-row:${startRow} / span ${span};background:${COLORS.solo};">
+  <div>【個人レッスン】</div><small>マンツーマン（50分）</small>${span >= 3 ? '<div class="gap"></div>' : ''}<div>【オンライン】</div><small>グループ / マンツーマン</small></div>`;
+
+function dayColumn(date, inMonth) {
+  const key = dk(date), dow = date.getDay();
+  if (!inMonth || schedule.off.includes(key)) return `<div class="col"></div>`;
+  if (TIMETABLE[dow]) return `<div class="col">${TIMETABLE[dow].map(b => `<div class="blk" style="grid-row:${ROWS.indexOf(b.time) + 1} / span ${b.span};background:${b.color};">${esc(b.label)}</div>`).join('')}</div>`;
+  // 火・木：個人レッスン。体験会などの予定がある時間はそれを上に出し、残りを個人レッスンの枠にする
+  const evs = schedule.events.filter(e => e.day === key && ROWS.includes(e.time)).sort((a, b) => a.time.localeCompare(b.time));
+  if (!evs.length) return `<div class="col">${soloBlock(5, 1)}</div>`;
+  let html = ''; let last = 0;
+  evs.forEach((e, i) => { const r = ROWS.indexOf(e.time) + 1; last = Math.max(last, r);
+    html += `<div class="blk" style="grid-row:${r};background:${/パソコン|PC/.test(e.label) ? COLORS.pcAdv : COLORS.spAdv};">${esc(e.label)}（${e.min}分）</div>`; });
+  if (evs.some(e => /体験会/.test(e.label)) && last < 5) { last++; html += `<div class="blk note" style="grid-row:${last};">↑↑↑<br>体験会は初回無料です<br>※2回目以降は有料となります</div>`; }
+  if (last < 5) html += soloBlock(5 - last, last + 1);
+  return `<div class="col">${html}</div>`;
+}
+
+function build() {
+  const [y, m] = month.split('-').map(Number); const first = new Date(y, m - 1, 1), dim = new Date(y, m, 0).getDate();
+  const start = new Date(first); start.setDate(1 - first.getDay());            // その月の最初の週の日曜
+  const weeks = [];
+  for (let w = new Date(start); w <= new Date(y, m - 1, dim); w.setDate(w.getDate() + 7)) {
+    const days = [2, 3, 4, 5].map(o => { const d = new Date(w); d.setDate(w.getDate() + o); return d; });
+    const active = days.some(d => d.getMonth() === m - 1 && !schedule.off.includes(dk(d)));
+    weeks.push({ sun: new Date(w), days, active });
+  }
+  const nActive = weeks.filter(w => w.active).length || 1, nThin = weeks.length - nActive;
+  // 行の高さ：紙面に収まるように、講座のある週の数から決める
+  const avail = 283 - 4 - 3 - 27 - 7 - 26 - nThin * 3.25 - nActive * 4.6;   // mm
+  document.documentElement.style.setProperty('--rh', Math.min(11.5, avail / (nActive * 5)).toFixed(2) + 'mm');
+  const body = weeks.map(w => {
+    if (!w.active) return `<div class="week-thin"></div>`;
+    const mon = new Date(w.sun); mon.setDate(w.sun.getDate() + 1);
+    const inM = d => d.getMonth() === m - 1;
+    return `<div class="week-dates"><div>${inM(w.sun) ? w.sun.getDate() : ''} ${inM(mon) ? mon.getDate() : ''}</div>${w.days.map(d => `<div>${inM(d) ? d.getDate() : ''}</div>`).join('')}</div>
+      <div class="week-body">${ROWS.map((t, i) => `<div class="tm" style="grid-row:${i + 1};">${t}</div>`).join('')}${w.days.map(d => dayColumn(d, inM(d))).join('')}</div>`;
+  }).join('');
+  document.getElementById('sheet').innerHTML = `
+    <div class="head"><div class="ym"><div class="y">${y}</div><div class="m">${m}月</div></div><div class="title">スマホ教室TERACOカレンダー</div></div>
+    <div class="grid-head"><div></div><div>火曜日</div><div>水曜日</div><div>木曜日</div><div>金曜日</div></div>
+    <div class="weeks">${body}</div>
+    <div class="foot"><div class="txt">
+      ※ スマホ入門、スマホ応用、パソコン入門、パソコン応用、は曜日時間が固定のグループレッスンです。※体験会2回目以降は2,000円<br>
+      ※ 講座日にご都合が合わない際は「同コース」の「別クラス」へ移動して受講できます。（スマホ応用A → スマホ応用B）<br>
+      ※ 個人レッスン、オンライン（※チケット含む）はご予約時に時間の調整をいたします。（AM10:00~12:00・PM14:00~17:00）<br>
+      ※ ご予約はお電話 <span class="tel">090-6738-1469</span> またはメッセージでお気軽にどうぞ♪　<span class="line">LINE友達追加で無料質問・お問合せ・予約ができます→</span></div>
+      <img class="qr" src="/images/line-qr.png" alt="LINE"><img class="logo" src="/images/teraco-labo-logo-main.png" alt="TERACO LABO"></div>`;
+  document.title = `${y}年${m}月 スマホ教室TERACOカレンダー`;
+  document.getElementById('msg').textContent = schedule.published.includes(month) ? `${m}月：生徒さんに公開中の日程です` : `${m}月：まだ公開していない日程です（管理者画面で確定できます）`;
+  history.replaceState(null, '', `?m=${month}`);
+}
+function shift(n) { const [y, m] = month.split('-').map(Number); const d = new Date(y, m - 1 + n, 1); month = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; build(); }
+document.getElementById('prev').onclick = () => shift(-1);
+document.getElementById('next').onclick = () => shift(1);
+fetch(API_BASE + '?action=schedule_get').then(r => r.json()).then(d => { schedule = d.schedule || { published: [], off: [], events: [] }; build(); })
+  .catch(() => { document.getElementById('sheet').innerHTML = '<div class="err">講座カレンダーを読み込めませんでした。<br>電波のよい場所で、もう一度ひらいてください。</div>'; document.getElementById('msg').textContent = ''; });
+</script>
+</body>
+</html>
