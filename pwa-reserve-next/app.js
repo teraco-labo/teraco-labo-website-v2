@@ -591,7 +591,9 @@ function viewAdminSchedule() {
   // 裏で数えて、ひとことで伝える
   const names = { 2: '火', 3: '水', 4: '木', 5: '金' };
   const over = [3, 5].filter(w => counts[w] !== 4).map(w => `${names[w]}曜が${counts[w]}回`);
-  const advice = over.length ? `${over.join('、')}です。月4回にするなら、休みにする週をえらんでください。` : '水曜・金曜とも、ちょうど4回です。';
+  const many = [3, 5].some(w => counts[w] > 4), few = [3, 5].some(w => counts[w] < 4);
+  const advice = !over.length ? '水曜・金曜とも、ちょうど4回です。'
+    : `${over.join('、')}です。` + (many && few ? '月4回にそろえるには、休みの週を見直してください。' : many ? '月4回にするなら、休みにする週をえらんでください。' : '月4回にするなら、休みを1つもどしてください。');
   const weekRows = weeks.map(wk => { const ds = wk.split(','); const allOff = ds.every(k => off.has(k));
     const a = parseDayKey(ds[0]), b = parseDayKey(ds[3]);
     return `<div class="sum-row" style="align-items:center;"><span style="flex:1;font-weight:800;">${a.getMonth() + 1}/${a.getDate()}〜${b.getMonth() + 1}/${b.getDate()} の週${allOff ? '（休み）' : ''}</span>
