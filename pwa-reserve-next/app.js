@@ -42,7 +42,6 @@ const S = {
   proxy: null,                               // 管理者が代理操作中の生徒 {name, category, course, usual}
   slots: [], daySlots: new Map(), slotIndex: new Map(),
   existing: [], syncing: false, loaded: false,
-  propOff: new Set(), propOn: new Set(),
   picked: new Map(), viewMonth: null, pickDay: null,
   mode: 'add', changing: null, pending: null, done: null, error: null,
   edit: null,                                // 'name' | 'class'（設定変更中）
@@ -177,8 +176,8 @@ const eventAt = (dayKey, time) => SCHEDULE.events.find(ev => ev.day === dayKey &
 function lessonsOn(p, date) {
   const dk = dayKeyOf(date); const dow = date.getDay();
   if (!p || !p.course || isOff(dk)) return [];
-  // 日程がまだ決まっていない先の月は、生徒からは予約できない（今月は従来どおり可）
-  const mk = monthKeyOf(date); if (!SCHEDULE.published.includes(mk) && mk !== monthKeyOf(new Date())) return [];
+  // 先生が日程を確定して公開した月だけ、生徒から予約できる（管理者の代理操作はいつでも可）
+  if (!SCHEDULE.published.includes(monthKeyOf(date))) return [];
   const c = COURSES[p.course];
   if (!c.classes) return TT.privateDows.includes(dow) ? TIMES_PRIVATE.filter(t => !eventAt(dk, t)).map(t => ({ time: t, klass: null, own: true })) : [];
   return Object.keys(c.classes).filter(k => c.classes[k].dow === dow && (FURIKAE || k === p.klass)).map(k => ({ time: c.classes[k].time, klass: k, own: k === p.klass }));
@@ -256,20 +255,6 @@ function proposals() {
   });
   return out;
 }
-// まだ日程が決まっていない直近の月（お知らせ用）
-function pendingMonthLabel() {
-  const next = addMonths(monthKeyOf(new Date()), 1);
-  return SCHEDULE.published.includes(next) ? '' : `${Number(next.split('-')[1])}月`;
-}
-function defaultOn(g, slot) { return g.preChecked; }
-function proposalChecked(g, slot) {
-  const id = String(slot.slot_id);
-  return defaultOn(g, slot) ? !S.propOff.has(id) : S.propOn.has(id);
-}
-function checkedProposalSlots() {
-  return proposals().flatMap(g => g.items.filter(s => proposalChecked(g, s)));
-}
-
 // ---------- 画面 ----------
 const $app = () => document.getElementById('app');
 function go(view) { S.view = view; render(); window.scrollTo(0, 0); }
@@ -459,7 +444,7 @@ function calendarBlock() {
   }
   if (cells) { while ((cells.match(/<td/g) || []).length < 7) cells += '<td class="off"></td>'; rows += `<tr>${cells}</tr>`; }
   const cur = monthKeyOf(new Date());
-  const undecided = !isAdmin() && !SCHEDULE.published.includes(S.viewMonth) && S.viewMonth !== cur;
+  const undecided = !isAdmin() && !SCHEDULE.published.includes(S.viewMonth) && S.viewMonth >= cur;
   const group = !isAdmin() && COURSES[me().course].classes;
   const legend = isAdmin() ? 'どの日でも選べます。数字はその日の予約人数です。'
     : group ? '<b>色のついた日</b>が、あなたのクラスの日です。<br>おすと、えらぶ・はずすができます。<b>緑の日</b>が、えらんでいる日です。'
@@ -701,7 +686,7 @@ function persistPerson() {
   if (S.proxy) { const all = store.get('tr_admin_people', {}); all[S.proxy.name] = { category: S.proxy.category, course: S.proxy.course, klass: S.proxy.klass || null, usual: S.proxy.usual || null }; store.set('tr_admin_people', all); }
   else store.set('tr_profile', S.profile);
 }
-function resetPicks() { S.override = null; S.pickInit = false; S.picked.clear(); S.propOff.clear(); S.propOn.clear(); S.pending = null; S.changing = null; S.mode = 'add'; S.pickDay = null; }
+function resetPicks() { S.override = null; S.pickInit = false; S.picked.clear(); S.pending = null; S.changing = null; S.mode = 'add'; S.pickDay = null; }
 
 async function doReserve(slots) {
   const p = me();
