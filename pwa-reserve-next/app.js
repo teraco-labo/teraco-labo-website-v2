@@ -350,10 +350,12 @@ function viewCategory() {
 // --- ホーム ---
 function rsvRow(e) {
   const d = new Date(e.start); const can = withinDeadline(d);
+  // 日時の変更：管理者はいつでも。生徒は個人レッスンだけ（グループ講座は曜日・時間が固定で、振替は今は使わないため）
+  const g0 = inferClass(e); const canChange = isAdmin() || FURIKAE || (g0 && g0.course === 'private');
   return `<div class="rsv"><div class="when"><div class="date">${fmtDay(d)} ${fmtTime(d)}</div>
     <div class="cls">${esc(rowClassText(e))}</div></div>
     <div class="ops">${can
-      ? `<button class="mini" data-act="change" data-id="${esc(e.event_id)}">日時を変える</button><button class="mini del" data-act="cancel" data-id="${esc(e.event_id)}">取り消す</button>`
+      ? `${canChange ? `<button class="mini" data-act="change" data-id="${esc(e.event_id)}">日時を変える</button>` : ''}<button class="mini del" data-act="cancel" data-id="${esc(e.event_id)}">取り消す</button>`
       : `<a class="mini" style="text-decoration:none;text-align:center;" href="tel:${TEL}">電話で相談</a>`}</div></div>`;
 }
 function viewHome() {

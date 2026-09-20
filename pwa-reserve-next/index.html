@@ -6,6 +6,7 @@
 <meta name="robots" content="noindex,nofollow">
 <title>TERACO予約</title>
 <meta name="theme-color" content="#06C755">
+<link rel="manifest" href="manifest.json">
 <style>
   :root{
     --green:#06C755; --green-deep:#0B7A3E; --green-weak:#E6F8EC; --line:#DCEBE1;
@@ -125,6 +126,7 @@
 <div id="tray"></div>
 <div id="busy"><div class="spin"></div><div id="busyText">おまちください</div></div>
 <script src="timetable.js?v=1"></script>
-<script src="app.js?v=n10"></script>
+<script src="app.js?v=n11"></script>
+<script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function(){}); }</script>
 </body>
 </html>
