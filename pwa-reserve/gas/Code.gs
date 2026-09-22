@@ -24,6 +24,7 @@ function authorizeMe() {
 }
 
 // ---- 管理者用：生徒さん一覧（Teraco Customer の顧客名簿から。五十音順） ----
+var LINE_LOGIN_CHANNEL_ID_DEFAULT = '2011702023';   // LINEログインチャネル「TERACO予約 ログイン」（秘密ではない。スクリプトプロパティがあればそちらを優先）
 var CUSTOMER_DB_ID = '1xh_qHvKhclCsaW9Lyt6dCnCVsazVrkfupb3MD5KbgXE';   // てらこ顧客管理DB
 var CUSTOMER_SHEET = '顧客名簿';
 function kanaKey_(s) {   // ひらがな→カタカナ、空白除去。並べ替え用
@@ -57,7 +58,7 @@ function getAdminStudents_(passcode) {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var action = p.action || 'overview';
-  if (action === 'version') return jsonOut({ok: true, version: 'v52', timestamp: new Date().toISOString()});
+  if (action === 'version') return jsonOut({ok: true, version: 'v53', timestamp: new Date().toISOString()});
   if (action === 'overview') return jsonOut(getOverview(p.name || '', Number(p.days) || CONFIG.OVERVIEW_DAYS));
   if (action === 'schedule_get') return jsonOut({ ok: true, schedule: getSchedule_() });
   if (action === 'admin_summary') return jsonOut(getAdminSummary(p.passcode));
@@ -753,7 +754,7 @@ function getNextData(name, days, email) {
   }
   var existing = [];
   if (name && name.trim()) existing = findUserEvents(cal, name.trim(), start, addDays(start, days + 31), email || '');
-  return { ok: true, version: 'v52', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_() };
+  return { ok: true, version: 'v53', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_() };
 }
 
 // =====================================================================
@@ -771,7 +772,7 @@ function prop_(k) { return PropertiesService.getScriptProperties().getProperty(k
 
 // LIFFのIDトークンをLINEに問い合わせて本人確認する。成功で {sub, name}、失敗で null
 function lineVerify_(idToken) {
-  var cid = prop_('LINE_LOGIN_CHANNEL_ID'); if (!idToken || !cid) return null;
+  var cid = prop_('LINE_LOGIN_CHANNEL_ID') || LINE_LOGIN_CHANNEL_ID_DEFAULT; if (!idToken || !cid) return null;
   try {
     var res = UrlFetchApp.fetch('https://api.line.me/oauth2/v2.1/verify', { method: 'post', payload: { id_token: idToken, client_id: cid }, muteHttpExceptions: true });
     if (res.getResponseCode() !== 200) return null;
