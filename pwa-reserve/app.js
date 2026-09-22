@@ -51,7 +51,7 @@ const S = {
   line: Object.assign({ userId: null, name: null, idToken: null, inClient: false, linkedFor: null }, store.get('tr_line', {})),
   override: null,                            // {course:'private'}：個人レッスン「も」予約するとき
   draft: {},                                 // 初回登録の途中経過
-  admin: { summary: null, names: [], query: '', history: null, historyMonths: 3 },
+  admin: { summary: null, names: [], students: [], studentsMsg: '', query: '', history: null, historyMonths: 3, pendingRender: false },
   demo: { added: [], removed: new Set() }
 };
 
@@ -623,15 +623,19 @@ function viewAdminLogin() {
 function viewAdminHome() {
   const a = S.admin; const q = normName(a.query);
   const recent = store.get('tr_admin_recent', []);
-  const hits = q ? a.names.filter(n => normName(n).includes(q)).slice(0, 12) : [];
   let sum = '';
   if (a.summary) Object.keys(a.summary).sort().forEach(k => { const day = a.summary[k];
     const rows = (day.slots || []).filter(s => (s.names || []).length).map(s => `<div class="sum-row"><span class="t">${esc(s.time)}</span><span>${s.names.map(esc).join('、')}（${s.names.length}人）</span></div>`).join('');
     sum += `<div class="sum-day">${esc(day.label)}</div>${rows || '<p class="muted">予約なし</p>'}`; });
+  const opts = a.students.map(st => `<option value="${esc(st.name)}">${esc(st.name)}${st.status === '休会' ? '（休会）' : ''}</option>`).join('');
+  const selBlock = a.students.length
+    ? `<select class="sel" id="whoSelect"><option value="">生徒さんをえらぶ（五十音順・${a.students.length}人）</option>${opts}</select>`
+    : `<p class="muted">${esc(a.studentsMsg || '生徒さんの一覧を読み込み中…')}</p>`;
   return `<h1>だれの予約を操作しますか？</h1>
-  <div class="card"><input class="txt" id="whoInput" type="text" placeholder="生徒さんの名前" value="${esc(a.query)}" autocomplete="off">
-    <div class="names">${hits.map(n => `<button data-act="pick-person" data-name="${esc(n)}">${esc(n)}</button>`).join('')}</div>
-    ${q ? `<button class="btn dark" style="margin-top:14px;" data-act="pick-person" data-name="${esc(a.query)}">「${esc(normName(a.query))}」さんで開く</button>` : ''}
+  <div class="card">${selBlock}
+    <p class="muted" style="margin:14px 0 6px;">一覧にない人は、名前を入れてください</p>
+    <input class="txt" id="whoInput" type="text" placeholder="生徒さんの名前" value="${esc(a.query)}" autocomplete="off">
+    <div id="whoHits">${whoHitsHtml()}</div>
     ${recent.length ? `<p class="muted" style="margin-top:16px;">最近操作した人</p><div class="names">${recent.map(n => `<button data-act="pick-person" data-name="${esc(n)}">${esc(n)}</button>`).join('')}</div>` : ''}
   </div>
   <div class="card"><h2 style="color:var(--admin);">講座カレンダー</h2>
@@ -787,7 +791,7 @@ async function adminLogin(code) {
   busy(true, 'たしかめています…');
   try { const d = await getJson({ action: 'admin_summary', passcode: code });
     if (!d.ok) { busy(false); alert(d.message || 'パスコードが正しくありません'); return; }
-    sessionStorage.setItem('teraco_admin_code', code); S.admin.summary = d.days; busy(false); go('admin-home'); loadAdminNames();
+    sessionStorage.setItem('teraco_admin_code', code); S.admin.summary = d.days; busy(false); go('admin-home'); loadAdminNames(); loadAdminStudents();
   } catch (e) { busy(false); alert('通信できませんでした。もう一度ためしてください。'); }
 }
 // 名前の候補：予約カレンダーの受講イベントに出てくる名前（私用の予定はタイトルで除外）
@@ -798,8 +802,25 @@ async function loadAdminNames() {
     S.admin.names = Array.from(set).sort((x, y) => x.localeCompare(y, 'ja')); if (S.view === 'admin-home') renderKeepInput();
   } catch (e) {}
 }
-function renderKeepInput() { const el = document.getElementById('whoInput'); const pos = el ? el.selectionStart : null; render();
-  const n = document.getElementById('whoInput'); if (n && pos != null) { n.focus(); n.setSelectionRange(pos, pos); } }
+function whoHitsHtml() {
+  const a = S.admin; const q = normName(a.query); if (!q) return '';
+  const pool = Array.from(new Set(a.students.map(st => st.name).concat(a.names)));
+  const hits = pool.filter(n => normName(n).includes(q)).slice(0, 12);
+  return `<div class="names">${hits.map(n => `<button data-act="pick-person" data-name="${esc(n)}">${esc(n)}</button>`).join('')}</div>
+    <button class="btn dark" style="margin-top:14px;" data-act="pick-person" data-name="${esc(a.query)}">「${esc(q)}」さんで開く</button>`;
+}
+// 名前を打っている最中は画面を描き直さない（描き直すと日本語の変換が途中で切れる）。打ち終わってから描き直す
+function renderKeepInput() {
+  const el = document.activeElement;
+  if (el && el.id === 'whoInput') { S.admin.pendingRender = true; return; }
+  render();
+}
+async function loadAdminStudents() {
+  try { const d = await post({ action: 'admin_students', passcode: adminCode() });
+    S.admin.students = (d.ok ? d.students : []) || []; S.admin.studentsMsg = d.ok ? '' : (/権限/.test(d.message || '') ? '生徒さんの一覧は、Apps Script で authorizeMe を1回実行（承認）すると出ます。' : (d.message || '生徒さんの一覧を読めませんでした'));
+  } catch (e) { S.admin.studentsMsg = '生徒さんの一覧を読めませんでした（通信）'; }
+  if (S.view === 'admin-home') renderKeepInput();
+}
 
 async function pickPerson(raw) {
   const name = normName(raw); if (!name) return;
@@ -823,9 +844,11 @@ async function loadHistory() {
 }
 
 document.addEventListener('input', (e) => {
-  if (e.target.id === 'whoInput') { S.admin.query = e.target.value; renderKeepInput(); }
+  if (e.target.id === 'whoInput') { S.admin.query = e.target.value; const h = document.getElementById('whoHits'); if (h) h.innerHTML = whoHitsHtml(); }
   if (e.target.id === 'nameInput') S.draft.name = e.target.value;
 });
+document.addEventListener('change', (e) => { if (e.target.id === 'whoSelect' && e.target.value) pickPerson(e.target.value); });
+document.addEventListener('focusout', (e) => { if (e.target.id === 'whoInput' && S.admin.pendingRender) { S.admin.pendingRender = false; setTimeout(() => { if (S.view === 'admin-home' && document.activeElement !== document.getElementById('whoInput')) render(); }, 150); } });
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
   if (e.target.id === 'nameInput') { e.preventDefault(); e.target.blur(); return; }   // 変換確定のエンターで登録が進まないよう、キーボードを閉じるだけ
@@ -919,7 +942,7 @@ function act(a, el) {
   if (a === 'admin-do-login') { const c = (document.getElementById('passInput') || {}).value; if (c) adminLogin(c.trim()); return; }
   if (a === 'admin-home') { S.proxy = null; resetPicks(); S.loaded = false; go('admin-home');
     getJson({ action: 'admin_summary', passcode: adminCode() }).then(x => { if (x.ok) { S.admin.summary = x.days; if (S.view === 'admin-home') renderKeepInput(); } }).catch(() => {});
-    if (!S.admin.names.length) loadAdminNames(); return; }
+    if (!S.admin.names.length) loadAdminNames(); if (!S.admin.students.length) loadAdminStudents(); return; }
   if (a === 'pick-person') return pickPerson(d.name);
   if (a === 'admin-schedule') { schedInit(); return go('admin-schedule'); }
   if (a && a.indexOf('sched-') === 0) return schedAct(a, d);

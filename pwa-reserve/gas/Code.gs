@@ -14,19 +14,54 @@ var CONFIG = {
   MONTHLY_LIMIT: 8
 };
 
+// 新しい権限（LINEへの送信＝外部接続、顧客管理DBの読み取り）を足したときは、エディタでこの関数を1回実行して承認する
 function authorizeMe() {
   var me = Session.getActiveUser().getEmail();
-  GmailApp.sendEmail(me, '承認テスト', 'これが届いたら承認完了です');
+  var r = UrlFetchApp.fetch('https://api.line.me/v2/bot/info', { muteHttpExceptions: true });   // 外部接続の権限（結果は見ない）
+  var ss = SpreadsheetApp.openById(CUSTOMER_DB_ID); var n = ss.getSheetByName(CUSTOMER_SHEET) ? 'あり' : 'なし';
+  GmailApp.sendEmail(me, '承認テスト', 'これが届いたら承認完了です。外部接続:' + r.getResponseCode() + ' 顧客名簿:' + n);
   Logger.log('承認されました！');
+}
+
+// ---- 管理者用：生徒さん一覧（Teraco Customer の顧客名簿から。五十音順） ----
+var CUSTOMER_DB_ID = '1xh_qHvKhclCsaW9Lyt6dCnCVsazVrkfupb3MD5KbgXE';   // てらこ顧客管理DB
+var CUSTOMER_SHEET = '顧客名簿';
+function kanaKey_(s) {   // ひらがな→カタカナ、空白除去。並べ替え用
+  return String(s || '').replace(/\s+/g, '').replace(/[ぁ-ゖ]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) + 0x60); });
+}
+function getAdminStudents_(passcode) {
+  if (passcode !== CONFIG.ADMIN_PASSCODE) return { ok: false, message: 'パスコードが正しくありません' };
+  var cache = CacheService.getScriptCache(), hit = cache.get('ADMIN_STUDENTS');
+  if (hit) return JSON.parse(hit);
+  var out;
+  try {
+    var sh = SpreadsheetApp.openById(CUSTOMER_DB_ID).getSheetByName(CUSTOMER_SHEET);
+    if (!sh) throw new Error('顧客名簿シートがありません');
+    var vals = sh.getDataRange().getValues(), head = vals[0].map(function(h) { return String(h || '').trim(); });
+    var ix = {}; head.forEach(function(h, i) { ix[h] = i; });
+    var students = [];
+    for (var i = 1; i < vals.length; i++) {
+      var r = vals[i], st = String(r[ix.status] || '').trim();
+      if (st !== '在籍' && st !== '休会') continue;
+      var name = String(r[ix.displayName] || ((r[ix.lastName] || '') + '' + (r[ix.firstName] || ''))).replace(/\s+/g, '');
+      if (!name) continue;
+      students.push({ name: name, kana: kanaKey_(String(r[ix.lastKana] || '') + String(r[ix.firstKana] || '')), status: st });
+    }
+    students.sort(function(a, b) { var ka = a.kana || '\uFFFF', kb = b.kana || '\uFFFF'; return ka < kb ? -1 : ka > kb ? 1 : (a.name < b.name ? -1 : a.name > b.name ? 1 : 0); });
+    out = { ok: true, students: students, count: students.length, source: CUSTOMER_SHEET };
+    cache.put('ADMIN_STUDENTS', JSON.stringify(out), 600);   // 10分
+  } catch (e) { out = { ok: false, message: '名簿を読めませんでした: ' + e.message, students: [] }; }
+  return out;
 }
 
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var action = p.action || 'overview';
-  if (action === 'version') return jsonOut({ok: true, version: 'v51', timestamp: new Date().toISOString()});
+  if (action === 'version') return jsonOut({ok: true, version: 'v52', timestamp: new Date().toISOString()});
   if (action === 'overview') return jsonOut(getOverview(p.name || '', Number(p.days) || CONFIG.OVERVIEW_DAYS));
   if (action === 'schedule_get') return jsonOut({ ok: true, schedule: getSchedule_() });
   if (action === 'admin_summary') return jsonOut(getAdminSummary(p.passcode));
+  if (action === 'admin_students') return jsonOut(getAdminStudents_(p.passcode));
   if (action === 'attendance_history') return jsonOut(getAttendanceHistory(p.passcode, p.name || '', p.email || '', Number(p.months) || 3));
   if (action === 'admin_calendar_events') return jsonOut(getAdminCalendarEvents(p.passcode, p.start || '', p.end || ''));
   if (action === 'admin_customer_reservations') return jsonOut(getAdminCustomerReservations(p.passcode, p.name || '', p.start || '', p.end || ''));
@@ -208,6 +243,7 @@ function doPost(e) {
   if (body.action === 'next_data') return jsonOut(getNextData(body.name || '', Number(body.days) || 75, body.email || ''));
   if (body.action === 'schedule_get') return jsonOut({ ok: true, schedule: getSchedule_() });
   if (body.action === 'schedule_set') return jsonOut(setSchedule_(body.passcode, body.schedule));
+  if (body.action === 'admin_students') return jsonOut(getAdminStudents_(body.passcode));
   LINE_CTX = { idToken: body.id_token || '', label: body.line_label || '', silent: !!body.line_silent };
   if (body.action === 'line_link') return jsonOut(lineLink_(body.id_token || '', body.name || ''));
   if (body.action === 'batch_reserve') return jsonOut(reserve(body.name, body.slots, body.class_details, body.email, body.add_to_calendar, body.passcode));
@@ -717,7 +753,7 @@ function getNextData(name, days, email) {
   }
   var existing = [];
   if (name && name.trim()) existing = findUserEvents(cal, name.trim(), start, addDays(start, days + 31), email || '');
-  return { ok: true, version: 'v51', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_() };
+  return { ok: true, version: 'v52', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_() };
 }
 
 // =====================================================================
