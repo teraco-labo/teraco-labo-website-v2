@@ -790,7 +790,7 @@ function lineAlertTeacher_(n) {
     ? '【TERACO予約】今月のLINEお知らせが' + n + '通に達しました。無料プランの上限（' + LINE_PUSH_LIMIT + '通）のため、今月はこれ以降の自動お知らせを止めます（予約自体は通ります）。有料プランへの変更を検討してください。'
     : '【TERACO予約】今月のLINEお知らせが' + n + '通になりました。無料プランの上限は' + LINE_PUSH_LIMIT + '通です。';
   try { if (CONFIG.TEACHER_EMAIL) GmailApp.sendEmail(CONFIG.TEACHER_EMAIL, '【TERACO予約】LINEお知らせ ' + n + '通', text, { name: 'TERACO予約システム' }); } catch (e) {}
-  var tk = prop_('LINE_TEACHER_TOKEN'), to = prop_('LINE_TEACHER_TO');
+  var tk = prop_('LINE_TEACHER_TOKEN') || prop_('LINE_244_TOKEN'), to = prop_('LINE_TEACHER_TO');   // 先生あては同じ公式LINEから送ってよい
   if (tk && to) { try { UrlFetchApp.fetch('https://api.line.me/v2/bot/message/push', { method: 'post', contentType: 'application/json', headers: { Authorization: 'Bearer ' + tk },
     payload: JSON.stringify({ to: to, messages: [{ type: 'text', text: text }] }), muteHttpExceptions: true }); } catch (e) {} }
 }
