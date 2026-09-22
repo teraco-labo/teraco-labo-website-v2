@@ -1,1044 +1,132 @@
 <!doctype html>
 <html lang="ja">
-
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>TERACO予約</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#00c853">
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <style>
-    :root {
-      --green: #06C755;
-      --green-deep: #039744;
-      --green-weak: #e2fbe7;
-      --border: #e5f5e8;
-      --bg: #f8fdf8;
-      --text: #222;
-      --muted: #555;
-      --error: #d32f2f;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      background: #fff;
-      color: var(--text);
-      font-size: 20px;
-      line-height: 1.7;
-    }
-
-    header {
-      position: sticky;
-      top: 0;
-      padding: 20px 20px;
-      background: var(--green);
-      color: #fff;
-      font-size: 28px;
-      font-weight: 700;
-      z-index: 10;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      text-align: center;
-    }
-
-    .wrap {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 24px 20px 60px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    /* Common Panel Styles */
-    .panel {
-      border: 2px solid var(--border);
-      border-radius: 20px;
-      padding: 20px;
-      background: #fff;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-    }
-
-    .panel h2 {
-      margin: 0 0 20px;
-      color: var(--green-deep);
-      font-size: 26px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .panel h2 .step-badge {
-      background: var(--green);
-      color: #fff;
-      font-size: 14px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-weight: 700;
-    }
-
-    .panel.hidden {
-      display: none;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    /* Notice */
-    .notice {
-      font-size: 17px;
-      background: var(--bg);
-      border: 2px solid var(--border);
-      border-radius: 16px;
-      padding: 16px;
-    }
-
-    /* Calendar */
-    .calendar-wrap {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: center;
-    }
-
-    .calendar {
-      flex: 0 1 460px;
-      max-width: 460px;
-      width: 100%;
-      border: 2px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      background: #fff;
-    }
-
-    .calendar header {
-      position: static;
-      background: var(--bg);
-      color: var(--green-deep);
-      font-size: 20px;
-      font-weight: 700;
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      text-align: center;
-    }
-
-    /* 月ナビゲーションのヘッダー */
-    .calendar header.cal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .cal-header .cal-title {
-      flex: 1;
-      text-align: center;
-    }
-
-    .cal-nav {
-      flex: 0 0 auto;
-      width: 44px;
-      height: 44px;
-      border: 2px solid var(--green);
-      background: #fff;
-      color: var(--green-deep);
-      border-radius: 12px;
-      font-size: 24px;
-      font-weight: 700;
-      line-height: 1;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .cal-nav:active:not(:disabled) {
-      background: var(--green);
-      color: #fff;
-      transform: translateY(2px);
-    }
-
-    .cal-nav:disabled {
-      border-color: #ddd;
-      color: #ccc;
-      cursor: not-allowed;
-    }
-
-    table.month-grid {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-    }
-
-    table.month-grid th {
-      padding: 10px 0;
-      background: #f5faf6;
-      color: var(--muted);
-      font-weight: 600;
-      border-bottom: 1px solid var(--border);
-    }
-
-    table.month-grid td {
-      height: 64px;
-      text-align: center;
-      vertical-align: middle;
-      border-bottom: 1px solid var(--border);
-      border-right: 1px solid var(--border);
-      cursor: pointer;
-      position: relative;
-      font-size: 20px;
-      font-weight: 600;
-    }
-
-    table.month-grid td:last-child {
-      border-right: none;
-    }
-
-    td.disabled {
-      color: #ccc;
-      background: #fafafa;
-      cursor: default;
-    }
-
-    td.active {
-      background: var(--green);
-      color: #fff !important;
-      font-weight: 700;
-    }
-
-    td.has-reservation::after {
-      content: '●';
-      position: absolute;
-      bottom: 4px;
-      right: 50%;
-      transform: translateX(50%);
-      font-size: 10px;
-      color: var(--green-deep);
-    }
-
-    td.active.has-reservation::after {
-      color: #fff;
-    }
-
-    td.has-selected {
-      background: var(--green-weak);
-      color: var(--green-deep);
-      font-weight: 700;
-      border: 2px solid var(--green);
-    }
-
-    td.full {
-      color: #ccc;
-      background: #fff0f0;
-    }
-
-    /* 当日：予約不可だが人数確認のためタップ可（ビュー専用） */
-    td.today-view {
-      color: var(--text);
-      background: #eef6ef;
-      cursor: pointer;
-    }
-
-    /* 日付マス右下の予約人数バッジ */
-    .day-count {
-      position: absolute;
-      bottom: 3px;
-      right: 4px;
-      font-size: 11px;
-      font-weight: 700;
-      line-height: 1;
-      color: #fff;
-      background: var(--green);
-      border-radius: 8px;
-      padding: 2px 5px;
-      pointer-events: none;
-    }
-
-    td.active .day-count {
-      background: #fff;
-      color: var(--green-deep);
-    }
-
-    td.full .day-count {
-      background: #e57373;
-      color: #fff;
-    }
-
-    @media (max-width:640px) {
-      .day-count {
-        font-size: 9px;
-        padding: 1px 4px;
-        bottom: 2px;
-        right: 2px;
-      }
-    }
-
-    /* Time Selection (Dropdown) */
-    .time-select-wrapper {
-      margin-top: 20px;
-      padding: 20px;
-      background: var(--bg);
-      border-radius: 16px;
-      border: 2px solid var(--green);
-    }
-
-    .time-select-label {
-      display: block;
-      font-weight: 700;
-      margin-bottom: 10px;
-      color: var(--green-deep);
-      font-size: 20px;
-    }
-
-    select.large-select {
-      width: 100%;
-      font-size: 22px;
-      padding: 16px;
-      border-radius: 12px;
-      border: 2px solid #ccc;
-      background: #fff;
-      appearance: none;
-      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-      background-repeat: no-repeat;
-      background-position: right 16px top 50%;
-      background-size: 16px auto;
-    }
-
-    select.large-select:focus {
-      outline: none;
-      border-color: var(--green);
-      box-shadow: 0 0 0 4px rgba(6, 199, 85, 0.2);
-    }
-
-    /* Selected Items */
-    .selected-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border: 2px solid var(--green);
-      background: #fff;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 12px;
-      font-size: 18px;
-    }
-
-    /* Input Field */
-    label.field {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      font-size: 18px;
-      font-weight: 700;
-    }
-
-    input[type="text"] {
-      font-size: 24px;
-      padding: 14px 16px;
-      border: 3px solid #ccc;
-      border-radius: 12px;
-      width: 100%;
-    }
-
-    input[type="text"]:focus {
-      outline: none;
-      border-color: var(--green);
-      box-shadow: 0 0 0 4px rgba(6, 199, 85, 0.2);
-    }
-
-    /* Refresh Icon Button */
-    .refresh-icon {
-      z-index: 10;
-    }
-
-    .refresh-icon:hover {
-      opacity: 1 !important;
-      color: var(--green) !important;
-    }
-
-    .refresh-icon:active {
-      transform: rotate(180deg);
-      transition: transform 0.3s;
-    }
-
-    /* Buttons */
-    .actions {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin-top: 20px;
-    }
-
-    button.big {
-      font-size: 22px;
-      padding: 24px;
-      border-radius: 16px;
-      border: 0;
-      background: var(--green);
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-      width: 100%;
-      box-shadow: 0 5px 0 var(--green-deep);
-      transition: transform 0.1s;
-    }
-
-    button.big:active {
-      transform: translateY(4px);
-      box-shadow: none;
-    }
-
-    button.big:disabled {
-      background: #ccc;
-      box-shadow: none;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    button.soft {
-      background: #fff;
-      color: var(--muted);
-      border: 2px solid #ccc;
-      padding: 18px;
-      font-size: 20px;
-      border-radius: 12px;
-      cursor: pointer;
-    }
-
-    .hint {
-      font-size: 15px;
-      color: var(--muted);
-      margin-top: 6px;
-    }
-
-    .error-msg {
-      color: var(--error);
-      font-weight: 700;
-      margin-top: 8px;
-      display: none;
-    }
-
-    /* Inline Time Select */
-    .inline-time-select {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      font-size: 16px;
-      opacity: 0;
-      /* Invisible overlay */
-      cursor: pointer;
-      z-index: 10;
-      appearance: none;
-      /* Remove default arrow */
-    }
-
-    /* Toggle Buttons for Class Selection */
-    .selection-group {
-      margin-bottom: 16px;
-    }
-
-    .field-label {
-      display: block;
-      font-weight: 700;
-      margin-bottom: 8px;
-      color: var(--text);
-    }
-
-    .toggle-group {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .toggle-btn {
-      flex: 1;
-      padding: 18px 12px;
-      border: 2px solid #ddd;
-      background: #fff;
-      color: var(--text);
-      border-radius: 12px;
-      font-size: 20px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
-      min-width: 120px;
-    }
-
-    .toggle-btn.active {
-      border-color: var(--green);
-      background: var(--green);
-      color: #fff;
-    }
-
-    /* Time Panel (below calendar) */
-    #timePanelWrap {
-      margin-top: 20px;
-      background: var(--bg);
-      border: 3px solid var(--green);
-      border-radius: 20px;
-      padding: 20px;
-    }
-
-    .time-btn-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin-top: 16px;
-    }
-
-    .time-btn {
-      padding: 24px 10px;
-      border: 3px solid var(--green);
-      background: #fff;
-      border-radius: 14px;
-      font-size: 26px;
-      font-weight: 700;
-      cursor: pointer;
-      color: var(--green-deep);
-      transition: all 0.15s;
-      text-align: center;
-      white-space: pre-line;
-      line-height: 1.4;
-    }
-
-    .time-btn:active:not(:disabled) {
-      background: var(--green);
-      color: #fff;
-      transform: translateY(2px);
-    }
-
-    .time-btn-selected {
-      background: var(--green) !important;
-      color: #fff !important;
-      border-color: var(--green-deep) !important;
-    }
-
-    .time-btn-full, .time-btn-done {
-      border-color: #ddd !important;
-      color: #bbb !important;
-      background: #f5f5f5 !important;
-      cursor: not-allowed;
-      font-weight: 400;
-    }
-
-    /* 当日のビュー専用ボタン（人数のみ・予約不可） */
-    .time-btn-view {
-      border-color: #cfd8cf !important;
-      color: #555 !important;
-      background: #f3f7f3 !important;
-      cursor: default;
-    }
-
-    .time-btn-view .t-sub {
-      color: #4a8c5e !important;
-    }
-
-    .time-btn-blocked {
-      border-color: #e0b4b4 !important;
-      color: #c97b7b !important;
-      background: repeating-linear-gradient(45deg, #fbeaea, #fbeaea 6px, #f7dede 6px, #f7dede 12px) !important;
-      cursor: not-allowed;
-      font-weight: 400;
-      font-size: 18px !important;
-    }
-
-    /* 時間ボタン内の2段表示（上＝時刻 / 下＝人数・状態） */
-    .time-btn .t-time {
-      display: block;
-    }
-
-    .time-btn .t-sub {
-      display: block;
-      margin-top: 4px;
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--green-deep);
-    }
-
-    .time-btn-full .t-sub,
-    .time-btn-done .t-sub {
-      color: #aaa;
-    }
-
-    .time-btn-selected .t-sub {
-      color: #fff;
-    }
-
-    .time-btn-blocked .t-sub {
-      color: #c97b7b;
-      font-weight: 600;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    @media (max-width:640px) {
-      .wrap {
-        padding: 16px;
-      }
-
-      table.month-grid td {
-        height: 48px;
-        font-size: 16px;
-      }
-
-      .calendar {
-        flex: 1 1 100%;
-      }
-
-      .toggle-btn {
-        font-size: 14px;
-        padding: 10px;
-      }
-    }
-
-    /* Time Selection Popup */
-    #timePopup {
-      position: fixed;
-      z-index: 500;
-      background: #fff;
-      border: 3px solid var(--green);
-      border-radius: 16px;
-      padding: 14px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
-      width: 210px;
-    }
-
-    #timePopup .time-btn {
-      padding: 14px 6px;
-      font-size: 22px;
-    }
-
-    @media (max-width: 480px) {
-      #timePopup {
-        width: 170px;
-        padding: 10px;
-      }
-      #timePopup .time-btn {
-        padding: 12px 4px;
-        font-size: 19px;
-        border-radius: 10px;
-      }
-    }
-
-    /* Sync Bar (background update indicator) */
-    #syncBar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      z-index: 200;
-      background: var(--green-deep);
-      color: #fff;
-      font-size: 14px;
-      text-align: center;
-      padding: 6px 12px;
-      transform: translateY(-100%);
-      transition: transform 0.3s ease;
-      pointer-events: none;
-    }
-    #syncBar.visible {
-      transform: translateY(0);
-    }
-
-    /* Loading Overlay */
-    #loadingOverlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.9);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      font-size: 20px;
-      font-weight: bold;
-      color: var(--green-deep);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s;
-    }
-
-    #loadingOverlay.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .spinner {
-      width: 50px;
-      height: 50px;
-      border: 5px solid var(--border);
-      border-top: 5px solid var(--green);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 20px;
-    }
-
-    @keyframes spin {
-      0% {
-        transform: rotate(0deg);
-      }
-
-      100% {
-        transform: rotate(360deg);
-      }
-    }
-
-    /* Admin Dashboard */
-    .admin-day-group {
-      margin-bottom: 24px;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #fff;
-    }
-    .admin-day-label {
-      background: #f0f0f0;
-      padding: 10px 16px;
-      font-weight: bold;
-      border-bottom: 1px solid #ddd;
-      color: #333;
-    }
-    .admin-slot-item {
-      padding: 12px 16px;
-      border-bottom: 1px solid #eee;
-    }
-    .admin-slot-item:last-child {
-      border-bottom: none;
-    }
-    .admin-slot-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-    }
-    .admin-slot-time {
-      font-weight: bold;
-      color: var(--green-deep);
-      font-size: 1.1em;
-    }
-    .admin-slot-count {
-      font-size: 13px;
-      background: #f5f5f5;
-      color: #666;
-      padding: 2px 10px;
-      border-radius: 20px;
-      border: 1px solid #ddd;
-    }
-    .admin-names-list {
-      font-size: 15px;
-      color: #444;
-      padding: 8px;
-      background: #f9fdfa;
-      border-radius: 8px;
-      margin-top: 4px;
-      white-space: pre-wrap;
-      line-height: 1.4;
-    }
-    .admin-empty-msg {
-      font-size: 14px;
-      color: #999;
-      font-style: italic;
-    }
-
-    /* 受講履歴検索 */
-    .history-section {
-      margin-top: 28px;
-      padding-top: 24px;
-      border-top: 2px solid #e8e8e8;
-    }
-    .history-section h3 {
-      margin: 0 0 16px;
-      font-size: 18px;
-      color: #333;
-    }
-    .history-period-group {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 14px;
-      flex-wrap: wrap;
-    }
-    .history-period-btn {
-      flex: 1;
-      padding: 12px 6px;
-      border: 2px solid #bbb;
-      background: #fff;
-      color: #444;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      min-width: 52px;
-      transition: all 0.15s;
-    }
-    .history-period-btn.active {
-      border-color: #333;
-      background: #333;
-      color: #fff;
-    }
-    .history-result-month {
-      margin-bottom: 16px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    .history-month-label {
-      background: #333;
-      color: #fff;
-      padding: 8px 14px;
-      font-weight: bold;
-      font-size: 15px;
-    }
-    .history-item {
-      padding: 10px 14px;
-      border-bottom: 1px solid #eee;
-      font-size: 15px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .history-item:last-child {
-      border-bottom: none;
-    }
-    .history-item-date {
-      font-weight: 700;
-      color: #333;
-      min-width: 110px;
-    }
-    .history-item-class {
-      color: #555;
-      font-size: 14px;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>TERACO予約</title>
+<meta name="theme-color" content="#06C755">
+<link rel="manifest" href="manifest.json">
+<style>
+  :root{
+    --green:#06C755; --green-deep:#0B7A3E; --green-weak:#E6F8EC; --line:#DCEBE1;
+    --ink:#1F2A24; --sub:#5B6B60; --bg:#F5FAF6; --warn:#C0392B; --warn-weak:#FDECEA; --admin:#2B3136;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html{-webkit-text-size-adjust:100%;}
+  body{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+       background:var(--bg);color:var(--ink);font-size:20px;line-height:1.6;}
+  header.bar{position:sticky;top:0;z-index:20;background:var(--green);color:#fff;text-align:center;
+             font-size:24px;font-weight:800;padding:14px 12px;letter-spacing:.04em;}
+  .restart{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:inherit;font-size:15px;font-weight:800;padding:8px 12px;border-radius:999px;border:2px solid #fff;background:transparent;color:#fff;}
+  .restart:active{background:rgba(255,255,255,.25);}
+  .band{padding:10px 14px;font-size:17px;font-weight:700;text-align:center;}
+  .band.demo{background:#FFF4D6;color:#7A5B00;}
+  .band.proxy{background:var(--admin);color:#fff;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;}
+  .band.proxy button{font-size:15px;padding:6px 12px;border-radius:999px;border:2px solid #fff;background:transparent;color:#fff;font-weight:700;}
+  main{max-width:600px;margin:0 auto;padding:18px 16px 120px;}
+  h1{font-size:26px;line-height:1.4;margin:6px 0 14px;}
+  h2{font-size:21px;color:var(--green-deep);margin:0 0 12px;}
+  .card{background:#fff;border:2px solid var(--line);border-radius:18px;padding:18px 16px;margin-bottom:18px;}
+  .muted{color:var(--sub);font-size:17px;}
+  .center{text-align:center;}
+  button{font-family:inherit;cursor:pointer;}
+  .btn{display:block;width:100%;min-height:68px;padding:14px 16px;border-radius:16px;border:0;
+       background:var(--green);color:#fff;font-size:23px;font-weight:800;box-shadow:0 4px 0 var(--green-deep);}
+  .btn:active{transform:translateY(3px);box-shadow:none;}
+  .btn:disabled{background:#C9D3CC;box-shadow:none;color:#fff;}
+  .btn.ghost{background:#fff;color:var(--green-deep);border:3px solid var(--green);box-shadow:none;}
+  .btn.quiet{background:#fff;color:var(--sub);border:2px solid #C9D3CC;box-shadow:none;font-size:20px;min-height:58px;}
+  .btn.danger{background:var(--warn);box-shadow:0 4px 0 #8E281D;}
+  .btn.dark{background:var(--admin);box-shadow:0 4px 0 #000;}
+  .btn + .btn{margin-top:12px;}
+  .link{background:none;border:0;color:var(--green-deep);font-size:18px;font-weight:700;text-decoration:underline;padding:10px 6px;}
+  .links{display:flex;flex-wrap:wrap;gap:4px 18px;justify-content:center;margin-top:6px;}
+  /* 予約の行 */
+  .rsv{display:flex;align-items:center;gap:10px;padding:14px 0;border-top:1px solid var(--line);}
+  .rsv:first-of-type{border-top:0;}
+  .rsv .when{flex:1;}
+  .rsv .date{font-size:23px;font-weight:800;}
+  .rsv .cls{font-size:16px;color:var(--sub);}
+  .rsv .ops{display:flex;flex-direction:column;gap:8px;}
+  .mini{min-width:104px;padding:10px 10px;border-radius:12px;border:2px solid var(--green);background:#fff;color:var(--green-deep);font-size:17px;font-weight:800;}
+  .mini.del{border-color:#E0B4AE;color:var(--warn);}
+  /* いつもの候補（チェック行） */
+  .month-label{font-size:19px;font-weight:800;margin:14px 0 8px;}
+  .pick{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:#fff;border:3px solid var(--line);
+        border-radius:14px;padding:14px;margin-bottom:10px;font-size:22px;font-weight:800;color:var(--ink);}
+  .pick .box{flex:0 0 34px;height:34px;border-radius:9px;border:3px solid #9AA8A0;background:#fff;position:relative;}
+  .pick.on{border-color:var(--green);background:var(--green-weak);}
+  .pick.on .box{background:var(--green);border-color:var(--green);}
+  .pick.on .box::after{content:"";position:absolute;left:9px;top:3px;width:9px;height:17px;border:solid #fff;border-width:0 4px 4px 0;transform:rotate(45deg);}
+  .pick .cnt{margin-left:auto;font-size:16px;font-weight:700;color:var(--sub);}
+  /* カレンダー */
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .cal-head .ttl{font-size:23px;font-weight:800;color:var(--green-deep);}
+  .nav{width:56px;height:56px;border-radius:14px;border:3px solid var(--green);background:#fff;color:var(--green-deep);font-size:28px;font-weight:800;}
+  .nav:disabled{border-color:#D5DDD8;color:#C3CCC6;}
+  table.cal{width:100%;border-collapse:collapse;table-layout:fixed;background:#fff;border-radius:14px;overflow:hidden;}
+  table.cal th{font-size:16px;color:var(--sub);padding:8px 0;background:#EEF6F0;}
+  table.cal td{height:62px;text-align:center;vertical-align:middle;font-size:21px;font-weight:800;border:1px solid #EDF3EF;position:relative;}
+  td.off{color:#C5CEC8;background:#FAFBFA;font-weight:600;}
+  td.ok{color:var(--ink);background:#fff;cursor:pointer;}
+  td.ok::before{content:"";position:absolute;inset:5px;border:2px solid var(--green);border-radius:12px;}
+  td.alt::before{border-style:dashed;border-color:#7FB58F;}
+  td.view{color:var(--sub);background:#F0F5F1;cursor:pointer;}
+  td.full{color:#C5CEC8;background:#FFF1EF;}
+  td.mine::after{content:"";position:absolute;left:50%;bottom:6px;width:9px;height:9px;margin-left:-4px;border-radius:50%;background:var(--green-deep);}
+  td.picked{background:var(--green);color:#fff;}
+  td.picked::before{border-color:#fff;}
+  .daycnt{position:absolute;right:3px;top:2px;font-size:11px;font-weight:800;color:#fff;background:var(--admin);border-radius:8px;padding:1px 5px;line-height:1.3;}
+  .legend{font-size:15px;color:var(--sub);margin-top:10px;line-height:1.7;}
+  /* 時間ボタン */
+  .times{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .time{min-height:84px;border-radius:16px;border:3px solid var(--green);background:#fff;color:var(--green-deep);font-size:27px;font-weight:800;line-height:1.2;}
+  .time small{display:block;font-size:15px;font-weight:700;color:var(--sub);margin-top:2px;}
+  .time.sel{background:var(--green);color:#fff;} .time.sel small{color:#fff;}
+  .time:disabled{border-color:#DDE3DF;color:#B7C0BA;background:#F6F8F6;}
+  .time.blocked{border-color:#E0B4AE;color:#C97B7B;background:#FBEDEB;}
+  /* 下固定バー */
+  .tray{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:3px solid var(--green);padding:12px 16px calc(12px + env(safe-area-inset-bottom));}
+  .tray .in{max-width:600px;margin:0 auto;}
+  .tray .n{font-size:17px;font-weight:700;margin-bottom:8px;text-align:center;}
+  /* 確認・完了 */
+  .big{font-size:25px;font-weight:800;line-height:1.5;}
+  .list-big{list-style:none;margin:12px 0 4px;}
+  .list-big li{font-size:25px;font-weight:800;padding:10px 0;border-top:1px solid var(--line);}
+  .list-big li:first-child{border-top:0;}
+  .arrow{font-size:20px;color:var(--sub);font-weight:700;margin:4px 0;}
+  .okmark{width:84px;height:84px;border-radius:50%;background:var(--green);margin:6px auto 14px;position:relative;}
+  .okmark::after{content:"";position:absolute;left:30px;top:16px;width:20px;height:38px;border:solid #fff;border-width:0 8px 8px 0;transform:rotate(45deg);}
+  .note{background:var(--warn-weak);color:#8E281D;border-radius:12px;padding:12px 14px;font-size:17px;font-weight:700;margin-top:10px;}
+  .info{background:var(--green-weak);color:var(--green-deep);border-radius:12px;padding:12px 14px;font-size:17px;font-weight:700;margin-top:10px;}
+  /* 入力 */
+  input.txt{width:100%;font-size:26px;padding:16px;border:3px solid #B9C6BE;border-radius:14px;font-family:inherit;}
+  input.txt:focus{outline:none;border-color:var(--green);}
+  .choice{display:block;width:100%;text-align:left;background:#fff;border:3px solid var(--green);border-radius:16px;padding:18px 16px;margin-bottom:12px;color:var(--ink);}
+  .choice b{display:block;font-size:25px;color:var(--green-deep);}
+  .choice span{font-size:17px;color:var(--sub);font-weight:700;}
+  .names{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;}
+  .names button{font-size:20px;font-weight:800;padding:12px 16px;border-radius:12px;border:2px solid var(--admin);background:#fff;color:var(--admin);}
+  .sum-day{font-weight:800;margin:12px 0 6px;}
+  .sum-row{display:flex;gap:10px;font-size:18px;padding:6px 0;border-top:1px solid var(--line);}
+  .sum-row .t{flex:0 0 64px;font-weight:800;}
+  /* 読み込み */
+  #busy{position:fixed;inset:0;z-index:100;background:rgba(255,255,255,.92);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-size:22px;font-weight:800;color:var(--green-deep);}
+  #busy.on{display:flex;}
+  .spin{width:56px;height:56px;border:6px solid var(--green-weak);border-top-color:var(--green);border-radius:50%;animation:sp 1s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .sync{font-size:15px;color:var(--sub);text-align:center;margin:-6px 0 12px;min-height:22px;}
+</style>
 </head>
-
 <body>
-  <header>TERACO予約</header>
-  <div class="wrap">
-
-    <div class="notice" style="font-size:20px;">
-      <strong>予約の手順</strong><br><br>
-      ① お名前を入力してください<br>
-      ② クラスを選んでください<br>
-      ③ 日付と時間をタップしてください<br>
-      ④「予約を確定する」を押してください
-    </div>
-
-    <div class="panels">
-
-      <!-- STEP 1: Name & Class Selection -->
-      <div id="namePanel" class="panel">
-        <h2><span class="step-badge">STEP 1</span> お名前とクラス</h2>
-        <div id="inputSection">
-          <div class="input-group" style="position: relative;">
-            <label style="font-size:20px; font-weight:700; display:block; margin-bottom:10px;">お名前（フルネーム）</label>
-            <button id="btnRefresh" class="refresh-icon" title="リフレッシュ（名前と予約をリセット）" style="position: absolute; top: 0; right: 0; background: none; border: none; cursor: pointer; padding: 4px; font-size: 20px; color: #666; opacity: 0.7; transition: opacity 0.2s;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
-                <path d="M21 3v5h-5"></path>
-                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
-                <path d="M3 21v-5h5"></path>
-              </svg>
-            </button>
-            <input type="text" id="nameInput" placeholder="例：田中花子" />
-            <div class="hint" style="font-size:17px; margin-top:8px;">※ 姓と名はスペースなしで入力してください</div>
-            <div class="error-msg" id="nameError">お名前を入力してください</div>
-
-            <div style="text-align:center; margin: 10px 0 6px; font-size:12px; color:#666;">または Googleアカウントで自動入力</div>
-
-            <div id="googleBtnWrapper" style="margin-bottom: 8px;">
-              <!-- Google Sign-In Button Container -->
-              <div id="g_id_onload"
-                data-client_id="962051135287-af9qpio58l2qt7cu3avip6qvk9269sl2.apps.googleusercontent.com"
-                data-callback="handleCredentialResponse" data-auto_prompt="true" data-auto_select="true"
-                data-itp_support="true">
-              </div>
-              <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline"
-                data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left">
-              </div>
-            </div>
-
-            <!-- Calendar Invite Option -->
-            <div id="calendarOption" style="margin-top: 12px; display: none;">
-              <label style="display: flex; align-items: center; cursor: pointer; font-size: 14px;">
-                <input type="checkbox" id="addToCalendar" style="transform: scale(1.2); margin-right: 8px;">
-                Googleカレンダーに追加する
-              </label>
-            </div>
-          </div>
-
-          <!-- Class Selection -->
-          <div class="class-selection" style="margin-top: 16px; border-top: 2px solid #eee; padding-top: 16px;">
-
-            <!-- Category -->
-            <div class="selection-group">
-              <label class="field-label" style="font-size:20px; font-weight:700; margin-bottom:8px; display:block;">コース種別</label>
-              <div class="toggle-group" id="categoryGroup">
-                <button type="button" class="toggle-btn active" data-value="smartphone">スマホ</button>
-                <button type="button" class="toggle-btn" data-value="pc_ai">パソコンAI</button>
-              </div>
-            </div>
-
-            <!-- Course (Dynamic) -->
-            <div class="selection-group" style="margin-top:14px;">
-              <label class="field-label" style="font-size:20px; font-weight:700; margin-bottom:8px; display:block;">クラス</label>
-              <!-- Smartphone Options -->
-              <div id="courseSmartphone" class="toggle-group" style="flex-direction:column;">
-                <button type="button" class="toggle-btn active" data-value="intro">入門まなび（45分）</button>
-                <button type="button" class="toggle-btn" data-value="applied">応用てらこ（90分）</button>
-                <button type="button" class="toggle-btn" data-value="private">個人レッスン（50分）</button>
-              </div>
-              <!-- PC/AI Options (Hidden initially) -->
-              <div id="coursePcAi" class="toggle-group hidden" style="flex-direction:column;">
-                <button type="button" class="toggle-btn active" data-value="basic">基礎ベーシック（45分）</button>
-                <button type="button" class="toggle-btn" data-value="advance">実践アドバンス（90分）</button>
-                <button type="button" class="toggle-btn" data-value="private">個人レッスン（50分）</button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      <!-- STEP 2: Date & Time -->
-      <div id="calendarPanel" class="panel">
-        <h2><span class="step-badge">STEP 2</span> 日付と時間を選ぶ</h2>
-        <div style="font-size:18px; color:var(--muted); margin-bottom:14px;">日付をタップすると時間ボタンが出ます</div>
-
-        <div id="current-date-display" style="text-align:center; margin-bottom:14px; font-size: 18px; color: var(--muted);"></div>
-
-        <div id="calendarWrap" class="calendar-wrap"></div>
-
-        <div id="timePanelWrap" class="hidden"></div>
-
-        <div id="timeSelectContainer" class="hidden" style="display:none;"></div>
-      </div>
-
-      <!-- STEP 3: Confirmation -->
-      <div id="confirmPanel" class="panel">
-        <h2><span class="step-badge">STEP 3</span> 予約内容の確認</h2>
-
-        <div id="selectedList">
-          <div class="hint">まだ日時が選択されていません。</div>
-        </div>
-
-        <div class="actions">
-          <button id="btnClear" class="soft">選択をクリア</button>
-          <button id="btnSubmit" class="big" disabled>予約を確定する</button>
-        </div>
-      </div>
-
-      <!-- STEP 4: Check & Cancel Reservations -->
-      <div id="managePanel" class="panel" style="margin-top: 40px; border-top: 4px solid var(--green);">
-        <h2>予約の確認・取り消し</h2>
-        <p style="margin-bottom:20px; font-size:19px;">
-          予約を確認したり、取り消したりできます。</p>
-
-        <div style="text-align:center; margin-bottom:24px;">
-          <button id="btnCheckReservation" class="soft"
-            style="width:100%; padding:22px; font-size:22px; font-weight:bold;">
-            予約を確認する
-          </button>
-        </div>
-
-        <div id="existingPanel" class="hidden">
-          <h3>あなたの予約状況</h3>
-          <div id="existingList"></div>
-          <div style="margin-top:16px; text-align:right;">
-            <button id="btnCancelSelected" class="soft"
-              style="color:var(--error); border-color:var(--error);">選択した予約を取り消す</button>
-          </div>
-        </div>
-
-        <!-- 受講履歴（予約者向け・Googleログイン時のみ表示） -->
-        <div id="myHistoryPanel" class="hidden" style="margin-top:28px; border-top:2px solid #eee; padding-top:20px;">
-          <h3>これまでの受講履歴</h3>
-          <div class="history-period-group" id="myHistoryPeriodGroup">
-            <button class="history-period-btn" data-months="1">1ヶ月</button>
-            <button class="history-period-btn active" data-months="3">3ヶ月</button>
-            <button class="history-period-btn" data-months="6">6ヶ月</button>
-            <button class="history-period-btn" data-months="12">1年</button>
-          </div>
-          <div id="myHistoryContent" style="margin-top:16px;"></div>
-        </div>
-      </div>
-
-      <!-- Admin Dashboard Panel -->
-      <div id="adminPanel" class="panel hidden" style="margin-top: 60px; border-top: 4px solid #333; background: #fafafa;">
-        <h2 style="color:#333;"><span class="step-badge" style="background:#333;">管理</span> 管理者メニュー</h2>
-        
-        <div id="adminLoginView">
-          <p style="font-size:14px; color:#666; margin-bottom:12px;">パスコードを入力してログインしてください。</p>
-          <input type="password" id="adminPasscode" placeholder="****" 
-            style="text-align:center; letter-spacing: 0.5em; font-size: 24px; padding: 12px; border: 2px solid #333; width: 100%;">
-          <button id="btnAdminLogin" class="big" style="margin-top:16px; background:#333; box-shadow: 0 4px 0 #000;">ログイン</button>
-        </div>
-
-        <div id="adminContentView" class="hidden">
-          <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h3 id="adminSummaryTitle" style="margin:0; font-size:18px;">予約状況（今日・明日）</h3>
-            <button id="btnAdminRefresh" class="soft" style="padding: 8px 16px; font-size: 14px;">更新</button>
-          </div>
-          <div id="adminSummaryList"></div>
-
-          <!-- 受講履歴検索 -->
-          <div class="history-section">
-            <h3>📋 受講履歴検索</h3>
-            <input type="text" id="historyNameInput" placeholder="例：田中花子"
-              style="font-size:18px; padding:14px; border:2px solid #ccc; border-radius:10px; width:100%; margin-bottom:12px;">
-            <div class="history-period-group" id="adminHistoryPeriodGroup">
-              <button class="history-period-btn" data-months="1">1ヶ月</button>
-              <button class="history-period-btn active" data-months="3">3ヶ月</button>
-              <button class="history-period-btn" data-months="6">6ヶ月</button>
-              <button class="history-period-btn" data-months="12">1年</button>
-            </div>
-            <button id="btnHistorySearch" class="big"
-              style="background:#333; box-shadow:0 4px 0 #000; font-size:18px; padding:18px;">
-              受講履歴を検索
-            </button>
-            <div id="historyResultPanel" class="hidden" style="margin-top:20px;">
-              <div id="historyResultContent"></div>
-            </div>
-          </div>
-
-          <button id="btnAdminLogout" class="soft" style="width:100%; margin-top:24px; border-color:#999;">ログアウト</button>
-        </div>
-      </div>
-
-      <!-- Hidden Admin Trigger -->
-      <div style="text-align:center; margin-top:40px; padding-bottom: 20px;">
-        <span id="adminTrigger" style="font-size:12px; color:#ccc; cursor:pointer; text-decoration: underline;">管理者の方はこちら</span>
-      </div>
-
-    </div>
-
-    <div id="message" class="message" style="text-align:center;font-weight:700;color:var(--green);"></div>
-  </div>
-
-  <!-- Time Selection Popup -->
-  <div id="timePopup" class="hidden">
-    <div id="timePopupContent"></div>
-  </div>
-
-  <div id="syncBar">予約状況を更新中...</div>
-
-  <div id="loadingOverlay">
-    <div class="spinner"></div>
-    <div id="loadingText">処理中です...</div>
-  </div>
-  <script src="main.js?v=44.2"></script>
-  <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }</script>
+<header class="bar">TERACO予約<button class="restart" data-act="home">最初から</button></header>
+<div id="bands"></div>
+<main id="app"></main>
+<div id="tray"></div>
+<div id="busy"><div class="spin"></div><div id="busyText">おまちください</div></div>
+<script src="timetable.js?v=1"></script>
+<script src="app.js?v=n13"></script>
+<script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function(){}); }</script>
 </body>
-
 </html>
