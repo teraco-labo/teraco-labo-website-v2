@@ -1,4 +1,4 @@
-// TERACO予約システム v50 (新デザイン用に next_data / schedule_get / schedule_set を追加。既存の処理は変更なし。分数はコース名の「(45分)」を優先)
+// TERACO予約システム v51 (LINEお知らせ: LIFFの本人確認・予約/取消のプッシュ・月200通の見張り) ← v50 (新デザイン用に next_data / schedule_get / schedule_set を追加。既存の処理は変更なし。分数はコース名の「(45分)」を優先)
 
 var CONFIG = {
   TIMEZONE: 'Asia/Tokyo',
@@ -23,7 +23,7 @@ function authorizeMe() {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var action = p.action || 'overview';
-  if (action === 'version') return jsonOut({ok: true, version: 'v50', timestamp: new Date().toISOString()});
+  if (action === 'version') return jsonOut({ok: true, version: 'v51', timestamp: new Date().toISOString()});
   if (action === 'overview') return jsonOut(getOverview(p.name || '', Number(p.days) || CONFIG.OVERVIEW_DAYS));
   if (action === 'schedule_get') return jsonOut({ ok: true, schedule: getSchedule_() });
   if (action === 'admin_summary') return jsonOut(getAdminSummary(p.passcode));
@@ -208,6 +208,8 @@ function doPost(e) {
   if (body.action === 'next_data') return jsonOut(getNextData(body.name || '', Number(body.days) || 75, body.email || ''));
   if (body.action === 'schedule_get') return jsonOut({ ok: true, schedule: getSchedule_() });
   if (body.action === 'schedule_set') return jsonOut(setSchedule_(body.passcode, body.schedule));
+  LINE_CTX = { idToken: body.id_token || '', label: body.line_label || '', silent: !!body.line_silent };
+  if (body.action === 'line_link') return jsonOut(lineLink_(body.id_token || '', body.name || ''));
   if (body.action === 'batch_reserve') return jsonOut(reserve(body.name, body.slots, body.class_details, body.email, body.add_to_calendar, body.passcode));
   if (body.action === 'batch_cancel') return jsonOut(cancel(body.name, body.event_ids, body.email, body.passcode));
   if (body.action === 'attendance_history') return jsonOut(getAttendanceHistory(body.passcode, body.name || '', body.email || '', Number(body.months) || 3));
@@ -297,11 +299,12 @@ function reserve(name, slotIds, classDetails, email, addToCalendar, passcode) {
     }
 
     if (created.length > 0) sendNotification('予約', userName, created, title, email);
+    var lineRes = created.length > 0 ? lineNotify_('予約', userName, created, LINE_CTX.label || title) : null;
     var msg = created.length + '件予約しました';
     if (addToCalendar && email && calendarAdded < created.length && calendarAdded >= 0) {
       msg += '（Googleカレンダー反映: ' + calendarAdded + '/' + created.length + '件）';
     }
-    return {ok: true, message: msg, created: created, calendar_added: calendarAdded};
+    return {ok: true, message: msg, created: created, calendar_added: calendarAdded, line: lineRes};
   } finally {
     lock.releaseLock();
   }
@@ -393,7 +396,8 @@ function cancel(name, eventIds, email, passcode) {
         sendNotificationToUser('取消', userName, removed, title, email);
       }
     }
-    return {ok: true, message: removed.length + '件取り消しました'};
+    var lineRes = removed.length > 0 ? lineNotify_('取消', userName, removed, LINE_CTX.label || title) : null;
+    return {ok: true, message: removed.length + '件取り消しました', line: lineRes};
   } finally {
     lock.releaseLock();
   }
@@ -713,6 +717,104 @@ function getNextData(name, days, email) {
   }
   var existing = [];
   if (name && name.trim()) existing = findUserEvents(cal, name.trim(), start, addDays(start, days + 31), email || '');
-  return { ok: true, version: 'v50', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_() };
+  return { ok: true, version: 'v51', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_() };
+}
+
+// =====================================================================
+// v51 追加：LINEのお知らせ。ここから下は新しい処理だけ。
+//   必要なスクリプトプロパティ（藤崎さんが貼る。コードには書かない）:
+//     LINE_LOGIN_CHANNEL_ID … LIFFを載せたLINEログインチャネルのチャネルID（本人確認用）
+//     LINE_244_TOKEN        … スマホ教室TERACO(@244jldgi) Messaging API のチャネルアクセストークン（長期）
+//     LINE_TEACHER_TOKEN / LINE_TEACHER_TO … 先生あて見張り通知（任意。無ければメールのみ）
+// =====================================================================
+var LINE_CTX = { idToken: '', label: '', silent: false };
+var LINE_PUSH_LIMIT = 200;   // 無料プランの月あたりの上限（この数に達したら自動送信を止め、予約は通す）
+var LINE_WARN_AT = 150;
+
+function prop_(k) { return PropertiesService.getScriptProperties().getProperty(k) || ''; }
+
+// LIFFのIDトークンをLINEに問い合わせて本人確認する。成功で {sub, name}、失敗で null
+function lineVerify_(idToken) {
+  var cid = prop_('LINE_LOGIN_CHANNEL_ID'); if (!idToken || !cid) return null;
+  try {
+    var res = UrlFetchApp.fetch('https://api.line.me/oauth2/v2.1/verify', { method: 'post', payload: { id_token: idToken, client_id: cid }, muteHttpExceptions: true });
+    if (res.getResponseCode() !== 200) return null;
+    var o = JSON.parse(res.getContentText()); return o && o.sub ? { sub: o.sub, name: o.name || '' } : null;
+  } catch (e) { return null; }
+}
+
+// 名前 ⇄ LINEの対応表（紐付きスプレッドシートの「LINE連携」シート）。無ければスクリプトプロパティに退避
+function lineUsersSheet_() {
+  try { var ss = SpreadsheetApp.getActiveSpreadsheet(); if (!ss) return null;
+    var sh = ss.getSheetByName('LINE連携'); if (!sh) { sh = ss.insertSheet('LINE連携'); sh.appendRow(['名前(正規化)', 'LINE userId', 'LINE表示名', '登録した名前', '更新日時']); }
+    return sh; } catch (e) { return null; }
+}
+function lineUserSave_(name, sub, disp) {
+  var key = normalize(name); if (!key || !sub) return;
+  var sh = lineUsersSheet_();
+  if (sh) {
+    var vals = sh.getDataRange().getValues(), now = new Date();
+    for (var i = 1; i < vals.length; i++) { if (String(vals[i][0]) === key) { sh.getRange(i + 1, 2, 1, 4).setValues([[sub, disp, name, now]]); SpreadsheetApp.flush(); return; } }
+    sh.appendRow([key, sub, disp, name, now]); SpreadsheetApp.flush(); return;
+  }
+  var raw = prop_('LINE_USERS'); var m = {}; try { m = raw ? JSON.parse(raw) : {}; } catch (e) { m = {}; }
+  m[key] = sub; PropertiesService.getScriptProperties().setProperty('LINE_USERS', JSON.stringify(m));
+}
+function lineUserFind_(name) {
+  var key = normalize(name); if (!key) return '';
+  var sh = lineUsersSheet_();
+  if (sh) { var vals = sh.getDataRange().getValues(); for (var i = 1; i < vals.length; i++) { if (String(vals[i][0]) === key) return String(vals[i][1] || ''); } return ''; }
+  try { var m = JSON.parse(prop_('LINE_USERS') || '{}'); return m[key] || ''; } catch (e) { return ''; }
+}
+
+// アプリがLINEの中で開かれたとき：本人確認して、名前とLINEを結びつける
+function lineLink_(idToken, name) {
+  var v = lineVerify_(idToken); if (!v) return { ok: false, message: '本人確認できませんでした' };
+  if (name && name.trim()) lineUserSave_(name.trim(), v.sub, v.name);
+  return { ok: true, line_user_id: v.sub, display_name: v.name, linked: !!(name && name.trim()) };
+}
+
+// 今月の送信数（月が変わったら0から）
+function lineCounter_() {
+  var ym = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyyMM'), p = PropertiesService.getScriptProperties();
+  if (p.getProperty('LINE_PUSH_YM') !== ym) { p.setProperties({ LINE_PUSH_YM: ym, LINE_PUSH_N: '0', LINE_ALERT_150: '', LINE_ALERT_200: '' }); }
+  return { ym: ym, n: Number(p.getProperty('LINE_PUSH_N') || 0) };
+}
+function lineCountUp_() { var c = lineCounter_(); PropertiesService.getScriptProperties().setProperty('LINE_PUSH_N', String(c.n + 1)); return c.n + 1; }
+
+// 先生に見張りの知らせ（メールは必ず。LINEは設定があれば）
+function lineAlertTeacher_(n) {
+  var p = PropertiesService.getScriptProperties(), key = n >= LINE_PUSH_LIMIT ? 'LINE_ALERT_200' : 'LINE_ALERT_150';
+  if (p.getProperty(key)) return; p.setProperty(key, '1');
+  var text = n >= LINE_PUSH_LIMIT
+    ? '【TERACO予約】今月のLINEお知らせが' + n + '通に達しました。無料プランの上限（' + LINE_PUSH_LIMIT + '通）のため、今月はこれ以降の自動お知らせを止めます（予約自体は通ります）。有料プランへの変更を検討してください。'
+    : '【TERACO予約】今月のLINEお知らせが' + n + '通になりました。無料プランの上限は' + LINE_PUSH_LIMIT + '通です。';
+  try { if (CONFIG.TEACHER_EMAIL) GmailApp.sendEmail(CONFIG.TEACHER_EMAIL, '【TERACO予約】LINEお知らせ ' + n + '通', text, { name: 'TERACO予約システム' }); } catch (e) {}
+  var tk = prop_('LINE_TEACHER_TOKEN'), to = prop_('LINE_TEACHER_TO');
+  if (tk && to) { try { UrlFetchApp.fetch('https://api.line.me/v2/bot/message/push', { method: 'post', contentType: 'application/json', headers: { Authorization: 'Bearer ' + tk },
+    payload: JSON.stringify({ to: to, messages: [{ type: 'text', text: text }] }), muteHttpExceptions: true }); } catch (e) {} }
+}
+
+// 生徒のLINEへお知らせ。結果 {sent, reason, count} を返す（送れなくても予約は成立させる）
+function lineNotify_(type, userName, items, label) {
+  if (LINE_CTX.silent) return { sent: false, reason: 'silent' };
+  var token = prop_('LINE_244_TOKEN'); if (!token) return { sent: false, reason: 'not_configured' };
+  var to = ''; var v = lineVerify_(LINE_CTX.idToken);
+  if (v) { to = v.sub; lineUserSave_(userName, v.sub, v.name); } else { to = lineUserFind_(userName); }
+  if (!to) return { sent: false, reason: 'not_linked' };
+  var c = lineCounter_();
+  if (c.n >= LINE_PUSH_LIMIT) { lineAlertTeacher_(c.n); return { sent: false, reason: 'limit', count: c.n }; }
+  var dates = items.map(function(it) { return '・' + formatSlot(new Date(it.start)); }).join('\n');
+  var text = type === '予約'
+    ? '【スマホ教室TERACO】予約を受け付けました\n\n' + userName + ' さん\n' + label + '\n' + dates + '\n\n変更・取り消しは前日17時まで予約アプリからできます。'
+    : '【スマホ教室TERACO】予約を取り消しました\n\n' + userName + ' さん\n' + label + '\n' + dates + '\n\nまたのご予約をお待ちしています。';
+  try {
+    var res = UrlFetchApp.fetch('https://api.line.me/v2/bot/message/push', { method: 'post', contentType: 'application/json', headers: { Authorization: 'Bearer ' + token },
+      payload: JSON.stringify({ to: to, messages: [{ type: 'text', text: text }] }), muteHttpExceptions: true });
+    var code = res.getResponseCode();
+    if (code === 200) { var n = lineCountUp_(); if (n === LINE_WARN_AT || n === LINE_PUSH_LIMIT) lineAlertTeacher_(n); return { sent: true, count: n }; }
+    // 403 = 友だちでない／ブロック中。送れないが予約は成立
+    return { sent: false, reason: code === 403 ? 'not_friend' : 'error', code: code };
+  } catch (e) { return { sent: false, reason: 'error' }; }
 }
 

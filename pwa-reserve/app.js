@@ -48,6 +48,7 @@ const S = {
   google: store.get('teraco_google_user', null),   // {name,email,picture}：ログインしている人だけ
   addToCal: store.get('tr_add_to_cal', true),
   myHistory: null, myHistoryMonths: 3,
+  line: Object.assign({ userId: null, name: null, idToken: null, inClient: false, linkedFor: null }, store.get('tr_line', {})),
   override: null,                            // {course:'private'}：個人レッスン「も」予約するとき
   draft: {},                                 // 初回登録の途中経過
   admin: { summary: null, names: [], query: '', history: null, historyMonths: 3 },
@@ -110,6 +111,30 @@ function inferClass(e) {
   return { course, klass, category: COURSES[course].cat || (pc ? 'pc_ai' : 'smartphone') };
 }
 const rowClassText = (e) => { const g = inferClass(e); return g ? courseName(g.course, g.klass) : ''; };
+
+// ---------- LINE（LIFF） ----------
+const LINE_CFG = window.TERACO_LINE || {};
+async function lineInit() {
+  if (!LINE_CFG.liffId || !window.liff) return;
+  try {
+    await liff.init({ liffId: LINE_CFG.liffId });
+    S.line.inClient = liff.isInClient();
+    if (liff.isLoggedIn()) {
+      S.line.idToken = liff.getIDToken() || null;
+      const p = await liff.getProfile().catch(() => null);
+      if (p) { S.line.userId = p.userId; S.line.name = p.displayName; }
+      store.set('tr_line', { userId: S.line.userId, name: S.line.name, linkedFor: S.line.linkedFor });
+      lineLink();
+    } else if (liff.isInClient()) { liff.login(); }   // LINEの中で開いたときだけ自動ログイン
+  } catch (e) { /* LINE連携が使えなくても予約は使える */ }
+}
+// 登録した名前とLINEを結びつける（一度結びつけば、先生が代理で入れた予約もその人のLINEに届く）
+async function lineLink() {
+  const p = baseMe(); if (!p || !p.name || !S.line.idToken || S.line.linkedFor === p.name || DEMO) return;
+  try { const r = await post({ action: 'line_link', id_token: S.line.idToken, name: p.name });
+    if (r && r.ok) { S.line.linkedFor = p.name; store.set('tr_line', { userId: S.line.userId, name: S.line.name, linkedFor: p.name }); if (S.view === 'more') render(); } } catch (e) {}
+}
+const lineLabelFor = (p, k) => { const c = COURSES[p.course]; return c.classes ? `${courseName(p.course, k || p.klass)} ${dowTimeText(c.classes[k || p.klass])}` : courseName(p.course); };
 
 // ---------- 通信 ----------
 async function post(payload, timeoutMs = 45000) {
@@ -515,6 +540,13 @@ function viewConfirm() {
     <p class="arrow">↓ 変更</p><p class="muted">新しい予約</p><p class="big" style="color:var(--green-deep);">${fmtDay(parseDayKey(pd.to.day_key))} ${esc(pd.to.start_time)}</p></div>
     <button class="btn" data-act="do">はい、変更する</button><button class="btn quiet" data-act="cancel-pending">やめる</button>`;
 }
+function lineResultHtml(l) {
+  if (!l || S.proxy) return '';
+  if (l.sent) return `<div class="info">LINEにお知らせを送りました。</div>`;
+  if (l.reason === 'not_friend') return `<div class="note">LINEのお知らせは、「${esc(LINE_CFG.accountName || 'スマホ教室TERACO')}」を友だち追加すると届きます。<br><a href="${esc(LINE_CFG.addFriendUrl || '#')}" style="color:#8E281D;font-weight:800;">友だち追加する</a></div>`;
+  if (l.reason === 'limit') return `<div class="note">今月のLINEのお知らせは上限に達したため送れませんでした。予約はできています。</div>`;
+  return '';
+}
 function viewDone() {
   const d = S.done; if (!d) return '';
   if (d.error) return `<h1>うまくいきませんでした</h1><div class="card"><p class="big" style="font-size:22px;">${esc(d.error)}</p>
@@ -523,8 +555,9 @@ function viewDone() {
       <button class="btn" style="margin-top:12px;" data-act="home">はじめの画面にもどる</button>`;
   return `<div class="card center" style="padding-top:26px;"><div class="okmark"></div><h1 style="margin-bottom:6px;">${esc(d.title)}</h1>
       <ul class="list-big">${d.lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
-      ${d.note ? `<div class="info">${esc(d.note)}</div>` : ''}</div>
-      ${d.share ? `<a class="btn ghost" style="text-decoration:none;text-align:center;line-height:40px;margin-bottom:12px;" href="https://line.me/R/share?text=${encodeURIComponent(d.share)}" target="_blank" rel="noopener">LINEに控えを送る</a>` : ''}
+      ${d.note ? `<div class="info">${esc(d.note)}</div>` : ''}
+      ${lineResultHtml(d.line)}</div>
+      ${d.share && !(d.line && d.line.sent) ? `<a class="btn ghost" style="text-decoration:none;text-align:center;line-height:40px;margin-bottom:12px;" href="https://line.me/R/share?text=${encodeURIComponent(d.share)}" target="_blank" rel="noopener">LINEに控えを送る</a>` : ''}
       <button class="btn" data-act="home">はじめの画面にもどる</button>`;
 }
 
@@ -550,6 +583,9 @@ function viewMore() {
   if (g) h += `<div class="card"><h2>Googleアカウント</h2><p style="font-weight:800;">${esc(g.name || '')}</p><p class="muted">${esc(g.email || '')}</p>
       <button class="pick ${S.addToCal ? 'on' : ''}" style="margin-top:12px;font-size:19px;" data-act="toggle-cal"><span class="box"></span><span>予約をGoogleカレンダーにも入れる</span></button>
       <button class="btn quiet" data-act="g-logout">Googleからログアウトする</button></div>`;
+  if (LINE_CFG.liffId) h += `<div class="card"><h2>LINEのお知らせ</h2>${S.line.userId
+      ? `<p style="font-weight:800;">受け取れる状態です</p><p class="muted">LINE名：${esc(S.line.name || '')}${S.line.linkedFor ? '（' + esc(S.line.linkedFor) + ' さんとして登録）' : ''}</p>`
+      : `<p class="muted">公式LINEの「講座を予約」からこのアプリを開くと、予約のたびにLINEへお知らせが届くようになります。</p>`}</div>`;
   h += `<div class="card"><h2>登録のやりなおし</h2><p class="muted" style="margin-bottom:12px;">お名前とクラスを、最初から登録しなおします。入っている予約は消えません。</p>
       <button class="btn quiet" data-act="reset-all">登録をやりなおす</button></div>
       <button class="btn" data-act="home">はじめの画面にもどる</button>`;
@@ -703,17 +739,19 @@ async function doReserve(slots) {
   let last = { ok: true };
   for (const [k, list] of byKlass) {
     last = await post({ action: 'batch_reserve', name: p.name, email: myEmail(), add_to_calendar: !!(myEmail() && S.addToCal),
-      slots: list.map(s => String(s.slot_id)), class_details: classDetails(p, k || null), passcode: adminCode() || null });
+      slots: list.map(s => String(s.slot_id)), class_details: classDetails(p, k || null), passcode: adminCode() || null,
+      id_token: S.proxy ? null : (S.line.idToken || null), line_label: lineLabelFor(p, k || null) });
     if (!last || !last.ok) return last;
   }
   return last;
 }
-async function doCancel(items) {
+async function doCancel(items, silent) {
   const p = me();
   if (DEMO) { await new Promise(r => setTimeout(r, 700));
     items.forEach(e => { if (String(e.event_id).startsWith('demo_')) S.demo.added = S.demo.added.filter(x => x.event_id !== e.event_id); else S.demo.removed.add(e.event_id); });
     return { ok: true }; }
-  return await post({ action: 'batch_cancel', name: p.name, email: myEmail(), event_ids: items.map(e => e.event_id), passcode: adminCode() || null });
+  return await post({ action: 'batch_cancel', name: p.name, email: myEmail(), event_ids: items.map(e => e.event_id), passcode: adminCode() || null,
+    id_token: S.proxy ? null : (S.line.idToken || null), line_label: items.map(rowClassText).filter(Boolean)[0] || '', line_silent: !!silent });
 }
 async function runPending() {
   const pd = S.pending; if (!pd) return;
@@ -723,20 +761,20 @@ async function runPending() {
       if (!r || !r.ok) throw new Error((r && r.message) || '予約できませんでした。');
       saveUsual(pd.slots);
       const lines = pd.slots.map(s => `${fmtDay(parseDayKey(s.day_key))} ${s.start_time}`);
-      S.done = { title: '予約できました', lines, note: `クラス：${classText(me())}`,
+      S.done = { title: '予約できました', lines, note: `クラス：${classText(me())}`, line: r.line || null,
         share: `【スマホ教室TERACO 予約の控え】\n${me().name} さん\n${classText(me())}\n${lines.join('\n')}` };
     } else if (pd.type === 'cancel') {
       busy(true, '取り消しています…'); const r = await doCancel(pd.items);
       if (!r || !r.ok) throw new Error((r && r.message) || '取り消しできませんでした。');
-      S.done = { title: '取り消しました', lines: pd.items.map(e => fmtWhen(e.start)) };
+      S.done = { title: '取り消しました', lines: pd.items.map(e => fmtWhen(e.start)), line: r.line || null };
     } else {
       // 変更：先に新しい枠を確保し、取れてから古い予約を消す（失敗しても予約が消えない順番）
       busy(true, '日時を変更しています…'); const r1 = await doReserve([pd.to]);
       if (!r1 || !r1.ok) throw new Error((r1 && r1.message) || '新しい日時を予約できませんでした。いまの予約はそのままです。');
-      const r2 = await doCancel([pd.from]);
+      const r2 = await doCancel([pd.from], true);   // 変更のときは取消のお知らせを送らない（予約のお知らせに含める）
       if (!r2 || !r2.ok) { S.done = { title: '新しい日時は予約できました', lines: [`${fmtDay(parseDayKey(pd.to.day_key))} ${pd.to.start_time}`],
         note: '前の予約の取り消しができませんでした。お手数ですが、お電話でお知らせください。' }; }
-      else S.done = { title: '日時を変更しました', lines: [`${fmtDay(parseDayKey(pd.to.day_key))} ${pd.to.start_time}`], note: `前の予約（${fmtWhen(pd.from.start)}）は取り消しました。` };
+      else S.done = { title: '日時を変更しました', lines: [`${fmtDay(parseDayKey(pd.to.day_key))} ${pd.to.start_time}`], note: `前の予約（${fmtWhen(pd.from.start)}）は取り消しました。`, line: r1.line || null };
     }
   } catch (e) {
     S.done = { error: e && e.name === 'AbortError' ? '通信に時間がかかっています。はじめの画面で、予約が入ったかたしかめてください。' : (e.message || 'エラーがおきました。') };
@@ -801,7 +839,7 @@ function applyClass(klass) {
   if (S.proxy) { Object.assign(S.proxy, { category, course, klass, usual: null }); persistPerson(); }
   else if (S.profile && S.edit === 'class') { Object.assign(S.profile, { category, course, klass, usual: null }); store.set('tr_profile', S.profile); }
   else { S.profile = { name: S.draft.name, category, course, klass, usual: null }; store.set('tr_profile', S.profile); S.loaded = false; }
-  S.edit = null; resetPicks(); go('home'); if (!S.loaded) loadData();
+  S.edit = null; resetPicks(); go('home'); if (!S.loaded) loadData(); lineLink();
 }
 
 function schedKeepForm() { const g = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
@@ -891,6 +929,7 @@ function act(a, el) {
 
 // ---------- 起動 ----------
 (function start() {
+  lineInit();
   if (S.profile && OLD_COURSE_KEYS[S.profile.course]) { S.profile.course = OLD_COURSE_KEYS[S.profile.course]; S.profile.usual = null; store.set('tr_profile', S.profile); }
   if (isAdmin()) { act('admin-home', document.body); return; }
   const c = S.profile && COURSES[S.profile.course];
