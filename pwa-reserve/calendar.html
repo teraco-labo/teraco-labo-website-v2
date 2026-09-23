@@ -41,6 +41,7 @@
   .foot .tel { color: #2E86DE; } .foot .line { color: #55AE3A; }
   .foot img.qr { width: 17mm; height: 17mm; } .foot img.logo { width: 23mm; height: auto; }
   .err { padding: 30mm 10mm; text-align: center; font-size: 5mm; }
+  @media screen and (max-width: 820px) { .sheet { zoom: var(--fit, 1); margin: 8px auto; } }
   @media print { body { background: #fff; } .tools { display: none; } .sheet { margin: 0; box-shadow: none; width: auto; min-height: 0; height: 283mm; padding: 0; } }
 </style>
 </head>
@@ -123,6 +124,8 @@ function build() {
   history.replaceState(null, '', `?m=${month}`);
 }
 function shift(n) { const [y, m] = month.split('-').map(Number); const d = new Date(y, m - 1 + n, 1); month = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; build(); }
+function fit() { const w = document.documentElement.clientWidth; document.documentElement.style.setProperty('--fit', String(Math.min(1, (w - 12) / 756))); }
+fit(); window.addEventListener('resize', fit);
 document.getElementById('prev').onclick = () => shift(-1);
 document.getElementById('next').onclick = () => shift(1);
 fetch(API_BASE + '?action=schedule_get').then(r => r.json()).then(d => { schedule = d.schedule || { published: [], off: [], events: [] }; build(); })

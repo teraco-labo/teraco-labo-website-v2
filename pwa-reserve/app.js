@@ -464,12 +464,16 @@ function calendarBlock() {
   const [minM, maxM] = monthRange(); const [y, m] = S.viewMonth.split('-').map(Number);
   const first = new Date(y, m - 1, 1); const dim = new Date(y, m, 0).getDate();
   let cells = ''; for (let i = 0; i < first.getDay(); i++) cells += '<td class="off"></td>';
-  let rows = '';
+  let rows = ''; let hasHol = false, hasEv = false;
   for (let d = 1; d <= dim; d++) {
     const date = new Date(y, m - 1, d); const st = dayStatus(date);
     const tap = ['ok', 'view', 'picked'].includes(st.cls);
     const tint = (!isAdmin() && st.own && ['ok', 'view'].includes(st.cls)) ? ` style="background:${COURSES[me().course].color};"` : '';
-    cells += `<td class="${st.cls}${st.mine ? ' mine' : ''}"${tint} ${tap ? `data-act="day" data-day="${dayKeyOf(date)}"` : ''}>${d}${isAdmin() && st.total ? `<span class="daycnt">${st.total}人</span>` : ''}</td>`;
+    // 講座カレンダー（先生が登録した休み・体験会など）を、そのまま日付のマスに出す
+    const dk = dayKeyOf(date); const hol = isOff(dk); const ev = hol ? null : SCHEDULE.events.find(e => e.day === dk);
+    if (hol) hasHol = true; if (ev) hasEv = true;
+    const tag = hol ? '<small class="tag hol">休み</small>' : (ev ? `<small class="tag ev">${esc(evShort(ev.label))}</small>` : '');
+    cells += `<td class="${st.cls}${st.mine ? ' mine' : ''}${hol ? ' hol' : ''}"${tint} ${tap ? `data-act="day" data-day="${dk}"` : ''}>${d}${tag}${isAdmin() && st.total ? `<span class="daycnt">${st.total}人</span>` : ''}</td>`;
     if ((first.getDay() + d) % 7 === 0) { rows += `<tr>${cells}</tr>`; cells = ''; }
   }
   if (cells) { while ((cells.match(/<td/g) || []).length < 7) cells += '<td class="off"></td>'; rows += `<tr>${cells}</tr>`; }
@@ -484,8 +488,11 @@ function calendarBlock() {
       <button class="nav" data-act="month" data-d="1" ${monthDiff(S.viewMonth, maxM) <= 0 ? 'disabled' : ''} aria-label="次の月">›</button></div>
     <table class="cal"><thead><tr>${DAYS.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
     ${undecided ? `<div class="note">${m}月の日程は、まだ決まっていません。決まりしだい、ここに出ます。</div>` : ''}
-    <div class="legend">${legend}<br>下に点がある日は、もう予約が入っています。</div>`;
+    <div class="legend">${legend}<br>下に点がある日は、もう予約が入っています。${hasHol ? '<br>「休み」の日は、教室がお休みです。' : ''}${hasEv ? '<br>「体験会」は、はじめての方の見学・体験の会です。' : ''}</div>
+    <div class="links" style="margin-top:10px;"><a class="link" target="_blank" rel="noopener" href="calendar.html?m=${S.viewMonth}">${m}月の講座カレンダーを見る</a></div>`;
 }
+// 体験会などの予定を、日付のマスに入る短い言葉にする
+function evShort(label) { const s = String(label || ''); return /体験会/.test(s) ? '体験会' : s.slice(0, 4); }
 // えらんだ日時の行（個人レッスン・管理者用）と予約ボタン
 function pickedRowsAndButton() {
   const picked = Array.from(S.picked.values()).sort((x, y) => Number(x.slot_id) - Number(y.slot_id)); const n = picked.length;
@@ -640,7 +647,8 @@ function viewAdminHome() {
   </div>
   <div class="card"><h2 style="color:var(--admin);">講座カレンダー</h2>
     <p class="muted" style="margin-bottom:12px;">休みの日・週と体験会を登録します。生徒さんの予約画面と、印刷用カレンダーの両方に反映されます。</p>
-    <button class="btn dark" data-act="admin-schedule">講座カレンダーを編集する</button></div>
+    <button class="btn dark" data-act="admin-schedule">講座カレンダーを編集する</button>
+    <a class="btn ghost" style="text-decoration:none;text-align:center;line-height:40px;margin-top:10px;" target="_blank" rel="noopener" href="calendar.html?m=${addMonths(monthKeyOf(new Date()), 1)}">講座カレンダーを見る（印刷用）</a></div>
   <div class="card"><h2 style="color:var(--admin);">今日・明日の予約</h2>${sum || '<p class="muted">読み込み中…</p>'}</div>
   <button class="btn quiet" data-act="admin-logout">管理者をおわる</button>`;
 }

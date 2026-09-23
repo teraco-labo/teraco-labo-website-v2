@@ -77,6 +77,10 @@
   td.mine::after{content:"";position:absolute;left:50%;bottom:6px;width:9px;height:9px;margin-left:-4px;border-radius:50%;background:var(--green-deep);}
   td.picked{background:var(--green);color:#fff;}
   td.picked::before{border-color:#fff;}
+  td.hol{background:#FDECEA;color:#B5544A;}
+  .tag{display:block;font-size:11px;font-weight:800;line-height:1.15;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px;}
+  .tag.hol{color:#B5544A;}
+  .tag.ev{color:#7A5A00;background:#FFF1C2;border-radius:6px;margin:2px 4px 0;font-size:10px;}
   .daycnt{position:absolute;right:3px;top:2px;font-size:11px;font-weight:800;color:#fff;background:var(--admin);border-radius:8px;padding:1px 5px;line-height:1.3;}
   .legend{font-size:15px;color:var(--sub);margin-top:10px;line-height:1.7;}
   /* 時間ボタン */
@@ -129,7 +133,7 @@
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script src="line-config.js?v=2"></script>
 <script src="timetable.js?v=1"></script>
-<script src="app.js?v=n15"></script>
+<script src="app.js?v=n16"></script>
 <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function(){}); }</script>
 </body>
 </html>
