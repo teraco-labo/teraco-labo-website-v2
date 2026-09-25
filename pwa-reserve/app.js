@@ -273,7 +273,7 @@ function groupCount(mk) {
 function limitText(mk) {
   if (isAdmin()) return '';
   const lim = groupLimit(), m = Number(mk.split('-')[1]);
-  return `${m}月は、あと<b>${groupRoom(mk)}回</b>えらべます。<br><small>月${lim}回のコース${S.plan && Number(S.plan.monthly) > 0 ? '' : '（名簿が読めないときの目安）'}。使わなかった分は翌月にまわせます（2か月で${lim * 2}回まで）。</small>`;
+  return `${m}月は、あと<b>${groupRoom(mk)}回</b>えらべます。`;   // 裏の仕組み（コースの回数・繰り越し）はお客さんには出さない
 }
 
 // ---------- 「いつもの」 ----------
@@ -528,15 +528,15 @@ function calendarBlock() {
   const tentative = !isAdmin() && bookableMonth(S.viewMonth) && !SCHEDULE.published.includes(S.viewMonth);
   const group = !isAdmin() && COURSES[me().course].classes;
   const legend = isAdmin() ? 'どの日でも選べます。数字はその日の予約人数です。'
-    : group ? '<b>色のついた日</b>が、あなたのクラスの日です。<br>おすと、えらぶ・はずすができます。<b>緑の日</b>が、えらんでいる日です。' + (hasAlt ? '<br><b>点線の日</b>は、同じコースの別のクラスの日です。都合がわるいときは、こちらもえらべます。' : '')
+    : group ? '<b>色のついた日</b>が、あなたのクラスの日です。おすと、えらぶ・はずすができます。' + (hasAlt ? '<br><b>点線の日</b>は、別のクラスの日です。' : '')
     : '緑のわくの日をおして、時間をえらんでください。';
   return `<div class="cal-head"><button class="nav" data-act="month" data-d="-1" ${monthDiff(minM, S.viewMonth) <= 0 ? 'disabled' : ''} aria-label="前の月">‹</button>
       <div class="ttl">${y}年${m}月</div>
       <button class="nav" data-act="month" data-d="1" ${monthDiff(S.viewMonth, maxM) <= 0 ? 'disabled' : ''} aria-label="次の月">›</button></div>
     <table class="cal"><thead><tr>${DAYS.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
     ${undecided ? `<div class="note">${m}月の日程は、まだ決まっていません。決まりしだい、ここに出ます。</div>` : ''}
-    ${tentative ? `<div class="info" style="margin-top:10px;">${m}月の日程は、まだ仮です。先生がお休みの日を決めると、変わることがあります。</div>` : ''}
-    <div class="legend">${legend}<br>下に点がある日は、もう予約が入っています。${hasHol ? '<br>「休み」の日は、教室がお休みです。' : ''}${hasEv ? '<br>「体験会」は、はじめての方の見学・体験の会です。' : ''}</div>
+    ${tentative ? `<div class="info" style="margin-top:10px;">${m}月の日程は仮です。変わることがあります。</div>` : ''}
+    <div class="legend">${legend}<br>下に点がある日は、もう予約が入っています。</div>
     <div class="links" style="margin-top:10px;"><a class="link" target="_blank" rel="noopener" href="calendar.html?m=${S.viewMonth}">${m}月の講座カレンダーを見る</a></div>`;
 }
 // 体験会などの予定を、日付のマスに入る短い言葉にする
@@ -990,7 +990,7 @@ function act(a, el) {
     if (S.picked.has(id)) S.picked.delete(id);
     else {
       const m = Number(slot.month_key.split('-')[1]);
-      if (!isAdmin() && isGroupSlot(slot) && groupRoom(slot.month_key) < 1) { alert(`これ以上はえらべません。\n月${groupLimit()}回のコースは、となり合う2か月で${groupLimit() * 2}回までです（翌月への繰り越しぶんをふくむ）。\nふやしたいときは、先生にご相談ください。`); return; }
+      if (!isAdmin() && isGroupSlot(slot) && groupRoom(slot.month_key) < 1) { alert('これ以上はえらべません。'); return; }
       if (!isAdmin() && !isGroupSlot(slot) && monthCount(slot.month_key) + 1 > MONTHLY_LIMIT) { alert(`${m}月の予約は${MONTHLY_LIMIT}回までです。`); return; }
       S.picked.set(id, slot); }
     return (S.view === 'reserve' || S.view === 'extra') ? renderKeepScroll() : goHomeNext(); }
