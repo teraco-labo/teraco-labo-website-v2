@@ -23,6 +23,33 @@ function authorizeMe() {
   Logger.log('承認されました！');
 }
 
+// ---- 生徒さんの「月の回数」（Teraco Customer の顧客名簿 monthlyLessons。4回コース／2回コースなど） ----
+// 名簿が読めないとき（未承認など）は null を返し、アプリ側は既定の上限（4回）で動く
+function planMap_() {
+  var cache = CacheService.getScriptCache(), hit = cache.get('PLAN_MAP');
+  if (hit) return JSON.parse(hit);
+  var map = {};
+  var sh = SpreadsheetApp.openById(CUSTOMER_DB_ID).getSheetByName(CUSTOMER_SHEET);
+  if (!sh) return map;
+  var vals = sh.getDataRange().getValues(), head = vals[0].map(function(h) { return String(h || '').trim(); });
+  var ix = {}; head.forEach(function(h, i) { ix[h] = i; });
+  for (var i = 1; i < vals.length; i++) {
+    var r = vals[i], st = String(r[ix.status] || '').trim(); if (st !== '在籍' && st !== '休会') continue;
+    var monthly = Number(r[ix.monthlyLessons]); if (isNaN(monthly)) monthly = null;
+    var rec = { monthly: monthly, course: String(r[ix.course] || ''), status: st };
+    var names = [String(r[ix.displayName] || ''), String(r[ix.lastName] || '') + String(r[ix.firstName] || '')]
+      .concat(String(r[ix.aliases] || '').split(/[,、|]/));
+    names.forEach(function(n) { var k = normalize(n); if (k && !map[k]) map[k] = rec; });
+  }
+  cache.put('PLAN_MAP', JSON.stringify(map), 600);
+  return map;
+}
+function getPlan_(name) {
+  var key = normalize(name || ''); if (!key) return null;
+  try { var rec = planMap_()[key]; return rec ? { monthly: rec.monthly, course: rec.course, status: rec.status, source: '顧客名簿' } : { monthly: null, course: '', status: '', source: 'not_found' }; }
+  catch (e) { return null; }
+}
+
 // ---- 管理者用：生徒さん一覧（Teraco Customer の顧客名簿から。五十音順） ----
 var LINE_LOGIN_CHANNEL_ID_DEFAULT = '2011702023';   // LINEログインチャネル「TERACO予約 ログイン」（秘密ではない。スクリプトプロパティがあればそちらを優先）
 var CUSTOMER_DB_ID = '1xh_qHvKhclCsaW9Lyt6dCnCVsazVrkfupb3MD5KbgXE';   // てらこ顧客管理DB
@@ -58,7 +85,7 @@ function getAdminStudents_(passcode) {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var action = p.action || 'overview';
-  if (action === 'version') return jsonOut({ok: true, version: 'v53', timestamp: new Date().toISOString()});
+  if (action === 'version') return jsonOut({ok: true, version: 'v55', timestamp: new Date().toISOString()});
   if (action === 'overview') return jsonOut(getOverview(p.name || '', Number(p.days) || CONFIG.OVERVIEW_DAYS));
   if (action === 'schedule_get') return jsonOut({ ok: true, schedule: getSchedule_() });
   if (action === 'admin_summary') return jsonOut(getAdminSummary(p.passcode));
@@ -754,7 +781,7 @@ function getNextData(name, days, email) {
   }
   var existing = [];
   if (name && name.trim()) existing = findUserEvents(cal, name.trim(), start, addDays(start, days + 31), email || '');
-  return { ok: true, version: 'v53', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_() };
+  return { ok: true, version: 'v55', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_(), plan: getPlan_(name) };
 }
 
 // =====================================================================

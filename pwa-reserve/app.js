@@ -6,7 +6,8 @@
 const API_BASE = 'https://script.google.com/macros/s/AKfycbz2_NXN-VuAo2iCFu-jQ-nT5k9Bk3eCoIYBGXAtfDtneNJS7La8vLxS5T7p4Xo3iUIy/exec';
 const TEL = '090-6738-1469';
 const DEMO = new URLSearchParams(location.search).has('demo');
-const MONTHLY_LIMIT = 8;
+const MONTHLY_LIMIT = 8;          // 個人レッスンなど、月の回数が決まっていないときの上限
+const DEFAULT_GROUP_LIMIT = 4;    // グループ講座で、名簿から月の回数が取れないときの上限
 const ADMIN_RANGE_MONTHS = 12;
 const DAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -51,6 +52,7 @@ const S = {
   myHistory: null, myHistoryMonths: 3,
   line: Object.assign({ userId: null, name: null, idToken: null, inClient: false, linkedFor: null }, store.get('tr_line', {})),
   override: null,                            // {course:'private'}：個人レッスン「も」予約するとき
+  plan: null,                                // 名簿の月の回数 {monthly:4|2|0|null, course, status}（next_data で取得）
   draft: {},                                 // 初回登録の途中経過
   admin: { summary: null, names: [], students: [], studentsMsg: '', query: '', history: null, historyMonths: 3, pendingRender: false },
   demo: { added: [], removed: new Set() }
@@ -175,15 +177,15 @@ async function loadData({ quiet = false } = {}) {
   const cacheKey = 'tr_cache_' + name;
   if (!S.loaded) {
     const c = store.get(cacheKey, null);
-    if (c && c.slots) { S.slots = c.slots; S.existing = c.existing || []; applySchedule(c.schedule); indexSlots(); applyDemo(); S.loaded = true; }
+    if (c && c.slots) { S.slots = c.slots; S.existing = c.existing || []; S.plan = c.plan || null; applySchedule(c.schedule); indexSlots(); applyDemo(); S.loaded = true; }
   }
   S.syncing = true; if (!quiet) render();
   try {
     const d = await post({ action: 'next_data', name: name, days: 75, email: myEmail() });
     if (!d || !d.ok) throw new Error('load');
     if (me() && me().name !== name) return;            // 途中で人が切り替わった
-    S.slots = d.slots || []; S.existing = d.existing || []; applySchedule(d.schedule); indexSlots(); applyDemo(); S.loaded = true;
-    store.set(cacheKey, { t: Date.now(), slots: S.slots, existing: d.existing || [], schedule: d.schedule || null });
+    S.slots = d.slots || []; S.existing = d.existing || []; S.plan = d.plan || null; applySchedule(d.schedule); indexSlots(); applyDemo(); S.loaded = true;
+    store.set(cacheKey, { t: Date.now(), slots: S.slots, existing: d.existing || [], schedule: d.schedule || null, plan: S.plan });
     S.error = null;
   } catch (e) {
     if (!S.loaded) S.error = '予約状況を読み込めませんでした。電波のよい場所で、もう一度ためしてください。';
@@ -203,7 +205,7 @@ function lessonsOn(p, date) {
   const dk = dayKeyOf(date); const dow = date.getDay();
   if (!p || !p.course || isOff(dk)) return [];
   // 先生が日程を確定して公開した月だけ、生徒から予約できる（管理者の代理操作はいつでも可）
-  if (!SCHEDULE.published.includes(monthKeyOf(date))) return [];
+  if (!bookableMonth(monthKeyOf(date))) return [];
   const c = COURSES[p.course];
   if (!c.classes) return TT.privateDows.includes(dow) ? TIMES_PRIVATE.filter(t => !eventAt(dk, t)).map(t => ({ time: t, klass: null, own: true })) : [];
   return Object.keys(c.classes).filter(k => c.classes[k].dow === dow && (FURIKAE || k === p.klass)).map(k => ({ time: c.classes[k].time, klass: k, own: k === p.klass }));
@@ -248,6 +250,30 @@ function monthCount(mk) {
   return S.existing.filter(e => monthKeyOf(new Date(e.start)) === mk).length
        + Array.from(S.picked.values()).filter(s => s.month_key === mk).length;
 }
+// グループ講座の月の上限（名簿の月回数。取れないときは4回）。個人レッスンは数えない
+const isGroupRsv = (e) => { const g = inferClass(e); return !g || g.course !== 'private'; };
+const isGroupSlot = (sl) => !!sl.klass;
+function groupLimit() { return (S.plan && Number(S.plan.monthly) > 0) ? Number(S.plan.monthly) : DEFAULT_GROUP_LIMIT; }
+// 予約できる月：先生が公開した月と、そのすぐ次の月（仮。休みの日が決まると変わることがある）
+function bookableMonth(mk) {
+  if (SCHEDULE.published.includes(mk)) return true;
+  const pub = SCHEDULE.published.slice().sort(); if (!pub.length) return false;
+  return mk === addMonths(pub[pub.length - 1], 1) && mk <= addMonths(monthKeyOf(new Date()), 2);
+}
+// 翌月への繰り越しあり：となり合う2か月の合計が「月の回数×2」まで（月4回なら2か月で8回、月2回なら4回）
+function groupRoom(mk) {
+  const two = groupLimit() * 2;
+  return Math.max(0, Math.min(two - groupCount(addMonths(mk, -1)) - groupCount(mk), two - groupCount(mk) - groupCount(addMonths(mk, 1))));
+}
+function groupCount(mk) {
+  return S.existing.filter(e => monthKeyOf(new Date(e.start)) === mk && isGroupRsv(e)).length
+       + Array.from(S.picked.values()).filter(s => s.month_key === mk && isGroupSlot(s)).length;
+}
+function limitText(mk) {
+  if (isAdmin()) return '';
+  const lim = groupLimit(), m = Number(mk.split('-')[1]);
+  return `${m}月は、あと<b>${groupRoom(mk)}回</b>えらべます。<br><small>月${lim}回のコース${S.plan && Number(S.plan.monthly) > 0 ? '' : '（名簿が読めないときの目安）'}。使わなかった分は翌月にまわせます（2か月で${lim * 2}回まで）。</small>`;
+}
 
 // ---------- 「いつもの」 ----------
 function usualOf(p) {
@@ -267,7 +293,7 @@ function proposals() {
   const taken = existingDays(); const groups = new Map(); const t = today0();
   for (let i = 1; i <= 75; i++) {
     const d = new Date(t); d.setDate(t.getDate() + i); const mk = monthKeyOf(d);
-    if (!SCHEDULE.published.includes(mk) || d.getDay() !== u.dow || !withinDeadline(d)) continue;
+    if (!bookableMonth(mk) || d.getDay() !== u.dow || !withinDeadline(d)) continue;
     const dk = dayKeyOf(d); if (taken.has(dk)) continue;
     const slot = slotsForDay(dk).find(x => x.start_time === u.time && x.own);
     if (!slot || slotState(slot) !== 'open') continue;
@@ -275,7 +301,7 @@ function proposals() {
   }
   const out = []; let first = true;
   Array.from(groups.keys()).sort().forEach(mk => {
-    const room = Math.max(0, MONTHLY_LIMIT - S.existing.filter(e => monthKeyOf(new Date(e.start)) === mk).length);
+    const room = Math.max(0, groupLimit() - S.existing.filter(e => monthKeyOf(new Date(e.start)) === mk && isGroupRsv(e)).length);
     const items = groups.get(mk).slice(0, isAdmin() ? 99 : room); if (!items.length) return;
     out.push({ mk, label: `${Number(mk.split('-')[1])}月分`, items, preChecked: first }); first = false;
   });
@@ -408,6 +434,7 @@ function viewReserve() {
         <p style="font-weight:800;border-left:14px solid ${COURSES[p.course].color};padding-left:10px;margin-bottom:12px;">${esc(classText(p))}</p>`;
   if (!S.loaded) h += `<p class="muted">予約できる日をしらべています…</p>`;
   else {
+    if (group) h += `<p class="muted" style="margin-bottom:10px;">${limitText(S.viewMonth)}</p>`;
     h += calendarBlock();
     const picked = Array.from(S.picked.values());
     const cand = group ? monthCandidates(S.viewMonth) : []; const candIds = new Set(cand.map(x => String(x.slot_id)));
@@ -454,7 +481,7 @@ function dayStatus(date) {
 // カレンダーを最初に開く月：生徒は「公開されている、いちばん近い月」。管理者は今月
 function firstBookableMonth() {
   const cur = monthKeyOf(new Date()); if (isAdmin()) return cur;
-  return [cur, addMonths(cur, 1), addMonths(cur, 2)].find(k => SCHEDULE.published.includes(k)) || cur;
+  return [cur, addMonths(cur, 1), addMonths(cur, 2)].find(k => bookableMonth(k)) || cur;
 }
 // はじめてホームを出すとき、確定している月の「自分のクラスの日」を最初からえらんだ状態にする
 function initHomePicks() {
@@ -493,7 +520,8 @@ function calendarBlock() {
   }
   if (cells) { while ((cells.match(/<td/g) || []).length < 7) cells += '<td class="off"></td>'; rows += `<tr>${cells}</tr>`; }
   const cur = monthKeyOf(new Date());
-  const undecided = !isAdmin() && !SCHEDULE.published.includes(S.viewMonth) && S.viewMonth >= cur;
+  const undecided = !isAdmin() && !bookableMonth(S.viewMonth) && S.viewMonth >= cur;
+  const tentative = !isAdmin() && bookableMonth(S.viewMonth) && !SCHEDULE.published.includes(S.viewMonth);
   const group = !isAdmin() && COURSES[me().course].classes;
   const legend = isAdmin() ? 'どの日でも選べます。数字はその日の予約人数です。'
     : group ? '<b>色のついた日</b>が、あなたのクラスの日です。<br>おすと、えらぶ・はずすができます。<b>緑の日</b>が、えらんでいる日です。' + (hasAlt ? '<br><b>点線の日</b>は、同じコースの別のクラスの日です。都合がわるいときは、こちらもえらべます。' : '')
@@ -503,6 +531,7 @@ function calendarBlock() {
       <button class="nav" data-act="month" data-d="1" ${monthDiff(S.viewMonth, maxM) <= 0 ? 'disabled' : ''} aria-label="次の月">›</button></div>
     <table class="cal"><thead><tr>${DAYS.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
     ${undecided ? `<div class="note">${m}月の日程は、まだ決まっていません。決まりしだい、ここに出ます。</div>` : ''}
+    ${tentative ? `<div class="info" style="margin-top:10px;">${m}月の日程は、まだ仮です。先生がお休みの日を決めると、変わることがあります。</div>` : ''}
     <div class="legend">${legend}<br>下に点がある日は、もう予約が入っています。${hasHol ? '<br>「休み」の日は、教室がお休みです。' : ''}${hasEv ? '<br>「体験会」は、はじめての方の見学・体験の会です。' : ''}</div>
     <div class="links" style="margin-top:10px;"><a class="link" target="_blank" rel="noopener" href="calendar.html?m=${S.viewMonth}">${m}月の講座カレンダーを見る</a></div>`;
 }
@@ -953,7 +982,11 @@ function act(a, el) {
     if (S.mode === 'change') { S.pending = { type: 'change', from: S.changing, to: slot }; return go('confirm'); }
     const id = String(slot.slot_id);
     if (S.picked.has(id)) S.picked.delete(id);
-    else { if (!isAdmin() && monthCount(slot.month_key) + 1 > MONTHLY_LIMIT) { alert(`${Number(slot.month_key.split('-')[1])}月の予約は${MONTHLY_LIMIT}回までです。`); return; } S.picked.set(id, slot); }
+    else {
+      const m = Number(slot.month_key.split('-')[1]);
+      if (!isAdmin() && isGroupSlot(slot) && groupRoom(slot.month_key) < 1) { alert(`これ以上はえらべません。\n月${groupLimit()}回のコースは、となり合う2か月で${groupLimit() * 2}回までです（翌月への繰り越しぶんをふくむ）。\nふやしたいときは、先生にご相談ください。`); return; }
+      if (!isAdmin() && !isGroupSlot(slot) && monthCount(slot.month_key) + 1 > MONTHLY_LIMIT) { alert(`${m}月の予約は${MONTHLY_LIMIT}回までです。`); return; }
+      S.picked.set(id, slot); }
     return (S.view === 'reserve' || S.view === 'extra') ? renderKeepScroll() : goHomeNext(); }
   if (a === 'to-confirm-picked') { const slots = Array.from(S.picked.values()).sort((x, y) => Number(x.slot_id) - Number(y.slot_id)); S.pending = { type: 'reserve', slots }; return go('confirm'); }
   if (a === 'change') { const e = S.existing.find(x => x.event_id === d.id); if (!e) return; S.mode = 'change'; S.changing = e; S.picked.clear(); S.viewMonth = monthKeyOf(new Date(e.start)); return go('calendar'); }
