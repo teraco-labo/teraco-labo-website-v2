@@ -269,9 +269,8 @@ const isGroupSlot = (sl) => !!sl.klass;
 function groupLimit() { return (S.plan && Number(S.plan.monthly) > 0) ? Number(S.plan.monthly) : DEFAULT_GROUP_LIMIT; }
 // 予約できる月：先生が公開した月と、そのすぐ次の月（仮。休みの日が決まると変わることがある）
 function bookableMonth(mk) {
-  if (SCHEDULE.published.includes(mk)) return true;
-  const pub = SCHEDULE.published.slice().sort(); if (!pub.length) return false;
-  return mk === addMonths(pub[pub.length - 1], 1) && mk <= addMonths(monthKeyOf(new Date()), 2);
+  // 2026-09-25 藤崎さん要望: 先生が公開した月だけ。次の月を「仮」で見せるのはやめる
+  return SCHEDULE.published.includes(mk);
 }
 // 翌月への繰り越しあり：となり合う2か月の合計が「月の回数×2」まで（月4回なら2か月で8回、月2回なら4回）
 function groupRoom(mk) {
@@ -479,8 +478,13 @@ function viewHistory() {
 function monthRange() {
   const cur = monthKeyOf(new Date());
   if (isAdmin()) return [addMonths(cur, -ADMIN_RANGE_MONTHS), addMonths(cur, ADMIN_RANGE_MONTHS)];
-  const last = S.slots.length ? S.slots[S.slots.length - 1].month_key : cur;
-  return [cur, last];
+  // 2026-09-25 藤崎さん要望: 生徒は「先生が公開した最後の月」までしか進めない（仮の月・未定の月は出さない）
+  return [cur, lastPublishedMonth()];
+}
+function lastPublishedMonth() {
+  const cur = monthKeyOf(new Date());
+  const pub = SCHEDULE.published.filter(mk => mk >= cur).sort();
+  return pub.length ? pub[pub.length - 1] : cur;
 }
 function dayStatus(date) {
   const dk = dayKeyOf(date); const slots = slotsForDay(dk);
