@@ -381,7 +381,7 @@ function viewCourse() {
   const back = S.proxy ? (S.proxy.course ? 'home' : 'admin-home') : (S.edit === 'class' ? 'home' : 'ob-back-name');
   return `<h1>どの講座ですか？</h1>
   ${Object.keys(COURSES).map(k => `<button class="choice" data-act="course" data-v="${k}" style="border-left:16px solid ${COURSES[k].color};"><b>${esc(courseName(k))}</b>${k === 'private' ? '<span>先生と1対1</span>' : ''}</button>`).join('')}
-  <p class="muted center" style="margin:6px 0 14px;">わからないときは、先生におたずねください。<br><a href="tel:${TEL}" style="color:var(--green-deep);font-weight:800;">電話で聞く</a></p>
+  <p class="muted center" style="margin:6px 0 14px;">わからないときは、先生におたずねください。</p>
   <button class="btn quiet" data-act="${back}">もどる</button>`;
 }
 function viewKlass() {
@@ -434,7 +434,7 @@ function viewHome() {
 
   h += `<div class="links"><button class="link" data-act="edit-class">クラスを変える</button>
         ${S.proxy ? '' : `<button class="link" data-act="edit-name">お名前をなおす</button><button class="link" data-act="more">受講履歴・そのほか</button>`}
-        <a class="link" href="tel:${TEL}">電話で聞く</a></div>
+        </div>
         <div class="links" style="margin-top:26px;"><button class="link" style="font-size:14px;color:#9AA8A0;" data-act="${isAdmin() ? 'admin-home' : 'admin-login'}">管理者</button></div>`;
   return h;
 }
@@ -620,8 +620,7 @@ function lineResultHtml(l) {
 function viewDone() {
   const d = S.done; if (!d) return '';
   if (d.error) return `<h1>うまくいきませんでした</h1><div class="card"><p class="big" style="font-size:22px;">${esc(d.error)}</p>
-      <p class="muted" style="margin-top:10px;">こまったときは、お電話ください。</p></div>
-      <a class="btn ghost" style="text-decoration:none;text-align:center;line-height:40px;" href="tel:${TEL}">電話で聞く</a>
+      <p class="muted" style="margin-top:10px;">こまったときは、教室で先生におたずねください。</p></div>
       <button class="btn" style="margin-top:12px;" data-act="home">はじめの画面にもどる</button>`;
   return `<div class="card center" style="padding-top:26px;"><div class="okmark"></div><h1 style="margin-bottom:6px;">${esc(d.title)}</h1>
       <ul class="list-big">${d.lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
@@ -848,7 +847,7 @@ async function runPending() {
       if (!r1 || !r1.ok) throw new Error((r1 && r1.message) || '新しい日時を予約できませんでした。いまの予約はそのままです。');
       const r2 = await doCancel([pd.from], true);   // 変更のときは取消のお知らせを送らない（予約のお知らせに含める）
       if (!r2 || !r2.ok) { S.done = { title: '新しい日時は予約できました', lines: [`${fmtDay(parseDayKey(pd.to.day_key))} ${slotTimeText(pd.to)}`],
-        note: '前の予約の取り消しができませんでした。お手数ですが、お電話でお知らせください。' }; }
+        note: '前の予約の取り消しができませんでした。教室で先生におつたえください。' }; }
       else S.done = { title: '日時を変更しました', lines: [`${fmtDay(parseDayKey(pd.to.day_key))} ${slotTimeText(pd.to)}`], note: `前の予約（${fmtWhen(pd.from.start)} ${rowClassText(pd.from)}）は取り消しました。`, line: r1.line || null };
     }
   } catch (e) {
