@@ -206,6 +206,9 @@ const isOff = (dayKey) => SCHEDULE.off.includes(dayKey);
 const eventAt = (dayKey, time) => SCHEDULE.events.find(ev => ev.day === dayKey && ev.time === time) || null;
 // 生徒がえらべる予定＝名前に「体験会」が入っているもの（初めての方も、在籍の方（有料）もえらべる）
 const trialEventsOn = (dayKey) => SCHEDULE.events.filter(ev => ev.day === dayKey && /体験会/.test(ev.label || '')).sort((a, b) => a.time.localeCompare(b.time));
+// 枠の表示：必ず「時刻（分数）」を出す。例「16:00（45分）」「10:00 体験会スマホ（45分）」
+const slotMin = (sl) => Number(sl.min) || ((me() && COURSES[me().course]) ? COURSES[me().course].min : 45);
+const slotTimeText = (sl) => `${sl.start_time}${sl.event ? ' ' + sl.event : ''}（${slotMin(sl)}分）`;
 const isTrialTitle = (e) => /体験会/.test((e && (e.class_title || e.label || e.title)) || '');
 // その日に受けられる講座の一覧 [{time, klass, own}]。own=自分のクラス、false=同じコースの別クラス（振替）
 function lessonsOn(p, date) {
@@ -456,7 +459,7 @@ function viewReserve() {
     if (rows.length) h += `<div class="month-label">${group ? 'えらべる日' : 'えらんだ日時'}</div>` + rows.map(sl => {
       const on = S.picked.has(String(sl.slot_id)); const n = Number(sl.reserved_count) || 0;
       return `<button class="pick ${on ? 'on' : ''}" data-act="toggle-slot" data-id="${esc(sl.slot_id)}" data-day="${esc(sl.day_key)}">
-        <span class="box"></span><span>${fmtDay(parseDayKey(sl.day_key))}${group ? '' : ' ' + esc(sl.start_time)}${sl.klass && !sl.own ? ` <small>${esc(sl.klass)}クラス ${esc(sl.start_time)}</small>` : ''}${sl.event ? ` <small>${group ? esc(sl.start_time) + ' ' : ''}${esc(sl.event)}（${Number(sl.min) || 45}分）</small>` : ''}</span>${n > 0 ? `<span class="cnt">${n}人</span>` : ''}</button>`; }).join('');
+        <span class="box"></span><span>${fmtDay(parseDayKey(sl.day_key))} ${esc(slotTimeText(sl))}${sl.klass && !sl.own ? ` <small>${esc(sl.klass)}クラス</small>` : ''}</span>${n > 0 ? `<span class="cnt">${n}人</span>` : ''}</button>`; }).join('');
     const n = S.picked.size;
     h += `<button class="btn" style="margin-top:10px;" data-act="to-confirm-picked" ${n ? '' : 'disabled'}>${n ? `この${n}回を予約する` : '日にちをえらんでください'}</button>`;
   }
@@ -554,7 +557,7 @@ function evShort(label) { const s = String(label || ''); return /体験会/.test
 function pickedRowsAndButton() {
   const picked = Array.from(S.picked.values()).sort((x, y) => Number(x.slot_id) - Number(y.slot_id)); const n = picked.length;
   return (n ? `<div class="month-label">えらんだ日時</div>` + picked.map(sl => `<button class="pick on" data-act="toggle-slot" data-id="${esc(sl.slot_id)}" data-day="${esc(sl.day_key)}">
-      <span class="box"></span><span>${fmtDay(parseDayKey(sl.day_key))} ${esc(sl.start_time)}</span></button>`).join('') : '')
+      <span class="box"></span><span>${fmtDay(parseDayKey(sl.day_key))} ${esc(slotTimeText(sl))}</span></button>`).join('') : '')
     + `<button class="btn" style="margin-top:10px;" data-act="to-confirm-picked" ${n ? '' : 'disabled'}>${n ? `この${n}回を予約する` : '日にちをえらんでください'}</button>`;
 }
 // グループの生徒が、個人レッスン「も」予約するときの画面
@@ -575,10 +578,10 @@ function viewTimes() {
   const viewOnly = !withinDeadline(date);
   const btns = slots.map(s => {
     const st = slotState(s); const n = Number(s.reserved_count) || 0; const sel = S.picked.has(String(s.slot_id));
-    if (viewOnly) return `<button class="time" disabled>${esc(s.start_time)}<small>${st === 'full' ? (Number(s.capacity) === 1 ? 'うまっています' : '満席') : (n ? n + '人' : '')}</small></button>`;
-    if (st === 'mine') return `<button class="time" disabled>${esc(s.start_time)}<small>予約ずみ</small></button>`;
-    if (st === 'full' && !isAdmin()) return `<button class="time" disabled>${esc(s.start_time)}<small>${Number(s.capacity) === 1 ? 'うまっています' : '満席'}</small></button>`;
-    return `<button class="time ${sel ? 'sel' : ''}" data-act="time" data-id="${esc(s.slot_id)}">${esc(s.start_time)}<small>${[s.event ? esc(s.event) + '（' + (Number(s.min) || 45) + '分）' : '', sel ? 'えらび中' : [s.klass && !s.own ? s.klass + 'クラスにふりかえ' : '', n ? n + '人' : ''].filter(Boolean).join('・')].filter(Boolean).join('　')}</small></button>`;
+    if (viewOnly) return `<button class="time" disabled>${esc(slotTimeText(s))}<small>${st === 'full' ? (Number(s.capacity) === 1 ? 'うまっています' : '満席') : (n ? n + '人' : '')}</small></button>`;
+    if (st === 'mine') return `<button class="time" disabled>${esc(slotTimeText(s))}<small>予約ずみ</small></button>`;
+    if (st === 'full' && !isAdmin()) return `<button class="time" disabled>${esc(slotTimeText(s))}<small>${Number(s.capacity) === 1 ? 'うまっています' : '満席'}</small></button>`;
+    return `<button class="time ${sel ? 'sel' : ''}" data-act="time" data-id="${esc(s.slot_id)}">${esc(slotTimeText(s))}<small>${sel ? 'えらび中' : [s.klass && !s.own ? s.klass + 'クラスにふりかえ' : '', n ? n + '人' : ''].filter(Boolean).join('・')}</small></button>`;
   }).join('');
   return `<h1>${fmtDay(date)}<br>${viewOnly ? 'の予約のようす' : '何時にしますか？'}</h1>
   ${viewOnly ? `<div class="note" style="margin:0 0 14px;">この日は、もう予約の受付がおわっています。お急ぎのときはお電話ください。</div>` : ''}
@@ -593,7 +596,7 @@ function viewConfirm() {
   if (pd.type === 'reserve') {
     return `<h1>この内容で予約しますか？</h1><div class="card">${who}<p class="muted">クラス</p><p class="big">${esc(classText(p))}</p>
       <p class="muted" style="margin-top:12px;">日時（${pd.slots.length}回）</p>
-      <ul class="list-big">${pd.slots.map(s => `<li>${fmtDay(parseDayKey(s.day_key))} ${esc(s.start_time)}${s.klass && !s.own ? `<br><span class="muted">${s.klass}クラスにふりかえ</span>` : ''}${s.event ? `<br><span class="muted">${esc(s.event)}（${Number(s.min) || 45}分）</span>` : ''}</li>`).join('')}</ul></div>
+      <ul class="list-big">${pd.slots.map(s => `<li>${fmtDay(parseDayKey(s.day_key))} ${esc(slotTimeText(s))}${s.klass && !s.own ? `<br><span class="muted">${s.klass}クラスにふりかえ</span>` : ''}</li>`).join('')}</ul></div>
       <button class="btn" data-act="do">はい、予約する</button><button class="btn quiet" data-act="cancel-pending">やめる</button>`;
   }
   if (pd.type === 'cancel') {
@@ -601,7 +604,7 @@ function viewConfirm() {
       <button class="btn danger" data-act="do">はい、取り消す</button><button class="btn quiet" data-act="cancel-pending">やめる</button>`;
   }
   return `<h1>日時を変えますか？</h1><div class="card">${who}<p class="muted">いまの予約</p><p class="big">${esc(fmtWhen(pd.from.start))}</p>
-    <p class="arrow">↓ 変更</p><p class="muted">新しい予約</p><p class="big" style="color:var(--green-deep);">${fmtDay(parseDayKey(pd.to.day_key))} ${esc(pd.to.start_time)}</p></div>
+    <p class="arrow">↓ 変更</p><p class="muted">新しい予約</p><p class="big" style="color:var(--green-deep);">${fmtDay(parseDayKey(pd.to.day_key))} ${esc(slotTimeText(pd.to))}</p></div>
     <button class="btn" data-act="do">はい、変更する</button><button class="btn quiet" data-act="cancel-pending">やめる</button>`;
 }
 function lineResultHtml(l) {
@@ -829,21 +832,21 @@ async function runPending() {
       busy(true, '予約しています…'); const r = await doReserve(pd.slots);
       if (!r || !r.ok) throw new Error((r && r.message) || '予約できませんでした。');
       saveUsual(pd.slots);
-      const lines = pd.slots.map(s => `${fmtDay(parseDayKey(s.day_key))} ${s.start_time}`);
+      const lines = pd.slots.map(s => `${fmtDay(parseDayKey(s.day_key))} ${slotTimeText(s)}`);
       S.done = { title: '予約できました', lines, note: `クラス：${classText(me())}`, line: r.line || null,
         share: `【スマホ教室TERACO 予約の控え】\n${me().name} さん\n${classText(me())}\n${lines.join('\n')}` };
     } else if (pd.type === 'cancel') {
       busy(true, '取り消しています…'); const r = await doCancel(pd.items);
       if (!r || !r.ok) throw new Error((r && r.message) || '取り消しできませんでした。');
-      S.done = { title: '取り消しました', lines: pd.items.map(e => fmtWhen(e.start)), line: r.line || null };
+      S.done = { title: '取り消しました', lines: pd.items.map(e => `${fmtWhen(e.start)} ${rowClassText(e)}`.trim()), line: r.line || null };
     } else {
       // 変更：先に新しい枠を確保し、取れてから古い予約を消す（失敗しても予約が消えない順番）
       busy(true, '日時を変更しています…'); const r1 = await doReserve([pd.to]);
       if (!r1 || !r1.ok) throw new Error((r1 && r1.message) || '新しい日時を予約できませんでした。いまの予約はそのままです。');
       const r2 = await doCancel([pd.from], true);   // 変更のときは取消のお知らせを送らない（予約のお知らせに含める）
-      if (!r2 || !r2.ok) { S.done = { title: '新しい日時は予約できました', lines: [`${fmtDay(parseDayKey(pd.to.day_key))} ${pd.to.start_time}`],
+      if (!r2 || !r2.ok) { S.done = { title: '新しい日時は予約できました', lines: [`${fmtDay(parseDayKey(pd.to.day_key))} ${slotTimeText(pd.to)}`],
         note: '前の予約の取り消しができませんでした。お手数ですが、お電話でお知らせください。' }; }
-      else S.done = { title: '日時を変更しました', lines: [`${fmtDay(parseDayKey(pd.to.day_key))} ${pd.to.start_time}`], note: `前の予約（${fmtWhen(pd.from.start)}）は取り消しました。`, line: r1.line || null };
+      else S.done = { title: '日時を変更しました', lines: [`${fmtDay(parseDayKey(pd.to.day_key))} ${slotTimeText(pd.to)}`], note: `前の予約（${fmtWhen(pd.from.start)} ${rowClassText(pd.from)}）は取り消しました。`, line: r1.line || null };
     }
   } catch (e) {
     S.done = { error: e && e.name === 'AbortError' ? '通信に時間がかかっています。はじめの画面で、予約が入ったかたしかめてください。' : (e.message || 'エラーがおきました。') };
