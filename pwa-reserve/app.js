@@ -499,13 +499,12 @@ function firstBookableMonth() {
   const cur = monthKeyOf(new Date()); if (isAdmin()) return cur;
   return [cur, addMonths(cur, 1), addMonths(cur, 2)].find(k => bookableMonth(k)) || cur;
 }
-// はじめてホームを出すとき、確定している月の「自分のクラスの日」を最初からえらんだ状態にする
+// 予約をとる画面を最初に出すとき：自分のクラスの日がある月を開く。**最初からはえらばない**（自分でチェックして入れた実感が要る。2026-09-25 藤崎さん）
 function initHomePicks() {
   if (!S.loaded || S.pickInit || S.mode === 'change') return;
   S.pickInit = true;
   const g = proposals()[0];
-  if (g) { g.items.forEach(sl => S.picked.set(String(sl.slot_id), sl)); S.viewMonth = g.mk; }
-  else S.viewMonth = firstBookableMonth();
+  S.viewMonth = g ? g.mk : firstBookableMonth();
 }
 // その月の、自分が予約できる日（グループ講座用）
 function monthCandidates(mk) {
@@ -540,7 +539,7 @@ function calendarBlock() {
   const tentative = !isAdmin() && bookableMonth(S.viewMonth) && !SCHEDULE.published.includes(S.viewMonth);
   const group = !isAdmin() && COURSES[me().course].classes;
   const legend = isAdmin() ? 'どの日でも選べます。数字はその日の予約人数です。'
-    : group ? '<b>色のついた日</b>が、あなたのクラスの日です。おすと、えらぶ・はずすができます。' + (hasAlt ? '<br><b>点線の日</b>は、別のクラスの日です。' : '')
+    : group ? '<b>色のついた日</b>が、あなたのクラスの日です。おしてえらんでください。' + (hasAlt ? '<br><b>点線の日</b>は、別のクラスの日です。' : '')
     : '緑のわくの日をおして、時間をえらんでください。';
   return `<div class="cal-head"><button class="nav" data-act="month" data-d="-1" ${monthDiff(minM, S.viewMonth) <= 0 ? 'disabled' : ''} aria-label="前の月">‹</button>
       <div class="ttl">${y}年${m}月</div>
