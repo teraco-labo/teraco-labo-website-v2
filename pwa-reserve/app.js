@@ -45,6 +45,7 @@ const S = {
   picked: new Map(), viewMonth: null, pickDay: null,
   mode: 'add', changing: null, pending: null, done: null, error: null,
   edit: null,                                // 'name' | 'class'（設定変更中）
+  editRsv: false,                            // 「予約を変更する」を押して、取り消しのボタンを出している間 true
   google: store.get('teraco_google_user', null),   // {name,email,picture}：ログインしている人だけ
   addToCal: store.get('tr_add_to_cal', true),
   myHistory: null, myHistoryMonths: 3,
@@ -302,6 +303,7 @@ function render() {
     : v === 'ob-course' ? viewCourse()
     : v === 'ob-class' ? viewKlass()
     : v === 'home' ? viewHome()
+    : v === 'reserve' ? viewReserve()
     : v === 'extra' ? viewExtra()
     : v === 'calendar' ? viewCalendar()
     : v === 'times' ? viewTimes()
@@ -326,7 +328,7 @@ function viewName() {
   return `<h1>${editing ? 'お名前をなおす' : 'はじめに、お名前をおしえてください'}</h1>
   <div class="card">
     <input class="txt" id="nameInput" data-focus type="text" placeholder="例：田中花子" value="${esc(S.draft.name || '')}" autocomplete="name" enterkeyhint="done">
-    <p class="muted" style="margin-top:10px;">姓と名をつづけて入れてください。<br>入れおわったら、下の「つぎへ」をおしてください。</p>
+    <p class="muted" style="margin-top:10px;">姓と名前の間にスペース（空白）を入れず、つづけて入れてください。<br>入れおわったら、下の「つぎへ」をおしてください。</p>
   </div>
   <button class="btn" data-act="name-next">つぎへ</button>
   ${editing ? `<button class="btn quiet" data-act="home">やめる</button>` : ''}`;
@@ -360,6 +362,7 @@ function viewCategory() {
 // --- ホーム ---
 function rsvRow(e) {
   const d = new Date(e.start); const can = withinDeadline(d);
+  if (!S.editRsv) return `<div class="rsv"><div class="when"><div class="date">${fmtDay(d)} ${fmtTime(d)}</div><div class="cls">${esc(rowClassText(e))}</div></div></div>`;
   // 日時の変更：管理者はいつでも。生徒は個人レッスンだけ（グループ講座は曜日・時間が固定で、振替は今は使わないため）
   const g0 = inferClass(e); const canChange = isAdmin() || FURIKAE || (g0 && g0.course === 'private');
   return `<div class="rsv"><div class="when"><div class="date">${fmtDay(d)} ${fmtTime(d)}</div>
@@ -371,7 +374,6 @@ function rsvRow(e) {
 function viewHome() {
   const p = me(); if (!p) return '';
   const list = S.existing.slice().sort((a, b) => new Date(a.start) - new Date(b.start));
-  initHomePicks();
   let h = `<h1>${S.proxy ? esc(p.name) + 'さんの予約を操作' : esc(p.name) + 'さん、こんにちは'}</h1><div class="sync">${S.syncing ? '最新の予約状況をたしかめています…' : ''}</div>`;
   if (S.error) h += `<div class="note" style="margin-bottom:16px;">${esc(S.error)}</div>`;
 
@@ -379,12 +381,30 @@ function viewHome() {
   if (!S.loaded) h += `<p class="muted">読み込み中…</p>`;
   else if (!list.length) h += `<p class="muted">いま入っている予約はありません。</p>`;
   else { h += list.map(rsvRow).join('');
-         if (!isAdmin()) h += `<p class="muted" style="margin-top:8px;">変更・取り消しは前日の17時までできます。</p>`; }
+         if (S.editRsv && !isAdmin()) h += `<p class="muted" style="margin-top:8px;">変更・取り消しは前日の17時までできます。</p>`;
+         h += `<button class="btn ${S.editRsv ? 'quiet' : 'ghost'}" style="margin-top:14px;" data-act="edit-rsv">${S.editRsv ? '変更をおわる' : '予約を変更する'}</button>`; }
   if (S.proxy) h += `<div style="margin-top:12px;"><button class="link" data-act="history" data-m="${S.admin.historyMonths}">過去の予約を見る</button></div>${S.admin.history ? periodButtons('history', S.admin.historyMonths) : ''}${viewHistory()}`;
   h += `</div>`;
 
+  h += `<button class="btn" style="margin-bottom:18px;" data-act="reserve">予約をとる</button>`;
+  if (COURSES[p.course].classes) h += `<div class="card"><h2>個人レッスンも受けるとき</h2>
+    <p class="muted" style="margin-bottom:12px;">特典チケットや、個別に習いたいときはこちらから。</p>
+    <button class="btn ghost" data-act="extra-private">${esc(courseName('private'))}も予約する</button></div>`;
+
+  h += `<div class="links"><button class="link" data-act="edit-class">クラスを変える</button>
+        ${S.proxy ? '' : `<button class="link" data-act="edit-name">お名前をなおす</button><button class="link" data-act="more">受講履歴・そのほか</button>`}
+        <a class="link" href="tel:${TEL}">電話で聞く</a></div>
+        <div class="links" style="margin-top:26px;"><button class="link" style="font-size:14px;color:#9AA8A0;" data-act="${isAdmin() ? 'admin-home' : 'admin-login'}">管理者</button></div>`;
+  return h;
+}
+// 予約をとる画面（カレンダー）。「最初から」を押すと、えらんだものを全部消してこの画面になる
+function viewReserve() {
+  const p = me(); if (!p) return '';
+  initHomePicks();
+  let h = `<h1>${S.proxy ? esc(p.name) + 'さんの予約をとる' : '予約をとる'}</h1>`;
+  if (S.error) h += `<div class="note" style="margin-bottom:16px;">${esc(S.error)}</div>`;
   const group = !!(COURSES[p.course] && COURSES[p.course].classes) && !isAdmin();
-  h += `<div class="card" id="next"><h2>つぎの予約をとる</h2>
+  h += `<div class="card" id="next">
         <p style="font-weight:800;border-left:14px solid ${COURSES[p.course].color};padding-left:10px;margin-bottom:12px;">${esc(classText(p))}</p>`;
   if (!S.loaded) h += `<p class="muted">予約できる日をしらべています…</p>`;
   else {
@@ -399,15 +419,7 @@ function viewHome() {
     const n = S.picked.size;
     h += `<button class="btn" style="margin-top:10px;" data-act="to-confirm-picked" ${n ? '' : 'disabled'}>${n ? `この${n}回を予約する` : '日にちをえらんでください'}</button>`;
   }
-  h += `</div>`;
-  if (COURSES[p.course].classes) h += `<div class="card"><h2>個人レッスンも受けるとき</h2>
-    <p class="muted" style="margin-bottom:12px;">特典チケットや、個別に習いたいときはこちらから。</p>
-    <button class="btn ghost" data-act="extra-private">${esc(courseName('private'))}も予約する</button></div>`;
-
-  h += `<div class="links"><button class="link" data-act="edit-class">クラスを変える</button>
-        ${S.proxy ? '' : `<button class="link" data-act="edit-name">お名前をなおす</button><button class="link" data-act="more">受講履歴・そのほか</button>`}
-        <a class="link" href="tel:${TEL}">電話で聞く</a></div>
-        <div class="links" style="margin-top:26px;"><button class="link" style="font-size:14px;color:#9AA8A0;" data-act="${isAdmin() ? 'admin-home' : 'admin-login'}">管理者</button></div>`;
+  h += `</div><button class="btn quiet" data-act="home">やめて、はじめの画面にもどる</button>`;
   return h;
 }
 function viewHistory() {
@@ -564,7 +576,6 @@ function viewDone() {
       <ul class="list-big">${d.lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
       ${d.note ? `<div class="info">${esc(d.note)}</div>` : ''}
       ${lineResultHtml(d.line)}</div>
-      ${d.share && !(d.line && d.line.sent) ? `<a class="btn ghost" style="text-decoration:none;text-align:center;line-height:40px;margin-bottom:12px;" href="https://line.me/R/share?text=${encodeURIComponent(d.share)}" target="_blank" rel="noopener">LINEに控えを送る</a>` : ''}
       <button class="btn" data-act="home">はじめの画面にもどる</button>`;
 }
 
@@ -899,11 +910,14 @@ async function schedAct(a, d) {
   }
 }
 function renderKeepScroll() { const y = window.scrollY; render(); window.scrollTo(0, y); }
-function goHomeNext() { S.view = S.override ? 'extra' : 'home'; render(); const el = document.getElementById('next'); if (el) el.scrollIntoView(); }
+function goHomeNext() { S.view = S.override ? 'extra' : 'reserve'; render(); const el = document.getElementById('next'); if (el) el.scrollIntoView(); }
 
 function act(a, el) {
   const d = el.dataset || {};
-  if (a === 'home') { S.edit = null; resetPicks(); if (isAdmin() && !S.proxy) return go('admin-home'); return go(me() && me().course ? 'home' : 'ob-name'); }
+  if (a === 'home') { S.edit = null; S.editRsv = false; resetPicks(); if (isAdmin() && !S.proxy) return go('admin-home'); return go(me() && me().course ? 'home' : 'ob-name'); }
+  if (a === 'restart') { S.edit = null; S.editRsv = false; resetPicks(); if (isAdmin() && !S.proxy) return go('admin-home'); if (!(me() && me().course)) return go('ob-name'); S.viewMonth = firstBookableMonth(); return go('reserve'); }
+  if (a === 'reserve') { S.editRsv = false; resetPicks(); S.viewMonth = firstBookableMonth(); return go('reserve'); }
+  if (a === 'edit-rsv') { S.editRsv = !S.editRsv; return renderKeepScroll(); }
   if (a === 'name-next') { const n = normName((document.getElementById('nameInput') || {}).value); if (!n) { alert('お名前を入れてください。'); return; }
     S.draft.name = n; return go('ob-name-confirm'); }
   if (a === 'name-ok') {
@@ -937,12 +951,12 @@ function act(a, el) {
     const id = String(slot.slot_id);
     if (S.picked.has(id)) S.picked.delete(id);
     else { if (!isAdmin() && monthCount(slot.month_key) + 1 > MONTHLY_LIMIT) { alert(`${Number(slot.month_key.split('-')[1])}月の予約は${MONTHLY_LIMIT}回までです。`); return; } S.picked.set(id, slot); }
-    return (S.view === 'home' || S.view === 'extra') ? renderKeepScroll() : goHomeNext(); }
+    return (S.view === 'reserve' || S.view === 'extra') ? renderKeepScroll() : goHomeNext(); }
   if (a === 'to-confirm-picked') { const slots = Array.from(S.picked.values()).sort((x, y) => Number(x.slot_id) - Number(y.slot_id)); S.pending = { type: 'reserve', slots }; return go('confirm'); }
   if (a === 'change') { const e = S.existing.find(x => x.event_id === d.id); if (!e) return; S.mode = 'change'; S.changing = e; S.picked.clear(); S.viewMonth = monthKeyOf(new Date(e.start)); return go('calendar'); }
   if (a === 'cancel') { const e = S.existing.find(x => x.event_id === d.id); if (!e) return; S.pending = { type: 'cancel', items: [e] }; return go('confirm'); }
   if (a === 'cancel-past') { const e = (Array.isArray(S.admin.history) ? S.admin.history : []).find(x => x.event_id === d.id); if (!e) return; S.pending = { type: 'cancel', items: [e] }; return go('confirm'); }
-  if (a === 'cancel-pending') { const t = S.pending && S.pending.type; S.pending = null; if (t === 'change') return go('calendar'); if (t === 'cancel') resetPicks(); return go(S.override ? 'extra' : 'home'); }
+  if (a === 'cancel-pending') { const t = S.pending && S.pending.type; S.pending = null; if (t === 'change') return go('calendar'); if (t === 'cancel') { resetPicks(); return go('home'); } return go(S.override ? 'extra' : 'reserve'); }
   if (a === 'do') return runPending();
   if (a === 'history') { S.admin.historyMonths = Number(d.m) || 3; return loadHistory(); }
 
