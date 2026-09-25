@@ -96,6 +96,9 @@ function classText(p) {
   return c.classes && p.klass ? `${courseName(p.course, p.klass)} ${dowTimeText(c.classes[p.klass])}` : courseName(p.course);
 }
 // サーバーに渡すクラス名。予約イベントのタイトル先頭「スマホ 」「パソコンAI 」は他の仕組みが目印にしているので維持する
+function trialDetails(slot) {
+  return { category: /パソコン|PC/.test(slot.event || '') ? 'パソコンAI' : 'スマホ', course: `体験会(${Number(slot.min) || 45}分)` };
+}
 function classDetails(p, klass) {
   const c = COURSES[p.course];
   const cat = CATEGORIES[c.cat || p.category] || 'スマホ';
@@ -114,7 +117,7 @@ function inferClass(e) {
   if (course !== 'private') { const m = t.match(/([AB])\s*[\(（]/); klass = m ? m[1] : (new Date(e.start).getDay() === 5 ? 'B' : 'A'); }
   return { course, klass, category: COURSES[course].cat || (pc ? 'pc_ai' : 'smartphone') };
 }
-const rowClassText = (e) => { const g = inferClass(e); return g ? courseName(g.course, g.klass) : ''; };
+const rowClassText = (e) => { const g = inferClass(e); if (g) return courseName(g.course, g.klass); const t = (e && (e.class_title || e.title)) || ''; return isTrialTitle(e) ? t.replace(/\(/, '（').replace(/\)/, '）') : ''; };
 
 // ---------- LINE（LIFF） ----------
 const LINE_CFG = window.TERACO_LINE || {};
@@ -201,6 +204,9 @@ async function prefetchSlots() {
 // ---------- ルール ----------
 const isOff = (dayKey) => SCHEDULE.off.includes(dayKey);
 const eventAt = (dayKey, time) => SCHEDULE.events.find(ev => ev.day === dayKey && ev.time === time) || null;
+// 生徒がえらべる予定＝名前に「体験会」が入っているもの（初めての方も、在籍の方（有料）もえらべる）
+const trialEventsOn = (dayKey) => SCHEDULE.events.filter(ev => ev.day === dayKey && /体験会/.test(ev.label || '')).sort((a, b) => a.time.localeCompare(b.time));
+const isTrialTitle = (e) => /体験会/.test((e && (e.class_title || e.label || e.title)) || '');
 // その日に受けられる講座の一覧 [{time, klass, own}]。own=自分のクラス、false=同じコースの別クラス（振替）
 function lessonsOn(p, date) {
   const dk = dayKeyOf(date); const dow = date.getDay();
@@ -208,8 +214,9 @@ function lessonsOn(p, date) {
   // 先生が日程を確定して公開した月だけ、生徒から予約できる（管理者の代理操作はいつでも可）
   if (!bookableMonth(monthKeyOf(date))) return [];
   const c = COURSES[p.course];
-  if (!c.classes) return TT.privateDows.includes(dow) ? TIMES_PRIVATE.filter(t => !eventAt(dk, t)).map(t => ({ time: t, klass: null, own: true })) : [];
-  return Object.keys(c.classes).filter(k => c.classes[k].dow === dow && (FURIKAE || k === p.klass)).map(k => ({ time: c.classes[k].time, klass: k, own: k === p.klass }));
+  const trials = trialEventsOn(dk).map(ev => ({ time: ev.time, klass: null, own: false, event: ev.label, min: Number(ev.min) || 45 }));
+  if (!c.classes) return (TT.privateDows.includes(dow) ? TIMES_PRIVATE.filter(t => !eventAt(dk, t)).map(t => ({ time: t, klass: null, own: true })) : []).concat(trials);
+  return Object.keys(c.classes).filter(k => c.classes[k].dow === dow && (FURIKAE || k === p.klass)).map(k => ({ time: c.classes[k].time, klass: k, own: k === p.klass })).concat(trials);
 }
 // 生徒が予約・変更・取消できる日か（明日以降。明日分は今日の17時まで）
 function withinDeadline(date) {
@@ -237,7 +244,9 @@ function slotsForDay(dayKey) {
       if (c && c.classes) k = Object.keys(c.classes).find(x => c.classes[x].dow === date.getDay() && c.classes[x].time === t) || p.klass;
       return makeSlot(date, t, { klass: k, own: true }); }); }
   const solo = !COURSES[me().course].classes;   // 個人レッスンは定員1人
-  return lessonsOn(me(), date).map(l => makeSlot(date, l.time, Object.assign({ klass: l.klass, own: l.own }, solo ? { capacity: 1 } : {})));
+  return lessonsOn(me(), date).map(l => l.event
+    ? makeSlot(date, l.time, { klass: null, own: false, event: l.event, min: l.min, capacity: 8, busy: false })
+    : makeSlot(date, l.time, Object.assign({ klass: l.klass, own: l.own }, solo ? { capacity: 1 } : {})));
 }
 const existingIds = () => new Set(S.existing.map(e => String(e.slot_id)));
 const existingDays = () => new Set(S.existing.map(e => dayKeyOf(new Date(e.start))));
@@ -252,7 +261,7 @@ function monthCount(mk) {
        + Array.from(S.picked.values()).filter(s => s.month_key === mk).length;
 }
 // グループ講座の月の上限（名簿の月回数。取れないときは4回）。個人レッスンは数えない
-const isGroupRsv = (e) => { const g = inferClass(e); return !g || g.course !== 'private'; };
+const isGroupRsv = (e) => { if (isTrialTitle(e)) return false; const g = inferClass(e); return !g || g.course !== 'private'; };
 const isGroupSlot = (sl) => !!sl.klass;
 function groupLimit() { return (S.plan && Number(S.plan.monthly) > 0) ? Number(S.plan.monthly) : DEFAULT_GROUP_LIMIT; }
 // 予約できる月：先生が公開した月と、そのすぐ次の月（仮。休みの日が決まると変わることがある）
@@ -447,7 +456,7 @@ function viewReserve() {
     if (rows.length) h += `<div class="month-label">${group ? 'えらべる日' : 'えらんだ日時'}</div>` + rows.map(sl => {
       const on = S.picked.has(String(sl.slot_id)); const n = Number(sl.reserved_count) || 0;
       return `<button class="pick ${on ? 'on' : ''}" data-act="toggle-slot" data-id="${esc(sl.slot_id)}" data-day="${esc(sl.day_key)}">
-        <span class="box"></span><span>${fmtDay(parseDayKey(sl.day_key))}${group ? '' : ' ' + esc(sl.start_time)}${sl.klass && !sl.own ? ` <small>${esc(sl.klass)}クラス ${esc(sl.start_time)}</small>` : ''}</span>${n > 0 ? `<span class="cnt">${n}人</span>` : ''}</button>`; }).join('');
+        <span class="box"></span><span>${fmtDay(parseDayKey(sl.day_key))}${group ? '' : ' ' + esc(sl.start_time)}${sl.klass && !sl.own ? ` <small>${esc(sl.klass)}クラス ${esc(sl.start_time)}</small>` : ''}${sl.event ? ` <small>${group ? esc(sl.start_time) + ' ' : ''}${esc(sl.event)}（${Number(sl.min) || 45}分）</small>` : ''}</span>${n > 0 ? `<span class="cnt">${n}人</span>` : ''}</button>`; }).join('');
     const n = S.picked.size;
     h += `<button class="btn" style="margin-top:10px;" data-act="to-confirm-picked" ${n ? '' : 'disabled'}>${n ? `この${n}回を予約する` : '日にちをえらんでください'}</button>`;
   }
@@ -475,12 +484,12 @@ function dayStatus(date) {
   const mine = existingDays().has(dk);
   const picked = Array.from(S.picked.values()).some(s => s.day_key === dk);
   if (!slots.length) return { cls: 'off', mine };
-  const own = slots.some(s => s.own);
+  const own = slots.some(s => s.own); const alt = slots.some(s => s.klass && !s.own);
   const total = slots.reduce((n, s) => n + (Number(s.reserved_count) || 0), 0);
-  if (picked) return { cls: 'picked', mine, total, own };
-  if (!withinDeadline(date)) return { cls: date >= today0() ? 'view' : 'off', mine, total, own };
+  if (picked) return { cls: 'picked', mine, total, own, alt };
+  if (!withinDeadline(date)) return { cls: date >= today0() ? 'view' : 'off', mine, total, own, alt };
   const open = slots.some(s => slotState(s) === 'open');
-  return { cls: open ? 'ok' : (mine ? 'view' : 'full'), mine, total, own };
+  return { cls: open ? 'ok' : (mine ? 'view' : 'full'), mine, total, own, alt };
 }
 // カレンダーを最初に開く月：生徒は「公開されている、いちばん近い月」。管理者は今月
 function firstBookableMonth() {
@@ -517,7 +526,7 @@ function calendarBlock() {
     const dk = dayKeyOf(date); const hol = isOff(dk); const ev = hol ? null : SCHEDULE.events.find(e => e.day === dk);
     if (hol) hasHol = true; if (ev) hasEv = true;
     const tag = hol ? '<small class="tag hol">休み</small>' : (ev ? `<small class="tag ev">${esc(evShort(ev.label))}</small>` : '');
-    const alt = !isAdmin() && !st.own && st.cls === 'ok' && !!COURSES[me().course].classes;   // 同じコースの別クラスの日
+    const alt = !isAdmin() && !st.own && st.alt && st.cls === 'ok';   // 同じコースの別クラスの日（体験会だけの日は含めない）
     if (alt) hasAlt = true;
     cells += `<td class="${st.cls}${st.mine ? ' mine' : ''}${hol ? ' hol' : ''}${alt ? ' alt' : ''}"${tint} ${tap ? `data-act="day" data-day="${dk}"` : ''}>${d}${tag}${isAdmin() && st.total ? `<span class="daycnt">${st.total}人</span>` : ''}</td>`;
     if ((first.getDay() + d) % 7 === 0) { rows += `<tr>${cells}</tr>`; cells = ''; }
@@ -569,7 +578,7 @@ function viewTimes() {
     if (viewOnly) return `<button class="time" disabled>${esc(s.start_time)}<small>${st === 'full' ? (Number(s.capacity) === 1 ? 'うまっています' : '満席') : (n ? n + '人' : '')}</small></button>`;
     if (st === 'mine') return `<button class="time" disabled>${esc(s.start_time)}<small>予約ずみ</small></button>`;
     if (st === 'full' && !isAdmin()) return `<button class="time" disabled>${esc(s.start_time)}<small>${Number(s.capacity) === 1 ? 'うまっています' : '満席'}</small></button>`;
-    return `<button class="time ${sel ? 'sel' : ''}" data-act="time" data-id="${esc(s.slot_id)}">${esc(s.start_time)}<small>${sel ? 'えらび中' : [s.klass && !s.own ? s.klass + 'クラスにふりかえ' : '', n ? n + '人' : ''].filter(Boolean).join('・')}</small></button>`;
+    return `<button class="time ${sel ? 'sel' : ''}" data-act="time" data-id="${esc(s.slot_id)}">${esc(s.start_time)}<small>${[s.event ? esc(s.event) + '（' + (Number(s.min) || 45) + '分）' : '', sel ? 'えらび中' : [s.klass && !s.own ? s.klass + 'クラスにふりかえ' : '', n ? n + '人' : ''].filter(Boolean).join('・')].filter(Boolean).join('　')}</small></button>`;
   }).join('');
   return `<h1>${fmtDay(date)}<br>${viewOnly ? 'の予約のようす' : '何時にしますか？'}</h1>
   ${viewOnly ? `<div class="note" style="margin:0 0 14px;">この日は、もう予約の受付がおわっています。お急ぎのときはお電話ください。</div>` : ''}
@@ -584,7 +593,7 @@ function viewConfirm() {
   if (pd.type === 'reserve') {
     return `<h1>この内容で予約しますか？</h1><div class="card">${who}<p class="muted">クラス</p><p class="big">${esc(classText(p))}</p>
       <p class="muted" style="margin-top:12px;">日時（${pd.slots.length}回）</p>
-      <ul class="list-big">${pd.slots.map(s => `<li>${fmtDay(parseDayKey(s.day_key))} ${esc(s.start_time)}${s.klass && !s.own ? `<br><span class="muted">${s.klass}クラスにふりかえ</span>` : ''}</li>`).join('')}</ul></div>
+      <ul class="list-big">${pd.slots.map(s => `<li>${fmtDay(parseDayKey(s.day_key))} ${esc(s.start_time)}${s.klass && !s.own ? `<br><span class="muted">${s.klass}クラスにふりかえ</span>` : ''}${s.event ? `<br><span class="muted">${esc(s.event)}（${Number(s.min) || 45}分）</span>` : ''}</li>`).join('')}</ul></div>
       <button class="btn" data-act="do">はい、予約する</button><button class="btn quiet" data-act="cancel-pending">やめる</button>`;
   }
   if (pd.type === 'cancel') {
@@ -794,11 +803,12 @@ async function doReserve(slots) {
     slots.forEach(s => { const cd = classDetails(p, s.klass);
       S.demo.added.push({ event_id: 'demo_' + s.slot_id, slot_id: String(s.slot_id), start: s.iso, class_title: `${cd.category} ${cd.course}` }); });
     return { ok: true }; }
-  const byKlass = new Map(); slots.forEach(s => { const k = s.klass || ''; if (!byKlass.has(k)) byKlass.set(k, []); byKlass.get(k).push(s); });
+  const byKlass = new Map(); slots.forEach(s => { const k = s.event ? 'trial:' + s.event + ':' + (s.min || 45) : (s.klass || ''); if (!byKlass.has(k)) byKlass.set(k, []); byKlass.get(k).push(s); });
   let last = { ok: true };
   for (const [k, list] of byKlass) {
+    const details = list[0].event ? trialDetails(list[0]) : classDetails(p, k || null);
     last = await post({ action: 'batch_reserve', name: p.name, email: myEmail(), add_to_calendar: !!(myEmail() && S.addToCal),
-      slots: list.map(s => String(s.slot_id)), class_details: classDetails(p, k || null), passcode: adminCode() || null,
+      slots: list.map(s => String(s.slot_id)), class_details: details, passcode: adminCode() || null,
       id_token: S.proxy ? null : (S.line.idToken || null), line_label: lineLabelFor(p, k || null) });
     if (!last || !last.ok) return last;
   }
