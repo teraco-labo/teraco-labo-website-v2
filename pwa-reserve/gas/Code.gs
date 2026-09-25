@@ -85,7 +85,7 @@ function getAdminStudents_(passcode) {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var action = p.action || 'overview';
-  if (action === 'version') return jsonOut({ok: true, version: 'v55', timestamp: new Date().toISOString()});
+  if (action === 'version') return jsonOut({ok: true, version: 'v56', timestamp: new Date().toISOString()});
   if (action === 'overview') return jsonOut(getOverview(p.name || '', Number(p.days) || CONFIG.OVERVIEW_DAYS));
   if (action === 'schedule_get') return jsonOut({ ok: true, schedule: getSchedule_() });
   if (action === 'admin_summary') return jsonOut(getAdminSummary(p.passcode));
@@ -274,6 +274,7 @@ function doPost(e) {
   if (body.action === 'admin_students') return jsonOut(getAdminStudents_(body.passcode));
   LINE_CTX = { idToken: body.id_token || '', label: body.line_label || '', silent: !!body.line_silent };
   if (body.action === 'line_link') return jsonOut(lineLink_(body.id_token || '', body.name || ''));
+  if (body.action === 'line_test') return jsonOut(lineTest_(body.passcode));
   if (body.action === 'batch_reserve') return jsonOut(reserve(body.name, body.slots, body.class_details, body.email, body.add_to_calendar, body.passcode));
   if (body.action === 'batch_cancel') return jsonOut(cancel(body.name, body.event_ids, body.email, body.passcode));
   if (body.action === 'attendance_history') return jsonOut(getAttendanceHistory(body.passcode, body.name || '', body.email || '', Number(body.months) || 3));
@@ -781,7 +782,7 @@ function getNextData(name, days, email) {
   }
   var existing = [];
   if (name && name.trim()) existing = findUserEvents(cal, name.trim(), start, addDays(start, days + 31), email || '');
-  return { ok: true, version: 'v55', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_(), plan: getPlan_(name) };
+  return { ok: true, version: 'v56', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_(), plan: getPlan_(name) };
 }
 
 // =====================================================================
@@ -857,6 +858,17 @@ function lineAlertTeacher_(n) {
   var tk = prop_('LINE_TEACHER_TOKEN') || prop_('LINE_244_TOKEN'), to = prop_('LINE_TEACHER_TO');   // 先生あては同じ公式LINEから送ってよい
   if (tk && to) { try { UrlFetchApp.fetch('https://api.line.me/v2/bot/message/push', { method: 'post', contentType: 'application/json', headers: { Authorization: 'Bearer ' + tk },
     payload: JSON.stringify({ to: to, messages: [{ type: 'text', text: text }] }), muteHttpExceptions: true }); } catch (e) {} }
+}
+
+// 設定の確認（管理者用）：値は返さず「入っているか」だけ。先生のLINEへ試しの1通を送る（送信数には数えない）
+function lineTest_(passcode) {
+  if (passcode !== CONFIG.ADMIN_PASSCODE) return { ok: false, message: 'パスコードが正しくありません' };
+  var tk = prop_('LINE_244_TOKEN'), to = prop_('LINE_TEACHER_TO'), cid = prop_('LINE_LOGIN_CHANNEL_ID') || LINE_LOGIN_CHANNEL_ID_DEFAULT;
+  var st = { has_token: !!tk, has_teacher_to: !!to, login_channel_id: cid, push_count: lineCounter_() };
+  if (!tk || !to) return { ok: false, message: '設定が足りません', status: st };
+  var res = UrlFetchApp.fetch('https://api.line.me/v2/bot/message/push', { method: 'post', contentType: 'application/json', headers: { Authorization: 'Bearer ' + tk },
+    payload: JSON.stringify({ to: to, messages: [{ type: 'text', text: '【TERACO予約】LINEお知らせの設定ができました。これは先生あての確認メッセージです。' }] }), muteHttpExceptions: true });
+  return { ok: res.getResponseCode() === 200, http: res.getResponseCode(), body: res.getResponseCode() === 200 ? '' : res.getContentText().slice(0, 200), status: st };
 }
 
 // 生徒のLINEへお知らせ。結果 {sent, reason, count} を返す（送れなくても予約は成立させる）
