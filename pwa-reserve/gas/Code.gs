@@ -85,7 +85,7 @@ function getAdminStudents_(passcode) {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var action = p.action || 'overview';
-  if (action === 'version') return jsonOut({ok: true, version: 'v56', timestamp: new Date().toISOString()});
+  if (action === 'version') return jsonOut({ok: true, version: 'v57', timestamp: new Date().toISOString()});
   if (action === 'overview') return jsonOut(getOverview(p.name || '', Number(p.days) || CONFIG.OVERVIEW_DAYS));
   if (action === 'schedule_get') return jsonOut({ ok: true, schedule: getSchedule_() });
   if (action === 'admin_summary') return jsonOut(getAdminSummary(p.passcode));
@@ -782,7 +782,7 @@ function getNextData(name, days, email) {
   }
   var existing = [];
   if (name && name.trim()) existing = findUserEvents(cal, name.trim(), start, addDays(start, days + 31), email || '');
-  return { ok: true, version: 'v56', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_(), plan: getPlan_(name) };
+  return { ok: true, version: 'v57', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_(), plan: getPlan_(name) };
 }
 
 // =====================================================================
@@ -872,7 +872,9 @@ function lineTest_(passcode) {
 }
 
 // 生徒のLINEへお知らせ。結果 {sent, reason, count} を返す（送れなくても予約は成立させる）
+var LINE_NOTIFY_ENABLED = false;   // 生徒へのLINEお知らせ。2026-09-25 藤崎さん「LINEの控えはいらない」で停止。true に戻せば再開（トークン等の設定は残してある）
 function lineNotify_(type, userName, items, label) {
+  if (!LINE_NOTIFY_ENABLED) return { sent: false, reason: 'disabled' };
   if (LINE_CTX.silent) return { sent: false, reason: 'silent' };
   var token = prop_('LINE_244_TOKEN'); if (!token) return { sent: false, reason: 'not_configured' };
   var to = ''; var v = lineVerify_(LINE_CTX.idToken);
