@@ -16,7 +16,7 @@ const TIMES_PRIVATE = TT.privateTimes;   // 個人レッスン（火・木）
 const ADMIN_TIMES   = TT.adminTimes;
 const CATEGORIES    = TT.categories;
 const COURSES       = TT.courses;
-const FURIKAE = false;   // 生徒が別クラスへ振り替える機能。今は混乱のもとになるため停止（管理者の代理操作では自由に入れられる）
+const FURIKAE = true;    // 同じコースの別クラス（A↔B・分数は同じ）の日もえらべる（2026-09-25 藤崎さん指示）。false にすると自分のクラスの日だけ
 const OLD_COURSE_KEYS = { intro: 'sp-intro', applied: 'sp-adv', basic: 'pc-intro', advance: 'pc-adv' };
 
 // 講座カレンダー。正本はサーバー（管理者画面「講座カレンダー」で編集）。下はサーバーから受け取る前の予備の値
@@ -410,12 +410,13 @@ function viewReserve() {
   else {
     h += calendarBlock();
     const picked = Array.from(S.picked.values());
-    const rows = (group ? monthCandidates(S.viewMonth).concat(picked.filter(x => x.month_key !== S.viewMonth)) : picked)
+    const cand = group ? monthCandidates(S.viewMonth) : []; const candIds = new Set(cand.map(x => String(x.slot_id)));
+    const rows = (group ? cand.concat(picked.filter(x => !candIds.has(String(x.slot_id)))) : picked)
       .sort((x, y) => Number(x.slot_id) - Number(y.slot_id));
     if (rows.length) h += `<div class="month-label">${group ? 'えらべる日' : 'えらんだ日時'}</div>` + rows.map(sl => {
       const on = S.picked.has(String(sl.slot_id)); const n = Number(sl.reserved_count) || 0;
       return `<button class="pick ${on ? 'on' : ''}" data-act="toggle-slot" data-id="${esc(sl.slot_id)}" data-day="${esc(sl.day_key)}">
-        <span class="box"></span><span>${fmtDay(parseDayKey(sl.day_key))}${group ? '' : ' ' + esc(sl.start_time)}</span>${n > 0 ? `<span class="cnt">${n}人</span>` : ''}</button>`; }).join('');
+        <span class="box"></span><span>${fmtDay(parseDayKey(sl.day_key))}${group ? '' : ' ' + esc(sl.start_time)}${sl.klass && !sl.own ? ` <small>${esc(sl.klass)}クラス ${esc(sl.start_time)}</small>` : ''}</span>${n > 0 ? `<span class="cnt">${n}人</span>` : ''}</button>`; }).join('');
     const n = S.picked.size;
     h += `<button class="btn" style="margin-top:10px;" data-act="to-confirm-picked" ${n ? '' : 'disabled'}>${n ? `この${n}回を予約する` : '日にちをえらんでください'}</button>`;
   }
@@ -476,7 +477,7 @@ function calendarBlock() {
   const [minM, maxM] = monthRange(); const [y, m] = S.viewMonth.split('-').map(Number);
   const first = new Date(y, m - 1, 1); const dim = new Date(y, m, 0).getDate();
   let cells = ''; for (let i = 0; i < first.getDay(); i++) cells += '<td class="off"></td>';
-  let rows = ''; let hasHol = false, hasEv = false;
+  let rows = ''; let hasHol = false, hasEv = false, hasAlt = false;
   for (let d = 1; d <= dim; d++) {
     const date = new Date(y, m - 1, d); const st = dayStatus(date);
     const tap = ['ok', 'view', 'picked'].includes(st.cls);
@@ -485,7 +486,9 @@ function calendarBlock() {
     const dk = dayKeyOf(date); const hol = isOff(dk); const ev = hol ? null : SCHEDULE.events.find(e => e.day === dk);
     if (hol) hasHol = true; if (ev) hasEv = true;
     const tag = hol ? '<small class="tag hol">休み</small>' : (ev ? `<small class="tag ev">${esc(evShort(ev.label))}</small>` : '');
-    cells += `<td class="${st.cls}${st.mine ? ' mine' : ''}${hol ? ' hol' : ''}"${tint} ${tap ? `data-act="day" data-day="${dk}"` : ''}>${d}${tag}${isAdmin() && st.total ? `<span class="daycnt">${st.total}人</span>` : ''}</td>`;
+    const alt = !isAdmin() && !st.own && st.cls === 'ok' && !!COURSES[me().course].classes;   // 同じコースの別クラスの日
+    if (alt) hasAlt = true;
+    cells += `<td class="${st.cls}${st.mine ? ' mine' : ''}${hol ? ' hol' : ''}${alt ? ' alt' : ''}"${tint} ${tap ? `data-act="day" data-day="${dk}"` : ''}>${d}${tag}${isAdmin() && st.total ? `<span class="daycnt">${st.total}人</span>` : ''}</td>`;
     if ((first.getDay() + d) % 7 === 0) { rows += `<tr>${cells}</tr>`; cells = ''; }
   }
   if (cells) { while ((cells.match(/<td/g) || []).length < 7) cells += '<td class="off"></td>'; rows += `<tr>${cells}</tr>`; }
@@ -493,7 +496,7 @@ function calendarBlock() {
   const undecided = !isAdmin() && !SCHEDULE.published.includes(S.viewMonth) && S.viewMonth >= cur;
   const group = !isAdmin() && COURSES[me().course].classes;
   const legend = isAdmin() ? 'どの日でも選べます。数字はその日の予約人数です。'
-    : group ? '<b>色のついた日</b>が、あなたのクラスの日です。<br>おすと、えらぶ・はずすができます。<b>緑の日</b>が、えらんでいる日です。'
+    : group ? '<b>色のついた日</b>が、あなたのクラスの日です。<br>おすと、えらぶ・はずすができます。<b>緑の日</b>が、えらんでいる日です。' + (hasAlt ? '<br><b>点線の日</b>は、同じコースの別のクラスの日です。都合がわるいときは、こちらもえらべます。' : '')
     : '緑のわくの日をおして、時間をえらんでください。';
   return `<div class="cal-head"><button class="nav" data-act="month" data-d="-1" ${monthDiff(minM, S.viewMonth) <= 0 ? 'disabled' : ''} aria-label="前の月">‹</button>
       <div class="ttl">${y}年${m}月</div>
@@ -915,7 +918,7 @@ function goHomeNext() { S.view = S.override ? 'extra' : 'reserve'; render(); con
 function act(a, el) {
   const d = el.dataset || {};
   if (a === 'home') { S.edit = null; S.editRsv = false; resetPicks(); if (isAdmin() && !S.proxy) return go('admin-home'); return go(me() && me().course ? 'home' : 'ob-name'); }
-  if (a === 'restart') { S.edit = null; S.editRsv = false; resetPicks(); if (isAdmin() && !S.proxy) return go('admin-home'); if (!(me() && me().course)) return go('ob-name'); S.viewMonth = firstBookableMonth(); return go('reserve'); }
+  if (a === 'restart') { S.edit = null; S.editRsv = false; resetPicks(); if (isAdmin() && !S.proxy) return go('admin-home'); return go(me() && me().course ? 'home' : 'ob-name'); }   // ホーム画面へ（えらびかけは消す）
   if (a === 'reserve') { S.editRsv = false; resetPicks(); S.viewMonth = firstBookableMonth(); return go('reserve'); }
   if (a === 'edit-rsv') { S.editRsv = !S.editRsv; return renderKeepScroll(); }
   if (a === 'name-next') { const n = normName((document.getElementById('nameInput') || {}).value); if (!n) { alert('お名前を入れてください。'); return; }
