@@ -392,8 +392,8 @@ function rsvRow(e) {
   if (!S.editRsv) return `<div class="rsv"><div class="when"><div class="date">${fmtDay(d)} ${fmtTime(d)}</div><div class="cls">${esc(rowClassText(e))}</div></div></div>`;
   // 日時の変更：管理者はいつでも。生徒は個人レッスンだけ（グループ講座は曜日・時間が固定で、振替は今は使わないため）
   const g0 = inferClass(e); const canChange = isAdmin() || FURIKAE || (g0 && g0.course === 'private');
-  if (!can) return `<div class="rsv"><div class="when"><div class="date">${fmtDay(d)} ${fmtTime(d)}</div><div class="cls">${esc(rowClassText(e))}</div></div>
-    <div class="ops"><a class="mini" style="text-decoration:none;text-align:center;" href="tel:${TEL}">電話で相談</a></div></div>`;
+  // 前日17時を過ぎた予約：ボタンは出さない（うまくいかないときは教室で直接聞いてもらう）
+  if (!can) return `<div class="rsv" style="opacity:.6;"><div class="when"><div class="date">${fmtDay(d)} ${fmtTime(d)}</div><div class="cls">${esc(rowClassText(e))}</div></div></div>`;
   const on = S.cancelSel.has(String(e.event_id));
   return `<button class="pick ${on ? 'on' : ''}" data-act="cancel-pick" data-id="${esc(e.event_id)}"><span class="box"></span>
       <span>${fmtDay(d)} ${fmtTime(d)}<br><small style="font-weight:600;color:var(--sub);">${esc(rowClassText(e))}</small></span></button>
@@ -410,7 +410,7 @@ function viewHome() {
   else if (!list.length) h += `<p class="muted">いま入っている予約はありません。</p>`;
   else { h += list.map(rsvRow).join('');
          if (S.editRsv) { const n = S.cancelSel.size;
-           h += `<p class="muted" style="margin-top:8px;">取り消したい予約をおして、下の「取り消す」をおしてください。${isAdmin() ? '' : '前日の17時まで取り消せます。'}</p>
+           h += `<p class="muted" style="margin-top:8px;">取り消したい予約をおして、下の「取り消す」をおしてください。${isAdmin() ? '' : '前日の17時までえらべます。'}</p>
                  <button class="btn danger" style="margin-top:10px;" data-act="cancel-picked" ${n ? '' : 'disabled'}>${n ? `えらんだ${n}件を取り消す` : '取り消す予約をえらんでください'}</button>`; }
          h += `<button class="btn ${S.editRsv ? 'quiet' : 'ghost'}" style="margin-top:14px;" data-act="edit-rsv">${S.editRsv ? '変更をおわる' : '予約を変更する'}</button>`; }
   if (S.proxy) h += `<div style="margin-top:12px;"><button class="link" data-act="history" data-m="${S.admin.historyMonths}">過去の予約を見る</button></div>${S.admin.history ? periodButtons('history', S.admin.historyMonths) : ''}${viewHistory()}`;
