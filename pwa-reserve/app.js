@@ -47,6 +47,7 @@ const S = {
   mode: 'add', changing: null, pending: null, done: null, error: null,
   edit: null,                                // 'name' | 'class'（設定変更中）
   editRsv: false,                            // 「予約を変更する」を押して、取り消しのボタンを出している間 true
+  cancelSel: new Set(),                      // 取り消しにえらんだ予約（event_id）
   google: store.get('teraco_google_user', null),   // {name,email,picture}：ログインしている人だけ
   addToCal: store.get('tr_add_to_cal', true),
   myHistory: null, myHistoryMonths: 3,
@@ -391,11 +392,12 @@ function rsvRow(e) {
   if (!S.editRsv) return `<div class="rsv"><div class="when"><div class="date">${fmtDay(d)} ${fmtTime(d)}</div><div class="cls">${esc(rowClassText(e))}</div></div></div>`;
   // 日時の変更：管理者はいつでも。生徒は個人レッスンだけ（グループ講座は曜日・時間が固定で、振替は今は使わないため）
   const g0 = inferClass(e); const canChange = isAdmin() || FURIKAE || (g0 && g0.course === 'private');
-  return `<div class="rsv"><div class="when"><div class="date">${fmtDay(d)} ${fmtTime(d)}</div>
-    <div class="cls">${esc(rowClassText(e))}</div></div>
-    <div class="ops">${can
-      ? `${canChange ? `<button class="mini" data-act="change" data-id="${esc(e.event_id)}">日時を変える</button>` : ''}<button class="mini del" data-act="cancel" data-id="${esc(e.event_id)}">取り消す</button>`
-      : `<a class="mini" style="text-decoration:none;text-align:center;" href="tel:${TEL}">電話で相談</a>`}</div></div>`;
+  if (!can) return `<div class="rsv"><div class="when"><div class="date">${fmtDay(d)} ${fmtTime(d)}</div><div class="cls">${esc(rowClassText(e))}</div></div>
+    <div class="ops"><a class="mini" style="text-decoration:none;text-align:center;" href="tel:${TEL}">電話で相談</a></div></div>`;
+  const on = S.cancelSel.has(String(e.event_id));
+  return `<button class="pick ${on ? 'on' : ''}" data-act="cancel-pick" data-id="${esc(e.event_id)}"><span class="box"></span>
+      <span>${fmtDay(d)} ${fmtTime(d)}<br><small style="font-weight:600;color:var(--sub);">${esc(rowClassText(e))}</small></span></button>
+    ${canChange ? `<div style="text-align:right;margin:-6px 0 8px;"><button class="link" style="font-size:16px;" data-act="change" data-id="${esc(e.event_id)}">この予約の日時を変える</button></div>` : ''}`;
 }
 function viewHome() {
   const p = me(); if (!p) return '';
@@ -407,7 +409,9 @@ function viewHome() {
   if (!S.loaded) h += `<p class="muted">読み込み中…</p>`;
   else if (!list.length) h += `<p class="muted">いま入っている予約はありません。</p>`;
   else { h += list.map(rsvRow).join('');
-         if (S.editRsv && !isAdmin()) h += `<p class="muted" style="margin-top:8px;">変更・取り消しは前日の17時までできます。</p>`;
+         if (S.editRsv) { const n = S.cancelSel.size;
+           h += `<p class="muted" style="margin-top:8px;">取り消したい予約をおして、下の「取り消す」をおしてください。${isAdmin() ? '' : '前日の17時まで取り消せます。'}</p>
+                 <button class="btn danger" style="margin-top:10px;" data-act="cancel-picked" ${n ? '' : 'disabled'}>${n ? `えらんだ${n}件を取り消す` : '取り消す予約をえらんでください'}</button>`; }
          h += `<button class="btn ${S.editRsv ? 'quiet' : 'ghost'}" style="margin-top:14px;" data-act="edit-rsv">${S.editRsv ? '変更をおわる' : '予約を変更する'}</button>`; }
   if (S.proxy) h += `<div style="margin-top:12px;"><button class="link" data-act="history" data-m="${S.admin.historyMonths}">過去の予約を見る</button></div>${S.admin.history ? periodButtons('history', S.admin.historyMonths) : ''}${viewHistory()}`;
   h += `</div>`;
@@ -584,7 +588,7 @@ function viewConfirm() {
       <button class="btn" data-act="do">はい、予約する</button><button class="btn quiet" data-act="cancel-pending">やめる</button>`;
   }
   if (pd.type === 'cancel') {
-    return `<h1>この予約を取り消しますか？</h1><div class="card">${who}<ul class="list-big">${pd.items.map(e => `<li>${esc(fmtWhen(e.start))}</li>`).join('')}</ul></div>
+    return `<h1>${pd.items.length > 1 ? `この${pd.items.length}件の予約を取り消しますか？` : 'この予約を取り消しますか？'}</h1><div class="card">${who}<ul class="list-big">${pd.items.map(e => `<li>${esc(fmtWhen(e.start))}<br><span class="muted" style="font-size:16px;">${esc(rowClassText(e))}</span></li>`).join('')}</ul></div>
       <button class="btn danger" data-act="do">はい、取り消す</button><button class="btn quiet" data-act="cancel-pending">やめる</button>`;
   }
   return `<h1>日時を変えますか？</h1><div class="card">${who}<p class="muted">いまの予約</p><p class="big">${esc(fmtWhen(pd.from.start))}</p>
@@ -782,7 +786,7 @@ function persistPerson() {
   if (S.proxy) { const all = store.get('tr_admin_people', {}); all[S.proxy.name] = { category: S.proxy.category, course: S.proxy.course, klass: S.proxy.klass || null, usual: S.proxy.usual || null }; store.set('tr_admin_people', all); }
   else store.set('tr_profile', S.profile);
 }
-function resetPicks() { S.override = null; S.pickInit = false; S.picked.clear(); S.pending = null; S.changing = null; S.mode = 'add'; S.pickDay = null; }
+function resetPicks() { S.override = null; S.pickInit = false; S.picked.clear(); S.cancelSel.clear(); S.pending = null; S.changing = null; S.mode = 'add'; S.pickDay = null; }
 
 async function doReserve(slots) {
   const p = me();
@@ -949,7 +953,9 @@ function act(a, el) {
   if (a === 'home') { S.edit = null; S.editRsv = false; resetPicks(); if (isAdmin() && !S.proxy) return go('admin-home'); return go(me() && me().course ? 'home' : 'ob-name'); }
   if (a === 'restart') { S.edit = null; S.editRsv = false; resetPicks(); if (isAdmin() && !S.proxy) return go('admin-home'); return go(me() && me().course ? 'home' : 'ob-name'); }   // ホーム画面へ（えらびかけは消す）
   if (a === 'reserve') { S.editRsv = false; resetPicks(); S.viewMonth = firstBookableMonth(); return go('reserve'); }
-  if (a === 'edit-rsv') { S.editRsv = !S.editRsv; return renderKeepScroll(); }
+  if (a === 'edit-rsv') { S.editRsv = !S.editRsv; S.cancelSel.clear(); return renderKeepScroll(); }
+  if (a === 'cancel-pick') { const id = String(d.id); if (S.cancelSel.has(id)) S.cancelSel.delete(id); else S.cancelSel.add(id); return renderKeepScroll(); }
+  if (a === 'cancel-picked') { const items = S.existing.filter(e => S.cancelSel.has(String(e.event_id))); if (!items.length) return; S.pending = { type: 'cancel', items }; return go('confirm'); }
   if (a === 'name-next') { const n = normName((document.getElementById('nameInput') || {}).value); if (!n) { alert('お名前を入れてください。'); return; }
     S.draft.name = n; return go('ob-name-confirm'); }
   if (a === 'name-ok') {
