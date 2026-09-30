@@ -26,7 +26,7 @@ function authorizeMe() {
 // ---- 生徒さんの「月の回数」（Teraco Customer の顧客名簿 monthlyLessons。4回コース／2回コースなど） ----
 // 名簿が読めないとき（未承認など）は null を返し、アプリ側は既定の上限（4回）で動く
 function planMap_() {
-  var cache = CacheService.getScriptCache(), hit = cache.get('PLAN_MAP');
+  var cache = CacheService.getScriptCache(), hit = cache.get('PLAN_MAP2');
   if (hit) return JSON.parse(hit);
   var map = {};
   var sh = SpreadsheetApp.openById(CUSTOMER_DB_ID).getSheetByName(CUSTOMER_SHEET);
@@ -36,12 +36,14 @@ function planMap_() {
   for (var i = 1; i < vals.length; i++) {
     var r = vals[i], st = String(r[ix.status] || '').trim(); if (st !== '在籍' && st !== '休会') continue;
     var monthly = Number(r[ix.monthlyLessons]); if (isNaN(monthly)) monthly = null;
+    // 月の回数が空・0でも、コース名が「ベーシック2回」「まなび4回」のように月の回数を表しているときはそれを使う（チケット系は月の枠なし）
+    if (!(monthly > 0)) { var cm = String(r[ix.course] || '').match(/(\d+)\s*回/); if (cm && String(r[ix.course]).indexOf('チケット') < 0) monthly = Number(cm[1]); }
     var rec = { monthly: monthly, course: String(r[ix.course] || ''), status: st };
     var names = [String(r[ix.displayName] || ''), String(r[ix.lastName] || '') + String(r[ix.firstName] || '')]
       .concat(String(r[ix.aliases] || '').split(/[,、|]/));
     names.forEach(function(n) { var k = normalize(n); if (k && !map[k]) map[k] = rec; });
   }
-  cache.put('PLAN_MAP', JSON.stringify(map), 600);
+  cache.put('PLAN_MAP2', JSON.stringify(map), 600);
   return map;
 }
 function getPlan_(name) {
@@ -85,7 +87,7 @@ function getAdminStudents_(passcode) {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var action = p.action || 'overview';
-  if (action === 'version') return jsonOut({ok: true, version: 'v57', timestamp: new Date().toISOString()});
+  if (action === 'version') return jsonOut({ok: true, version: 'v58', timestamp: new Date().toISOString()});
   if (action === 'overview') return jsonOut(getOverview(p.name || '', Number(p.days) || CONFIG.OVERVIEW_DAYS));
   if (action === 'schedule_get') return jsonOut({ ok: true, schedule: getSchedule_() });
   if (action === 'admin_summary') return jsonOut(getAdminSummary(p.passcode));
@@ -782,7 +784,7 @@ function getNextData(name, days, email) {
   }
   var existing = [];
   if (name && name.trim()) existing = findUserEvents(cal, name.trim(), start, addDays(start, days + 31), email || '');
-  return { ok: true, version: 'v57', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_(), plan: getPlan_(name) };
+  return { ok: true, version: 'v58', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_(), plan: getPlan_(name) };
 }
 
 // =====================================================================
