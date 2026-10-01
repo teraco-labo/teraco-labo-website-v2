@@ -272,10 +272,9 @@ function bookableMonth(mk) {
   // 2026-09-25 藤崎さん要望: 先生が公開した月だけ。次の月を「仮」で見せるのはやめる
   return SCHEDULE.published.includes(mk);
 }
-// 翌月への繰り越しあり：となり合う2か月の合計が「月の回数×2」まで（月4回なら2か月で8回、月2回なら4回）
+// その月にえらべる残り。月4回の人は月4回まで、月2回の人は月2回まで（繰り越しがあっても、ひと月の上限は変わらない。2026-10-01 藤崎さん）
 function groupRoom(mk) {
-  const two = groupLimit() * 2;
-  return Math.max(0, Math.min(two - groupCount(addMonths(mk, -1)) - groupCount(mk), two - groupCount(mk) - groupCount(addMonths(mk, 1))));
+  return Math.max(0, groupLimit() - groupCount(mk));
 }
 function groupCount(mk) {
   return S.existing.filter(e => monthKeyOf(new Date(e.start)) === mk && isGroupRsv(e)).length
