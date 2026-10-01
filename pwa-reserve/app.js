@@ -267,6 +267,8 @@ function monthCount(mk) {
 const isGroupRsv = (e) => { if (isTrialTitle(e)) return false; const g = inferClass(e); return !g || g.course !== 'private'; };
 const isGroupSlot = (sl) => !!sl.klass;
 function groupLimit() { return (S.plan && Number(S.plan.monthly) > 0) ? Number(S.plan.monthly) : DEFAULT_GROUP_LIMIT; }
+// その月の上限＝月の回数＋前の月にお休みした回数（繰り越し。受講台帳の欠席から GAS が数える）
+function monthLimit(mk) { return groupLimit() + ((S.plan && S.plan.carry && Number(S.plan.carry[mk])) || 0); }
 // 予約できる月：先生が公開した月と、そのすぐ次の月（仮。休みの日が決まると変わることがある）
 function bookableMonth(mk) {
   // 2026-09-25 藤崎さん要望: 先生が公開した月だけ。次の月を「仮」で見せるのはやめる
@@ -274,15 +276,16 @@ function bookableMonth(mk) {
 }
 // その月にえらべる残り。月4回の人は月4回まで、月2回の人は月2回まで（繰り越しがあっても、ひと月の上限は変わらない。2026-10-01 藤崎さん）
 function groupRoom(mk) {
-  return Math.max(0, groupLimit() - groupCount(mk));
+  return Math.max(0, monthLimit(mk) - groupCount(mk));
 }
 function groupCount(mk) {
   return S.existing.filter(e => monthKeyOf(new Date(e.start)) === mk && isGroupRsv(e)).length
-       + Array.from(S.picked.values()).filter(s => s.month_key === mk && isGroupSlot(s)).length;
+       + Array.from(S.picked.values()).filter(s => s.month_key === mk && isGroupSlot(s)).length
+       + ((S.plan && S.plan.past && Number(S.plan.past[mk])) || 0);   // 今月すでに過ぎた回（受けた・休んだとも、その月の1回に数える）
 }
 function limitText(mk) {
   if (isAdmin()) return '';
-  const lim = groupLimit(), m = Number(mk.split('-')[1]);
+  const m = Number(mk.split('-')[1]);
   return `${m}月は、あと<b>${groupRoom(mk)}回</b>えらべます。`;   // 裏の仕組み（コースの回数・繰り越し）はお客さんには出さない
 }
 
@@ -312,7 +315,7 @@ function proposals() {
   }
   const out = []; let first = true;
   Array.from(groups.keys()).sort().forEach(mk => {
-    const room = Math.max(0, groupLimit() - S.existing.filter(e => monthKeyOf(new Date(e.start)) === mk && isGroupRsv(e)).length);
+    const room = groupRoom(mk);
     const items = groups.get(mk).slice(0, isAdmin() ? 99 : room); if (!items.length) return;
     out.push({ mk, label: `${Number(mk.split('-')[1])}月分`, items, preChecked: first }); first = false;
   });

@@ -26,7 +26,7 @@ function authorizeMe() {
 // ---- 生徒さんの「月の回数」（Teraco Customer の顧客名簿 monthlyLessons。4回コース／2回コースなど） ----
 // 名簿が読めないとき（未承認など）は null を返し、アプリ側は既定の上限（4回）で動く
 function planMap_() {
-  var cache = CacheService.getScriptCache(), hit = cache.get('PLAN_MAP2');
+  var cache = CacheService.getScriptCache(), hit = cache.get('PLAN_MAP3');
   if (hit) return JSON.parse(hit);
   var map = {};
   var sh = SpreadsheetApp.openById(CUSTOMER_DB_ID).getSheetByName(CUSTOMER_SHEET);
@@ -38,18 +38,64 @@ function planMap_() {
     var monthly = Number(r[ix.monthlyLessons]); if (isNaN(monthly)) monthly = null;
     // 月の回数が空・0でも、コース名が「ベーシック2回」「まなび4回」のように月の回数を表しているときはそれを使う（チケット系は月の枠なし）
     if (!(monthly > 0)) { var cm = String(r[ix.course] || '').match(/(\d+)\s*回/); if (cm && String(r[ix.course]).indexOf('チケット') < 0) monthly = Number(cm[1]); }
-    var rec = { monthly: monthly, course: String(r[ix.course] || ''), status: st };
+    var rec = { monthly: monthly, course: String(r[ix.course] || ''), status: st, id: String(r[ix.id] || '') };
     var names = [String(r[ix.displayName] || ''), String(r[ix.lastName] || '') + String(r[ix.firstName] || '')]
       .concat(String(r[ix.aliases] || '').split(/[,、|]/));
     names.forEach(function(n) { var k = normalize(n); if (k && !map[k]) map[k] = rec; });
   }
-  cache.put('PLAN_MAP2', JSON.stringify(map), 600);
+  cache.put('PLAN_MAP3', JSON.stringify(map), 600);
+  return map;
+}
+// 月の回数の正本は Teraco Customer（monthlyQuotaOf_ ＝ 名簿の回数 → コース名の対応表 → 月謝 の順で決める）。
+// Customer が毎晩作る「マイページ用」シートの monthlyLessons をそのまま使い、予約アプリ側で数え直さない（2026-10-01 そろえた）
+function myPageMap_() {
+  var cache = CacheService.getScriptCache(), hit = cache.get('MYPAGE_MAP2');
+  if (hit) return JSON.parse(hit);
+  var map = {};
+  var sh = SpreadsheetApp.openById(CUSTOMER_DB_ID).getSheetByName('マイページ用'); if (!sh) return map;
+  var vals = sh.getDataRange().getValues();
+  for (var i = 1; i < vals.length; i++) {
+    var sum = {}; try { sum = JSON.parse(vals[i][5] || '{}'); } catch (e) {}
+    var rec = { monthly: (sum.monthlyLessons === 0 || sum.monthlyLessons) ? Number(sum.monthlyLessons) : null, course: sum.course || '', updatedAt: String(vals[i][4] || ''), id: String(vals[i][0] || '') };
+    [String(vals[i][1] || '')].concat(String(vals[i][2] || '').split('|')).forEach(function(n) { var k = normalize(n); if (k && !map[k]) map[k] = rec; });
+  }
+  cache.put('MYPAGE_MAP2', JSON.stringify(map), 600);
   return map;
 }
 function getPlan_(name) {
   var key = normalize(name || ''); if (!key) return null;
-  try { var rec = planMap_()[key]; return rec ? { monthly: rec.monthly, course: rec.course, status: rec.status, source: '顧客名簿' } : { monthly: null, course: '', status: '', source: 'not_found' }; }
-  catch (e) { return null; }
+  try {
+    var mp = myPageMap_()[key], rec = planMap_()[key];   // マイページ用に居ないとき（新しく登録した人など）だけ名簿から
+    var out = mp ? { monthly: mp.monthly, course: mp.course, status: '', source: 'Customer（マイページ用）', updatedAt: mp.updatedAt }
+            : rec ? { monthly: rec.monthly, course: rec.course, status: rec.status, source: '顧客名簿' } : { monthly: null, course: '', status: '', source: 'not_found' };
+    var cid = (mp && mp.id) || (rec && rec.id) || '';
+    // 繰り越し：前の月にお休みした回数（受講台帳の「欠席」＝来店スタンプなし）を、その翌月の上限に足す（2026-10-01 藤崎さん「単純に休んだ回数を翌月まで繰り越す」）
+    var cm = monthKey(new Date()), pm = addMonthKey_(cm, -1), nm = addMonthKey_(cm, 1), abs = cid ? (absenceMap_()[cid] || {}) : {};
+    out.carry = {}; out.carry[cm] = abs[pm] || 0; out.carry[nm] = abs[cm] || 0;
+    return out;
+  } catch (e) { return null; }
+}
+
+function addMonthKey_(mk, n) { var y = Number(mk.slice(0, 4)), m = Number(mk.slice(5, 7)) - 1 + n; var d = new Date(y, m, 1); return Utilities.formatDate(d, CONFIG.TIMEZONE, 'yyyy-MM'); }
+// 受講台帳（Teraco Customer「出欠台帳」）の欠席を、顧客IDごと・月ごとに数える。グループ講座だけ（個人レッスン・体験会は数えない）
+function absenceMap_() {
+  var cache = CacheService.getScriptCache(), hit = cache.get('ABS_MAP1');
+  if (hit) return JSON.parse(hit);
+  var map = {};
+  var sh = SpreadsheetApp.openById(CUSTOMER_DB_ID).getSheetByName('出欠台帳'); if (!sh) return map;
+  var vals = sh.getDataRange().getValues(), head = vals[0].map(function(h) { return String(h || '').trim(); });
+  var ix = {}; head.forEach(function(h, i) { ix[h] = i; });
+  var since = addMonthKey_(monthKey(new Date()), -2);
+  for (var i = 1; i < vals.length; i++) {
+    var r = vals[i]; if (String(r[ix.status] || '').trim() !== '欠席') continue;
+    var title = String(r[ix.classTitle] || ''); if (/個人|【個|個別|マンツーマン|来店|訪問|体験/.test(title)) continue;
+    var d = r[ix.date]; var ym = (d instanceof Date) ? Utilities.formatDate(d, CONFIG.TIMEZONE, 'yyyy-MM') : String(d).replace(/\//g, '-').slice(0, 7);
+    if (ym < since) continue;
+    var cid = String(r[ix.customerId] || ''); if (!cid) continue;
+    map[cid] = map[cid] || {}; map[cid][ym] = (map[cid][ym] || 0) + 1;
+  }
+  cache.put('ABS_MAP1', JSON.stringify(map), 600);
+  return map;
 }
 
 // ---- 管理者用：生徒さん一覧（Teraco Customer の顧客名簿から。五十音順） ----
@@ -87,7 +133,7 @@ function getAdminStudents_(passcode) {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var action = p.action || 'overview';
-  if (action === 'version') return jsonOut({ok: true, version: 'v58', timestamp: new Date().toISOString()});
+  if (action === 'version') return jsonOut({ok: true, version: 'v59', timestamp: new Date().toISOString()});
   if (action === 'overview') return jsonOut(getOverview(p.name || '', Number(p.days) || CONFIG.OVERVIEW_DAYS));
   if (action === 'schedule_get') return jsonOut({ ok: true, schedule: getSchedule_() });
   if (action === 'admin_summary') return jsonOut(getAdminSummary(p.passcode));
@@ -782,9 +828,14 @@ function getNextData(name, days, email) {
                    month_key: monthKey(st), capacity: solo ? 1 : CONFIG.CAPACITY, reserved_count: count, busy: solo ? busy : false });
     }
   }
-  var existing = [];
+  var existing = [], pastThisMonth = 0;
   if (name && name.trim()) existing = findUserEvents(cal, name.trim(), start, addDays(start, days + 31), email || '');
-  return { ok: true, version: 'v58', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_(), plan: getPlan_(name) };
+  if (name && name.trim()) {
+    var ms = new Date(start.getFullYear(), start.getMonth(), 1);
+    if (ms < start) pastThisMonth = findUserEvents(cal, name.trim(), ms, start, email || '').filter(function(e) { var t = e.class_title || ''; return isLessonTitle_(t) && !/個人|【個|個別|マンツーマン|体験/.test(t); }).length;
+  }
+  var plan = getPlan_(name); if (plan) { plan.past = {}; plan.past[monthKey(start)] = pastThisMonth; }
+  return { ok: true, version: 'v59', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_(), plan: plan };
 }
 
 // =====================================================================
