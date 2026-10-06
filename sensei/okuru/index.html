@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- てらこ先生本人が「名刺ページ」を人に送るための道具（2026-10-06 藤崎さん「単純に僕が使う用。お客さんには見せなくていい」）
+     どこからもリンクしない・検索に出さない。スマホのホーム画面に追加して使う -->
+<meta name="robots" content="noindex, nofollow">
+<title>名刺を送る</title>
+<meta name="apple-mobile-web-app-title" content="名刺を送る">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="../img/face-chibi.jpg">
+<link rel="icon" href="../img/face-chibi.jpg">
+<meta name="theme-color" content="#2F5D46">
+<style>
+  :root{--bg:#FAF7F1;--card:#fff;--ink:#2B2823;--muted:#5A554C;--rule:#E4DDCC;--green:#2F5D46;--line:#06C755;}
+  @media (prefers-color-scheme: dark){:root{--bg:#1B1A17;--card:#252219;--ink:#F2EDE2;--muted:#B6AE9D;--rule:#3A352A;--green:#8FC49F;}}
+  *{box-sizing:border-box}
+  html{color-scheme:light dark}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+       -webkit-font-smoothing:antialiased;line-height:1.6}
+  main{max-width:520px;margin:0 auto;padding:max(24px,env(safe-area-inset-top)) 16px 40px}
+  .head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+  .head img{width:56px;height:56px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--green)}
+  .head h1{font-size:20px;margin:0;line-height:1.35}
+  .head p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .b{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:110px;padding:14px 8px;
+     border-radius:18px;border:1px solid var(--rule);background:var(--card);color:var(--ink);font:inherit;font-size:16px;font-weight:800;
+     text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .b:active{transform:scale(.98)}
+  .b svg{width:34px;height:34px;fill:none;stroke:var(--green);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .b.line{background:var(--line);border-color:var(--line);color:#fff}
+  .b.line svg{fill:#fff;stroke:none}
+  .b.main{grid-column:1 / -1;min-height:90px;flex-direction:row;background:var(--green);border-color:var(--green);color:#fff;font-size:18px}
+  .b.main svg{stroke:#fff}
+  .sec{margin-top:22px;background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:14px 16px}
+  .sec h2{font-size:13px;color:var(--green);margin:0 0 8px;letter-spacing:.06em}
+  .msg{width:100%;min-height:96px;border:1px solid var(--rule);border-radius:10px;padding:10px;font:inherit;font-size:15px;background:var(--bg);color:var(--ink);resize:vertical}
+  .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .s{flex:1 1 auto;padding:10px 12px;border-radius:10px;border:1px solid var(--rule);background:var(--bg);color:var(--ink);font:inherit;font-size:14px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none}
+  .url{font-weight:800;word-break:break-all}
+  .tip{font-size:13px;color:var(--muted);margin:16px 4px 0}
+  .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#222;color:#fff;
+         font-size:15px;font-weight:700;padding:11px 20px;border-radius:999px;white-space:nowrap;opacity:0;pointer-events:none;transition:all .2s ease;z-index:20}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  .qrbox{position:fixed;inset:0;background:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;z-index:30;color:#111}
+  .qrbox.on{display:flex}
+  .qrbox img.qr{width:min(86vw,460px);height:auto}
+  .qrbox .who{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-weight:800;font-size:18px}
+  .qrbox .who img{width:44px;height:44px;border-radius:50%}
+  .qrbox p{margin:12px 0 0;font-size:16px;text-align:center;line-height:1.6}
+  .qrbox button{margin-top:22px;padding:14px 40px;border-radius:14px;border:0;background:#2F5D46;color:#fff;font:inherit;font-weight:800;font-size:16px}
+</style>
+</head>
+<body>
+<main>
+  <div class="head">
+    <img src="../img/face-chibi.jpg" alt="">
+    <div><h1>名刺ページを送る</h1><p class="url">teraco-labo.com/sensei</p></div>
+  </div>
+
+  <div class="grid">
+    <button class="b main" type="button" id="b-share"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>共有メニューで送る</button>
+    <button class="b" type="button" id="b-qr"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v1M14 20h1M18 18h3v3"/></svg>QRを見せる</button>
+    <button class="b" type="button" id="b-copy"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>URLをコピー</button>
+    <a class="b line" id="b-line" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.4c-5.52 0-10 3.62-10 8.07 0 3.99 3.55 7.33 8.35 7.96.32.07.77.21.88.49.1.25.07.64.03.89l-.14.84c-.04.25-.2.97.86.53s5.7-3.35 7.77-5.74C21.13 13.87 22 12.32 22 10.47c0-4.45-4.48-8.07-10-8.07z"/></svg>LINEで送る</a>
+    <a class="b" id="b-mail" href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>メールで送る</a>
+  </div>
+
+  <section class="sec">
+    <h2>添える文（書きかえてOK）</h2>
+    <textarea class="msg" id="msg">てらこ先生（藤﨑）です。講座・番組・SNSはこちらのページにまとめています。</textarea>
+    <div class="row">
+      <button class="s" type="button" id="b-copymsg">文とURLをまとめてコピー</button>
+      <a class="s" href="../" target="_blank" rel="noopener">名刺ページを開く</a>
+    </div>
+  </section>
+
+  <p class="tip">スマホのブラウザで「ホーム画面に追加」すると、アプリのように1回で開けます。このページはお客さんには見えません（どこからもリンクしていません）。</p>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="qrbox" id="qrbox" role="dialog" aria-modal="true" aria-label="名刺ページのQRコード">
+  <div class="who"><img src="../img/face-chibi.jpg" alt="">てらこ先生｜スマホとAIの教室</div>
+  <img class="qr" src="../qr/qr-plain.png" alt="名刺ページのQRコード">
+  <p><b>スマホのカメラで読み取ってください</b><br>teraco-labo.com/sensei</p>
+  <button type="button" id="qr-close">閉じる</button>
+</div>
+
+<script>
+(function(){
+  var URL_ = 'https://teraco-labo.com/sensei/';
+  var TITLE = 'てらこ先生｜スマホとAIの教室';
+  var msg = document.getElementById('msg');
+  try { var saved = localStorage.getItem('okuru-msg'); if (saved) msg.value = saved; } catch(e) {}
+  msg.addEventListener('input', function(){ try { localStorage.setItem('okuru-msg', msg.value); } catch(e) {} refresh(); });
+  function text(){ return (msg.value.trim() ? msg.value.trim() + '\n' : '') + URL_; }
+  function refresh(){
+    document.getElementById('b-line').href = 'https://line.me/R/share?text=' + encodeURIComponent(text());
+    document.getElementById('b-mail').href = 'mailto:?subject=' + encodeURIComponent(TITLE) + '&body=' + encodeURIComponent(text());
+  }
+  refresh();
+  var toast = document.getElementById('toast'), t;
+  function say(m){ toast.textContent = m; toast.classList.add('on'); clearTimeout(t); t = setTimeout(function(){ toast.classList.remove('on'); }, 2000); }
+  function copy(s, okMsg){
+    function fallback(){
+      var a = document.createElement('textarea'); a.value = s; a.setAttribute('readonly',''); a.style.position='fixed'; a.style.opacity='0';
+      document.body.appendChild(a); a.select(); try { document.execCommand('copy'); say(okMsg); } catch(e) { say('コピーできませんでした'); } document.body.removeChild(a);
+    }
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(s).then(function(){ say(okMsg); }, fallback); } else { fallback(); }
+  }
+  document.getElementById('b-copy').addEventListener('click', function(){ copy(URL_, 'URLをコピーしました'); });
+  document.getElementById('b-copymsg').addEventListener('click', function(){ copy(text(), '文とURLをコピーしました'); });
+  document.getElementById('b-share').addEventListener('click', function(){
+    if (navigator.share) { navigator.share({ title: TITLE, text: msg.value.trim(), url: URL_ }).catch(function(){}); }
+    else { copy(text(), '共有メニューがないので、文とURLをコピーしました'); }
+  });
+  var box = document.getElementById('qrbox');
+  document.getElementById('b-qr').addEventListener('click', function(){ box.classList.add('on'); });
+  document.getElementById('qr-close').addEventListener('click', function(){ box.classList.remove('on'); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') box.classList.remove('on'); });
+})();
+</script>
+</body>
+</html>
