@@ -382,6 +382,15 @@
     }
     .about2-bio { font-size: 14px; line-height: 2; color: var(--body-text); margin-bottom: 14px; }
     .about2-chips { display: flex; gap: 10px; flex-wrap: wrap; }
+    .about2-name small { font-family: var(--font-sans); font-size: 14px; font-weight: 700; color: var(--forest); letter-spacing: .12em; margin-left: .8em; }
+    .about2-media { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--tl-border); }
+    .about2-media-head { font-family: var(--font-serif); font-size: 17px; font-weight: 700; color: var(--tl-text); }
+    .about2-media-text { font-size: 13.5px; line-height: 1.9; color: var(--body-text); margin-top: 4px; }
+    .about2-media-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .about2-media-links a { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 99px; border: 1px solid var(--chip-border); background: var(--cream); color: var(--forest-dark); font-size: 13.5px; font-weight: 700; text-decoration: none; transition: border-color .2s ease, background .2s ease; }
+    .about2-media-links a:hover { border-color: var(--forest); background: #fff; }
+    .about2-media-links a.about2-media-all { background: var(--forest); border-color: var(--forest); color: var(--white); }
+    .about2-media-links a.about2-media-all:hover { background: var(--forest-dark); }
     .about2-chip {
         font-size: 12.5px; color: var(--tl-muted); border: 1px solid var(--chip-border);
         border-radius: 99px; padding: 5px 14px; background: var(--cream);
@@ -544,6 +553,7 @@
         .about2-photo { width: 200px; height: 226px; margin: 0 auto; }
         .about2-bio { text-align: left; }
         .about2-chips { justify-content: center; }
+        .about2-media { text-align: left; }
 
         .voice-grid { grid-template-columns: 1fr; }
 
@@ -601,6 +611,9 @@
     .business-card-link { color: var(--forest) !important; }
     .about2-label { color: var(--forest) !important; }
     .about2-bio { color: var(--body-text) !important; }
+    .about2-media-text { color: var(--body-text) !important; }
+    .about2-media-links a { text-decoration: none !important; color: var(--forest-dark) !important; }
+    .about2-media-links a.about2-media-all { color: var(--white) !important; }
     .voice-text { color: var(--nav-text) !important; }
     .faq2-a { color: var(--body-text) !important; }
     .faq2-footer { color: var(--tl-muted) !important; }
@@ -831,13 +844,24 @@
                     <img class="about2-photo" src="images/fujisaki-portrait.jpg" alt="代表 藤﨑秀一">
                     <div>
                         <p class="about2-label">代表紹介｜講師・映像作家</p>
-                        <h2 class="about2-name">藤﨑 秀一</h2>
+                        <h2 class="about2-name">藤﨑 秀一<small>てらこ先生</small></h2>
                         <p class="about2-bio">通信業界に20年以上従事し、年間およそ3万人の接客・サポートを経験。地域おこし協力隊の任期中に映像制作事業で起業しました。いまは高齢者向けスマホ講座から学生向けのAI研修まで、年間300講座・延べ1,000人以上を指導。「何度聞いても大丈夫」が信条です。</p>
                         <div class="about2-chips">
                             <span class="about2-chip">携帯ショップ店長歴22年</span>
                             <span class="about2-chip">接客・サポート 年間約3万人</span>
                             <span class="about2-chip">地域おこし協力隊3年満了</span>
                             <span class="about2-chip">西都市を拠点に県内出張対応</span>
+                        </div>
+                        <div class="about2-media">
+                            <p class="about2-media-head">発信活動にも力を入れています</p>
+                            <p class="about2-media-text">「てらこ先生」として、スマホとAIのことを、ラジオ・YouTube・SNSでやさしくお届けしています。</p>
+                            <div class="about2-media-links">
+                                <a href="https://www.youtube.com/@teracosensei" target="_blank" rel="noopener">YouTube</a>
+                                <a href="https://teraco-labo.github.io/line-outou/radio.html" target="_blank" rel="noopener">ラジオ</a>
+                                <a href="https://www.instagram.com/teracosensei/" target="_blank" rel="noopener">Instagram</a>
+                                <a href="https://note.com/teraco_labo" target="_blank" rel="noopener">note</a>
+                                <a class="about2-media-all" href="sensei/">てらこ先生のリンク集 →</a>
+                            </div>
                         </div>
                     </div>
                 </div>
