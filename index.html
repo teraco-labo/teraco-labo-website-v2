@@ -617,6 +617,8 @@
     .about2-media-text { color: var(--body-text) !important; }
     #about .about2-media-links a { text-decoration: none !important; color: var(--forest-dark) !important; }
     #about .about2-media-links a.about2-media-all { color: var(--white) !important; }
+    #about .about2-media-links a.about2-media-iconlink { padding: 0; min-height: 0; border: 0; background: none; border-radius: 50%; }
+    #about .about2-media-links a.about2-media-iconlink:hover .about2-media-icon { border-color: var(--forest); }
     .voice-text { color: var(--nav-text) !important; }
     .faq2-a { color: var(--body-text) !important; }
     .faq2-footer { color: var(--tl-muted) !important; }
@@ -865,7 +867,7 @@
                                 <a href="https://note.com/teraco_labo" target="_blank" rel="noopener">note</a>
                                 <span class="about2-media-end">
                                     <a class="about2-media-all" href="sensei/">てらこ先生のリンク集 →</a>
-                                    <img class="about2-media-icon" src="images/terako-sensei-icon.jpg" alt="てらこ先生のイラスト" width="52" height="52" loading="lazy">
+                                    <a class="about2-media-iconlink" href="sensei/" tabindex="-1" aria-hidden="true"><img class="about2-media-icon" src="images/terako-sensei-icon.jpg" alt="" width="52" height="52" loading="lazy"></a>
                                 </span>
                             </div>
                         </div>
