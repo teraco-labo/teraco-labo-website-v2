@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<!-- 名刺ページの配布物（tools/render_cards.sh で sensei/qr/ と sensei/img/ に画像にする） -->
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#ddd;font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif;color:#2B2823;}
+  .c{position:relative;overflow:hidden;background:#FAF7F1;display:flex;}
+  .green{color:#2F5D46;}
+  .face{border-radius:50%;object-fit:cover;border:6px solid #fff;box-shadow:0 0 0 3px #2F5D46;}
+  .url{font-weight:800;letter-spacing:.01em;color:#2F5D46;white-space:nowrap;}
+  .scan{color:#5A554C;}
+
+  /* OGP 1200x630 */
+  #og{width:1200px;height:630px;align-items:center;padding:0 90px;gap:70px;}
+  #og .face{width:300px;height:300px;}
+  #og .brand{font-size:26px;letter-spacing:.2em;font-weight:700;}
+  #og h1{font-size:84px;font-weight:900;margin:8px 0 0;}
+  #og .real{font-size:30px;color:#5A554C;letter-spacing:.1em;margin-top:4px;}
+  #og .catch{font-size:31px;font-weight:700;margin-top:26px;white-space:nowrap;}
+  #og .url{font-size:30px;margin-top:22px;}
+
+  /* 講座のスライド 1920x1080 */
+  #class{width:1920px;height:1080px;align-items:center;justify-content:center;gap:110px;}
+  #class img.qr{width:760px;height:760px;background:#fff;border-radius:28px;box-shadow:0 10px 40px rgba(0,0,0,.08);}
+  #class h2{font-size:64px;font-weight:900;line-height:1.35;}
+  #class .scan{font-size:40px;margin-top:40px;line-height:1.6;}
+  #class .url{font-size:58px;margin-top:40px;}
+  #class .or{font-size:32px;color:#8A8272;margin-top:36px;}
+
+  /* SNS 1080x1350 */
+  #sns{width:1080px;height:1350px;flex-direction:column;align-items:center;padding-top:90px;}
+  #sns .face{width:220px;height:220px;}
+  #sns h1{font-size:86px;font-weight:900;margin-top:26px;}
+  #sns .real{font-size:34px;color:#5A554C;letter-spacing:.1em;}
+  #sns .catch{font-size:40px;font-weight:700;margin-top:20px;}
+  #sns img.qr{width:500px;height:500px;margin-top:44px;background:#fff;border-radius:24px;}
+  #sns .url{font-size:46px;margin-top:22px;}
+
+  /* 名刺の裏 91x55mm（300dpi で 1075x650）*/
+  #meishi{width:1075px;height:650px;background:#fff;align-items:center;padding:0 60px;gap:44px;}
+  #meishi img.qr{width:420px;height:420px;flex:0 0 auto;}
+  #meishi .lead{font-size:34px;font-weight:800;line-height:1.5;}
+  #meishi .scan{font-size:25px;margin-top:20px;line-height:1.6;}
+  #meishi .url{font-size:31px;margin-top:22px;}
+</style></head><body>
+
+<section class="c" id="og">
+  <img class="face" src="../sensei/img/face.jpg">
+  <div>
+    <div class="brand green">TERACO.LABO</div>
+    <h1>てらこ先生</h1>
+    <div class="real">藤﨑 秀一</div>
+    <div class="catch green">「むずかしい」を「かんたん」に変える先生</div>
+    <div class="url">teraco-labo.com/sensei</div>
+  </div>
+</section>
+
+<section class="c" id="class">
+  <img class="qr" src="../sensei/qr/qr-class.png">
+  <div>
+    <h2>てらこ先生の<br>ページはこちら</h2>
+    <div class="scan">スマホのカメラを<br>QRコードにかざしてください</div>
+    <div class="or">読み取れないときは、この文字を入力</div>
+    <div class="url">teraco-labo.com/sensei</div>
+  </div>
+</section>
+
+<section class="c" id="sns">
+  <img class="face" src="../sensei/img/face.jpg">
+  <h1>てらこ先生</h1>
+  <div class="real">藤﨑 秀一</div>
+  <div class="catch green">「むずかしい」を「かんたん」に変える先生</div>
+  <img class="qr" src="../sensei/qr/qr-sns.png">
+  <div class="url">teraco-labo.com/sensei</div>
+</section>
+
+<section class="c" id="meishi">
+  <img class="qr" src="../sensei/qr/qr-card.png">
+  <div>
+    <div class="lead">講座・番組・SNSは<br>このページから</div>
+    <div class="scan">スマホのカメラを<br>かざしてください</div>
+    <div class="url">teraco-labo.com/sensei</div>
+  </div>
+</section>
+
+<script>var h=location.hash.slice(1);if(h){document.body.style.background="#fff";document.querySelectorAll(".c").forEach(function(e){if(e.id!==h)e.style.display="none";});}</script>
+</body></html>
