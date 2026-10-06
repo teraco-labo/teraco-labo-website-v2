@@ -87,5 +87,6 @@
   </div>
 </section>
 
-<script>var h=location.hash.slice(1);if(h){document.body.style.background="#fff";document.querySelectorAll(".c").forEach(function(e){if(e.id!==h)e.style.display="none";});}</script>
+<script>var f=new URLSearchParams(location.search).get("face");if(f){document.querySelectorAll("img.face").forEach(function(i){i.src="../sensei/img/face-"+f+".jpg";});}
+var h=location.hash.slice(1);if(h){document.body.style.background="#fff";document.querySelectorAll(".c").forEach(function(e){if(e.id!==h)e.style.display="none";});}</script>
 </body></html>

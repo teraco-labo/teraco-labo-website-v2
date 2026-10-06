@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>名刺ページ一式の確認</title>
+<!-- 名刺ページ /sensei と配布物の確認用（公開前の見せ合わせ。http://localhost:8931/tools/preview.html）
+     左＝ふつうの絵（sensei/img/face.jpg）、右＝ちびキャラ（sensei/img/face-chibi.jpg）。ページ本体は face.jpg のまま -->
+<style>
+  body{margin:0;background:#EFEAE0;font-family:"Hiragino Sans",sans-serif;color:#2B2823;}
+  main{max-width:1240px;margin:0 auto;padding:28px 16px 60px;}
+  h1{font-size:24px;margin:0 0 6px;} .lead{color:#5A554C;margin:0 0 24px;}
+  section{background:#fff;border-radius:14px;padding:18px 20px 22px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+  h2{font-size:18px;margin:0 0 4px;} .note{font-size:13.5px;color:#5A554C;margin:0 0 14px;}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
+  .pair > div > b{display:block;font-size:14px;margin-bottom:8px;color:#2F5D46;}
+  .row{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start;}
+  figure{margin:0;} figcaption{font-size:13px;color:#5A554C;margin-top:6px;}
+  img{display:block;max-width:100%;border:1px solid #E4DDCC;border-radius:6px;background:#fff;}
+  .phone{width:360px;max-width:100%;height:740px;border:10px solid #222;border-radius:36px;overflow:hidden;background:#fff;}
+  .phone iframe{width:100%;height:100%;border:0;}
+  code{background:#F2ECDF;padding:1px 6px;border-radius:4px;font-size:13px;}
+  @media (max-width:760px){.pair{grid-template-columns:1fr;}}
+</style></head><body><main>
+<h1>てらこ先生の名刺ページ一式</h1>
+<p class="lead">左がふつうの絵、右がちびキャラ。URL は <code>teraco-labo.com/sensei</code>。QR は黒一色で中にアイコンなし。</p>
+
+<section>
+  <h2>0. アイコン</h2>
+  <div class="row">
+    <figure><img src="../sensei/img/face.jpg" width="220"><figcaption>ふつうの絵（バストアップ）</figcaption></figure>
+    <figure><img src="../sensei/img/face-chibi.jpg" width="220"><figcaption>ちびキャラ（バストアップ）</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>1. 名刺ページ（スマホで見たところ）</h2>
+  <p class="note">中は実際に押せます。いちばん下に「連絡先に保存する」。</p>
+  <div class="pair">
+    <div><b>ふつうの絵</b><div class="phone"><iframe src="../sensei/"></iframe></div></div>
+    <div><b>ちびキャラ</b><div class="phone"><iframe id="chibi-page" src="../sensei/"></iframe></div></div>
+  </div>
+</section>
+
+<section>
+  <h2>2. 名刺の裏（91×55mm）</h2>
+  <p class="note">名刺用の QR（来た人を「名刺から」として数える）。</p>
+  <div class="pair">
+    <div><b>ふつうの絵</b><img src="../sensei/qr/meishi-back.png"></div>
+    <div><b>ちびキャラ</b><img src="../sensei/qr/chibi/meishi-back.png"></div>
+  </div>
+</section>
+
+<section>
+  <h2>3. 講座のスライド（16:9）</h2>
+  <p class="note">講座用の QR（「講座から」として数える）。読めない人向けに URL を大きく。</p>
+  <div class="pair">
+    <div><b>ふつうの絵</b><img src="../sensei/qr/slide-class.png"></div>
+    <div><b>ちびキャラ</b><img src="../sensei/qr/chibi/slide-class.png"></div>
+  </div>
+</section>
+
+<section>
+  <h2>4. SNS に載せる画像（4:5）</h2>
+  <p class="note">SNS 用の QR（「SNSから」として数える）。</p>
+  <div class="pair">
+    <div><b>ふつうの絵</b><img src="../sensei/qr/sns-post.png" style="max-width:420px"></div>
+    <div><b>ちびキャラ</b><img src="../sensei/qr/chibi/sns-post.png" style="max-width:420px"></div>
+  </div>
+</section>
+
+<section>
+  <h2>5. リンクを貼ったときに出る絵（LINE・X・Facebook など）</h2>
+  <div class="pair">
+    <div><b>ふつうの絵</b><img src="../sensei/img/og.png"></div>
+    <div><b>ちびキャラ</b><img src="../sensei/img/og-chibi.png"></div>
+  </div>
+</section>
+
+<section>
+  <h2>6. QR コード単体（黒・アイコンなし・両方共通）</h2>
+  <p class="note">印刷物やチラシに自由に置く用。どれも同じページに飛び、どこから来たかだけが違います。</p>
+  <div class="row">
+    <figure><img src="../sensei/qr/qr-card.png" width="200"><figcaption>名刺用</figcaption></figure>
+    <figure><img src="../sensei/qr/qr-class.png" width="200"><figcaption>講座用</figcaption></figure>
+    <figure><img src="../sensei/qr/qr-sns.png" width="200"><figcaption>SNS 用</figcaption></figure>
+    <figure><img src="../sensei/qr/qr-plain.png" width="200"><figcaption>そのほか（数えない）</figcaption></figure>
+  </div>
+</section>
+</main>
+<script>
+// 右のスマホはページ本体を変えずに、アイコンだけちびキャラに差し替えて見せる
+document.getElementById('chibi-page').addEventListener('load', function(){
+  var d = this.contentDocument; if (!d) return;
+  var i = d.querySelector('img.face'); if (i) i.src = '../sensei/img/face-chibi.jpg'.replace('../sensei/','');
+});
+</script>
+</body></html>
