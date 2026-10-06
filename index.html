@@ -391,6 +391,8 @@
     .about2-media-links a:hover { border-color: var(--forest); background: #fff; }
     .about2-media-links a.about2-media-all { background: var(--forest); border-color: var(--forest); color: var(--white); }
     .about2-media-links a.about2-media-all:hover { background: var(--forest-dark); }
+    .about2-media-end { display: inline-flex; align-items: center; gap: 10px; }
+    .about2-media-icon { width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--chip-border); background: #fff; flex-shrink: 0; }
     .about2-chip {
         font-size: 12.5px; color: var(--tl-muted); border: 1px solid var(--chip-border);
         border-radius: 99px; padding: 5px 14px; background: var(--cream);
@@ -860,7 +862,10 @@
                                 <a href="https://teraco-labo.github.io/line-outou/radio.html" target="_blank" rel="noopener">ラジオ</a>
                                 <a href="https://www.instagram.com/teracosensei/" target="_blank" rel="noopener">Instagram</a>
                                 <a href="https://note.com/teraco_labo" target="_blank" rel="noopener">note</a>
-                                <a class="about2-media-all" href="sensei/">てらこ先生のリンク集 →</a>
+                                <span class="about2-media-end">
+                                    <a class="about2-media-all" href="sensei/">てらこ先生のリンク集 →</a>
+                                    <img class="about2-media-icon" src="images/terako-sensei-icon.jpg" alt="てらこ先生のイラスト" width="52" height="52" loading="lazy">
+                                </span>
                             </div>
                         </div>
                     </div>
