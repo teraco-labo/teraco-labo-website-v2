@@ -20,7 +20,7 @@
   @media (max-width:760px){.pair{grid-template-columns:1fr;}}
 </style></head><body><main>
 <h1>てらこ先生の名刺ページ一式</h1>
-<p class="lead">左がふつうの絵、右がちびキャラ。URL は <code>teraco-labo.com/sensei</code>。QR は黒一色で中にアイコンなし。</p>
+<p class="lead">左がふつうの絵、右がちびキャラ。<b>使い分け（2026-10-06 決定）：ページ・SNS・講座スライド・共有時の絵はちび、企業・自治体に渡す名刺と提案書はふつうの絵。</b>URL は <code>teraco-labo.com/sensei</code>。QR は黒一色で中にアイコンなし。</p>
 
 <section>
   <h2>0. アイコン</h2>
@@ -34,13 +34,13 @@
   <h2>1. 名刺ページ（スマホで見たところ）</h2>
   <p class="note">中は実際に押せます。いちばん下に「連絡先に保存する」。</p>
   <div class="pair">
-    <div><b>ふつうの絵</b><div class="phone"><iframe src="../sensei/"></iframe></div></div>
-    <div><b>ちびキャラ</b><div class="phone"><iframe id="chibi-page" src="../sensei/"></iframe></div></div>
+    <div><b>ふつうの絵（参考）</b><div class="phone"><iframe id="normal-page" src="../sensei/"></iframe></div></div>
+    <div><b>ちびキャラ（採用）</b><div class="phone"><iframe src="../sensei/"></iframe></div></div>
   </div>
 </section>
 
 <section>
-  <h2>2. 名刺の裏（91×55mm）</h2>
+  <h2>2. 名刺の裏（91×55mm）… 企業・自治体向けは左（ふつうの絵）</h2>
   <p class="note">名刺用の QR（来た人を「名刺から」として数える）。</p>
   <div class="pair">
     <div><b>ふつうの絵</b><img src="../sensei/qr/meishi-back.png"></div>
@@ -49,7 +49,7 @@
 </section>
 
 <section>
-  <h2>3. 講座のスライド（16:9）</h2>
+  <h2>3. 講座のスライド（16:9）… 右（ちび）</h2>
   <p class="note">講座用の QR（「講座から」として数える）。読めない人向けに URL を大きく。</p>
   <div class="pair">
     <div><b>ふつうの絵</b><img src="../sensei/qr/slide-class.png"></div>
@@ -58,7 +58,7 @@
 </section>
 
 <section>
-  <h2>4. SNS に載せる画像（4:5）</h2>
+  <h2>4. SNS に載せる画像（4:5）… 右（ちび）</h2>
   <p class="note">SNS 用の QR（「SNSから」として数える）。</p>
   <div class="pair">
     <div><b>ふつうの絵</b><img src="../sensei/qr/sns-post.png" style="max-width:420px"></div>
@@ -67,7 +67,7 @@
 </section>
 
 <section>
-  <h2>5. リンクを貼ったときに出る絵（LINE・X・Facebook など）</h2>
+  <h2>5. リンクを貼ったときに出る絵（LINE・X・Facebook など）… 右（ちび）</h2>
   <div class="pair">
     <div><b>ふつうの絵</b><img src="../sensei/img/og.png"></div>
     <div><b>ちびキャラ</b><img src="../sensei/img/og-chibi.png"></div>
@@ -86,10 +86,10 @@
 </section>
 </main>
 <script>
-// 右のスマホはページ本体を変えずに、アイコンだけちびキャラに差し替えて見せる
-document.getElementById('chibi-page').addEventListener('load', function(){
+// ページ本体はちびキャラ。左のスマホはアイコンだけふつうの絵に差し替えて見せる（参考）
+document.getElementById('normal-page').addEventListener('load', function(){
   var d = this.contentDocument; if (!d) return;
-  var i = d.querySelector('img.face'); if (i) i.src = '../sensei/img/face-chibi.jpg'.replace('../sensei/','');
+  var i = d.querySelector('img.face'); if (i) i.src = 'img/face.jpg';
 });
 </script>
 </body></html>
