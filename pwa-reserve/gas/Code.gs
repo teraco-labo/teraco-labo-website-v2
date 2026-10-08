@@ -133,7 +133,7 @@ function getAdminStudents_(passcode) {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var action = p.action || 'overview';
-  if (action === 'version') return jsonOut({ok: true, version: 'v59', timestamp: new Date().toISOString()});
+  if (action === 'version') return jsonOut({ok: true, version: 'v60', timestamp: new Date().toISOString()});
   if (action === 'overview') return jsonOut(getOverview(p.name || '', Number(p.days) || CONFIG.OVERVIEW_DAYS));
   if (action === 'schedule_get') return jsonOut({ ok: true, schedule: getSchedule_() });
   if (action === 'admin_summary') return jsonOut(getAdminSummary(p.passcode));
@@ -319,6 +319,7 @@ function doPost(e) {
   if (body.action === 'next_data') return jsonOut(getNextData(body.name || '', Number(body.days) || 75, body.email || ''));
   if (body.action === 'schedule_get') return jsonOut({ ok: true, schedule: getSchedule_() });
   if (body.action === 'schedule_set') return jsonOut(setSchedule_(body.passcode, body.schedule));
+  if (body.action === 'admin_merge_duplicates') return jsonOut(mergeDuplicateLessons_(body.passcode, body.start || '', body.end || '', !!body.dry));
   if (body.action === 'admin_students') return jsonOut(getAdminStudents_(body.passcode));
   LINE_CTX = { idToken: body.id_token || '', label: body.line_label || '', silent: !!body.line_silent };
   if (body.action === 'line_link') return jsonOut(lineLink_(body.id_token || '', body.name || ''));
@@ -380,6 +381,7 @@ function reserve(name, slotIds, classDetails, email, addToCalendar, passcode) {
 
       var endTime = new Date(startTime.getTime() + minutes * 60000);
       var existing = findEventAt(cal, startTime, title);
+      var newTitle = normalizeLessonTitle_(title, startTime);
       var eventId = "";
 
       if (existing) {
@@ -389,7 +391,7 @@ function reserve(name, slotIds, classDetails, email, addToCalendar, passcode) {
           existing.setDescription(addName(desc, userName, email));
         }
       } else {
-        var ev = cal.createEvent(title, startTime, endTime, {
+        var ev = cal.createEvent(newTitle, startTime, endTime, {
           description: addName('', userName, email),
           location: CONFIG.LOCATION,
           sendInvites: false
@@ -587,7 +589,56 @@ function findEventAt(cal, startTime, title) {
   for (var i = 0; i < events.length; i++) {
     if (events[i].getTitle() === title && events[i].getStartTime().getTime() === startTime.getTime()) return events[i];
   }
-  return null;
+  // 名前が少し違っても同じ講座なら同じ予定に入れる（例「スマホ 応用てらこ(90分)」と「スマホ 応用B(90分)」。2026-10-08 藤崎さん）
+  var key = lessonKey_(title); if (!key) return null;
+  var hit = null;
+  for (var j = 0; j < events.length; j++) {
+    var ev = events[j]; if (ev.getStartTime().getTime() !== startTime.getTime() || lessonKey_(ev.getTitle()) !== key) continue;
+    if (!hit || /[AB]\s*[\(（]/.test(ev.getTitle())) hit = ev;   // 新しい名前（A/B つき）の予定を優先
+  }
+  return hit;
+}
+// 講座の見分け：「スマホ／パソコン」＋「応用／入門」＋分数。個人レッスン・体験会は対象外
+function lessonKey_(title) {
+  var t = String(title || ''); if (!/^(スマホ|パソコン)/.test(t) || /個人|体験/.test(t)) return '';
+  var cat = /^パソコン/.test(t) ? 'pc' : 'sp';
+  var kind = /応用|アドバンス/.test(t) ? 'adv' : /入門|ベーシック|基礎/.test(t) ? 'intro' : ''; if (!kind) return '';
+  var m = t.match(/(\d+)\s*分/); return cat + '-' + kind + '-' + (m ? m[1] : '');
+}
+// 古いクラス名（応用てらこ・入門まなび など A/B が無いもの）を、曜日から A（水）／B（金）に直す
+function normalizeLessonTitle_(title, start) {
+  var t = String(title || ''); if (!lessonKey_(t) || /[AB]\s*[\(（]/.test(t)) return t;
+  var dow = start.getDay(), k = dow === 3 ? 'A' : dow === 5 ? 'B' : ''; if (!k) return t;
+  return t.replace(/(応用|入門)[^\(（\s]*\s*([\(（])/, '$1' + k + '$2');
+}
+// 管理者用：同じ時刻・同じ講座で分かれてしまった予定を1つにまとめる（新しい名前の予定に名前・ゲストを移し、古い方は通知なしで消す）
+function mergeDuplicateLessons_(passcode, startStr, endStr, dry) {
+  if (passcode !== CONFIG.ADMIN_PASSCODE) return { ok: false, message: 'パスコードが正しくありません' };
+  var cal = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);
+  var start = startStr ? new Date(startStr + 'T00:00:00+09:00') : todayStart(), end = endStr ? new Date(endStr + 'T23:59:59+09:00') : addDays(start, 180);
+  var groups = {}, out = [];
+  cal.getEvents(start, end).forEach(function(ev) { var k = lessonKey_(ev.getTitle()); if (!k) return; var g = ev.getStartTime().getTime() + '|' + k; (groups[g] = groups[g] || []).push(ev); });
+  Object.keys(groups).forEach(function(g) {
+    var list = groups[g]; if (list.length < 2) return;
+    var keep = list.filter(function(e) { return /[AB]\s*[\(（]/.test(e.getTitle()); })[0] || list[0];
+    var desc = keep.getDescription() || '', moved = [];
+    list.forEach(function(ev) {
+      if (ev.getId() === keep.getId()) return;
+      (ev.getDescription() || '').split('\n').map(function(l) { return l.trim(); }).filter(String).forEach(function(line) {
+        if (line.indexOf('email:') === 0) { if (desc.indexOf(line) < 0) desc += (desc ? '\n' : '') + line; return; }
+        if (isJunkLine(line)) return;
+        if (!hasName(desc, line)) { desc = addName(desc, line, ''); moved.push(line); }
+      });
+      var guests = []; try { guests = ev.getGuestList().map(function(x) { return x.getEmail(); }); } catch (e) {}
+      if (!dry) {
+        keep.setDescription(desc);
+        guests.forEach(function(em) { if (em) addGuestSilently(keep.getId(), em); });
+        Calendar.Events.remove(CONFIG.CALENDAR_ID, ev.getId().split('@')[0], { sendUpdates: 'none' });
+      }
+      out.push({ when: Utilities.formatDate(ev.getStartTime(), CONFIG.TIMEZONE, 'yyyy-MM-dd HH:mm'), from: ev.getTitle(), to: keep.getTitle(), moved: moved, guests: guests.length });
+    });
+  });
+  return { ok: true, dry: !!dry, merged: out };
 }
 function findUserEvents(cal, userName, start, end, email) {
   var events = cal.getEvents(start, end);
@@ -835,7 +886,7 @@ function getNextData(name, days, email) {
     if (ms < start) pastThisMonth = findUserEvents(cal, name.trim(), ms, start, email || '').filter(function(e) { var t = e.class_title || ''; return isLessonTitle_(t) && !/個人|【個|個別|マンツーマン|体験/.test(t); }).length;
   }
   var plan = getPlan_(name); if (plan) { plan.past = {}; plan.past[monthKey(start)] = pastThisMonth; }
-  return { ok: true, version: 'v59', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_(), plan: plan };
+  return { ok: true, version: 'v60', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_(), plan: plan };
 }
 
 // =====================================================================
