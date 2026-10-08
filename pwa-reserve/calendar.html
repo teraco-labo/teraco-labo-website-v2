@@ -41,8 +41,9 @@
   .foot .tel { color: #2E86DE; } .foot .line { color: #55AE3A; }
   .foot img.qr { width: 17mm; height: 17mm; } .foot img.logo { width: 23mm; height: auto; }
   .err { padding: 30mm 10mm; text-align: center; font-size: 5mm; }
+  .sheet.pic { padding: 0; min-height: 0; } .sheet.pic img { display: block; width: 100%; height: auto; }
   @media screen and (max-width: 820px) { .sheet { zoom: var(--fit, 1); margin: 8px auto; } }
-  @media print { body { background: #fff; } .tools { display: none; } .sheet { margin: 0; box-shadow: none; width: auto; min-height: 0; height: 283mm; padding: 0; } }
+  @media print { body { background: #fff; } .tools { display: none; } .sheet { margin: 0; box-shadow: none; width: auto; min-height: 0; height: 283mm; padding: 0; } .sheet.pic { height: auto; } .sheet.pic img { max-height: 283mm; width: auto; max-width: 100%; margin: 0 auto; } }
 </style>
 </head>
 <body>
@@ -70,6 +71,16 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const qs = new URLSearchParams(location.search);
 let month = /^\d{4}-\d{2}$/.test(qs.get('m') || '') ? qs.get('m') : (() => { const d = new Date(); d.setMonth(d.getMonth() + 1, 1); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; })();
 let schedule = null;
+// 先生が Numbers で作った紙面の画像がある月は、それをそのまま見せる（calendar-img/calendar-YYYY-MM.jpg）。無い月は下で自動で組む
+const IMG_MONTHS = ['2026-10', '2026-11', '2026-12', '2027-01', '2027-02', '2027-03'];
+function showImage() {
+  const [y, m] = month.split('-').map(Number), sheet = document.getElementById('sheet');
+  sheet.classList.add('pic');
+  sheet.innerHTML = `<img src="calendar-img/calendar-${month}.jpg?v=1" alt="${y}年${m}月 スマホ教室TERACOカレンダー">`;
+  document.title = `${y}年${m}月 スマホ教室TERACOカレンダー`;
+  document.getElementById('msg').textContent = `${m}月の講座カレンダー`;
+  history.replaceState(null, '', `?m=${month}`);
+}
 
 const soloBlock = (span, startRow) => `<div class="blk" style="grid-row:${startRow} / span ${span};background:${SOLO.color};">
   <div>【個人レッスン】</div><small>マンツーマン（${SOLO.min}分）</small>${span >= 3 ? '<div class="gap"></div>' : ''}<div>【オンライン】</div><small>グループ / マンツーマン</small></div>`;
@@ -90,6 +101,9 @@ function dayColumn(date, inMonth) {
 }
 
 function build() {
+  if (IMG_MONTHS.includes(month)) return showImage();
+  document.getElementById('sheet').classList.remove('pic');
+  if (!schedule) { document.getElementById('sheet').innerHTML = '<div class="err">講座カレンダーを読み込めませんでした。<br>電波のよい場所で、もう一度ひらいてください。</div>'; document.getElementById('msg').textContent = ''; return; }
   const [y, m] = month.split('-').map(Number); const first = new Date(y, m - 1, 1), dim = new Date(y, m, 0).getDate();
   const start = new Date(first); start.setDate(1 - first.getDay());            // その月の最初の週の日曜
   const weeks = [];
@@ -129,7 +143,7 @@ fit(); window.addEventListener('resize', fit);
 document.getElementById('prev').onclick = () => shift(-1);
 document.getElementById('next').onclick = () => shift(1);
 fetch(API_BASE + '?action=schedule_get').then(r => r.json()).then(d => { schedule = d.schedule || { published: [], off: [], events: [] }; build(); })
-  .catch(() => { document.getElementById('sheet').innerHTML = '<div class="err">講座カレンダーを読み込めませんでした。<br>電波のよい場所で、もう一度ひらいてください。</div>'; document.getElementById('msg').textContent = ''; });
+  .catch(() => build());
 </script>
 </body>
 </html>
