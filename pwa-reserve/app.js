@@ -269,10 +269,11 @@ const isGroupSlot = (sl) => !!sl.klass;
 function groupLimit() { return (S.plan && Number(S.plan.monthly) > 0) ? Number(S.plan.monthly) : DEFAULT_GROUP_LIMIT; }
 // その月の上限＝月の回数＋前の月にお休みした回数（繰り越し。受講台帳の欠席から GAS が数える）
 function monthLimit(mk) { return groupLimit() + ((S.plan && S.plan.carry && Number(S.plan.carry[mk])) || 0); }
-// 予約できる月：先生が公開した月と、そのすぐ次の月（仮。休みの日が決まると変わることがある）
+// 予約できる月：今月と来月の2か月だけ（2026-10-08 藤崎さん「当月を入れた翌月まで。そんなにまとめてする人はいない」）。
+// 管理者画面の「公開」には左右されない（休みの日・体験会は講座カレンダーの登録がそのまま効く）
 function bookableMonth(mk) {
-  // 2026-09-25 藤崎さん要望: 先生が公開した月だけ。次の月を「仮」で見せるのはやめる
-  return SCHEDULE.published.includes(mk);
+  const cur = monthKeyOf(new Date());
+  return mk === cur || mk === addMonths(cur, 1);
 }
 // その月にえらべる残り。月4回の人は月4回まで、月2回の人は月2回まで（繰り越しがあっても、ひと月の上限は変わらない。2026-10-01 藤崎さん）
 function groupRoom(mk) {
@@ -480,13 +481,10 @@ function viewHistory() {
 function monthRange() {
   const cur = monthKeyOf(new Date());
   if (isAdmin()) return [addMonths(cur, -ADMIN_RANGE_MONTHS), addMonths(cur, ADMIN_RANGE_MONTHS)];
-  // 2026-09-25 藤崎さん要望: 生徒は「先生が公開した最後の月」までしか進めない（仮の月・未定の月は出さない）
-  return [cur, lastPublishedMonth()];
-}
-function lastPublishedMonth() {
-  const cur = monthKeyOf(new Date());
-  const pub = SCHEDULE.published.filter(mk => mk >= cur).sort();
-  return pub.length ? pub[pub.length - 1] : cur;
+  // 生徒が見られる月：予約できる来月まで＋講座カレンダーの画像がある月まで（2026-10-08 藤崎さん「見れるようにはしてあげて」）
+  const imgs = (window.TERACO_CAL_IMG_MONTHS || []).filter(mk => mk >= cur).sort();
+  const last = imgs.length ? imgs[imgs.length - 1] : cur;
+  return [cur, last > addMonths(cur, 1) ? last : addMonths(cur, 1)];
 }
 function dayStatus(date) {
   const dk = dayKeyOf(date); const slots = slotsForDay(dk);
@@ -542,7 +540,6 @@ function calendarBlock() {
   if (cells) { while ((cells.match(/<td/g) || []).length < 7) cells += '<td class="off"></td>'; rows += `<tr>${cells}</tr>`; }
   const cur = monthKeyOf(new Date());
   const undecided = !isAdmin() && !bookableMonth(S.viewMonth) && S.viewMonth >= cur;
-  const tentative = !isAdmin() && bookableMonth(S.viewMonth) && !SCHEDULE.published.includes(S.viewMonth);
   const group = !isAdmin() && COURSES[me().course].classes;
   const legend = isAdmin() ? 'どの日でも選べます。数字はその日の予約人数です。'
     : group ? '<b>色のついた日</b>が、あなたのクラスの日です。おしてえらんでください。' + (hasAlt ? '<br><b>点線の日</b>は、別のクラスの日です。' : '')
@@ -551,8 +548,7 @@ function calendarBlock() {
       <div class="ttl">${y}年${m}月</div>
       <button class="nav" data-act="month" data-d="1" ${monthDiff(S.viewMonth, maxM) <= 0 ? 'disabled' : ''} aria-label="次の月">›</button></div>
     <table class="cal"><thead><tr>${DAYS.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
-    ${undecided ? `<div class="note">${m}月の日程は、まだ決まっていません。決まりしだい、ここに出ます。</div>` : ''}
-    ${tentative ? `<div class="info" style="margin-top:10px;">${m}月の日程は仮です。変わることがあります。</div>` : ''}
+    ${undecided ? `<div class="note">${m}月の予約は、まだできません（予約できるのは今月と来月です）。日程は下の「講座カレンダー」で見られます。</div>` : ''}
     <div class="legend">${legend}<br>下に点がある日は、もう予約が入っています。</div>
     <div class="links" style="margin-top:10px;"><a class="link" target="_blank" rel="noopener" href="calendar.html?m=${S.viewMonth}">${m}月の講座カレンダーを見る</a></div>`;
 }
@@ -772,7 +768,8 @@ function viewAdminSchedule() {
     <div style="margin-top:14px;">${weekRows}</div>
   </div>
   <div class="card"><h2 style="color:var(--admin);">生徒さんへの公開</h2>
-    <p style="font-weight:800;margin-bottom:10px;">${m}月の日程：${published ? '公開中（生徒さんが予約できます）' : 'まだ公開していません'}</p>
+    <p class="muted" style="margin-bottom:8px;">生徒さんが予約できるのは、公開に関係なく<b>今月と来月</b>です（2026-10-08〜）。休み・体験会はこの画面の登録がそのまま効きます。</p>
+    <p style="font-weight:800;margin-bottom:10px;">${m}月の日程：${published ? '公開中' : 'まだ公開していません'}</p>
     <button class="btn ${published ? 'quiet' : 'dark'}" data-act="sched-publish">${published ? '公開をとりやめる' : `${m}月の日程を確定して公開する`}</button>
   </div>
   <div class="card"><h2 style="color:var(--admin);">体験会などの特別な予定</h2>

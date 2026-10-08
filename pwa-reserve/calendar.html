@@ -54,6 +54,7 @@
 </div>
 <div class="sheet" id="sheet"><div class="err">講座カレンダーを読み込んでいます…</div></div>
 <script src="timetable.js?v=1"></script>
+<script src="calendar-img/months.js?v=1"></script>
 <script>
 'use strict';
 const API_BASE = 'https://script.google.com/macros/s/AKfycbz2_NXN-VuAo2iCFu-jQ-nT5k9Bk3eCoIYBGXAtfDtneNJS7La8vLxS5T7p4Xo3iUIy/exec';
@@ -72,7 +73,7 @@ const qs = new URLSearchParams(location.search);
 let month = /^\d{4}-\d{2}$/.test(qs.get('m') || '') ? qs.get('m') : (() => { const d = new Date(); d.setMonth(d.getMonth() + 1, 1); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; })();
 let schedule = null;
 // 先生が Numbers で作った紙面の画像がある月は、それをそのまま見せる（calendar-img/calendar-YYYY-MM.jpg）。無い月は下で自動で組む
-const IMG_MONTHS = ['2026-10', '2026-11', '2026-12', '2027-01', '2027-02', '2027-03'];
+const IMG_MONTHS = window.TERACO_CAL_IMG_MONTHS || [];
 function showImage() {
   const [y, m] = month.split('-').map(Number), sheet = document.getElementById('sheet');
   sheet.classList.add('pic');
