@@ -53,7 +53,7 @@
   <span class="msg" id="msg">読み込み中…</span>
 </div>
 <div class="sheet" id="sheet"><div class="err">講座カレンダーを読み込んでいます…</div></div>
-<script src="timetable.js?v=1"></script>
+<script src="timetable.js?v=2"></script>
 <script src="calendar-img/months.js?v=1"></script>
 <script>
 'use strict';
@@ -65,7 +65,7 @@ const SOLO = TT.courses['private'];
 const TIMETABLE = {};
 Object.values(TT.courses).forEach(c => { if (!c.classes) return;
   Object.keys(c.classes).forEach(k => { const cl = c.classes[k];
-    (TIMETABLE[cl.dow] = TIMETABLE[cl.dow] || []).push({ time: cl.time, span: c.min > 60 ? 2 : 1, label: `${c.label} ${k}（${c.min}分）`, color: c.color }); }); });
+    (TIMETABLE[cl.dow] = TIMETABLE[cl.dow] || []).push({ time: cl.time, span: c.min > 60 ? 2 : 1, label: `${c.label} ${k}（${c.minLabel || c.min}分）`, color: c.color }); }); });
 const pad = n => String(n).padStart(2, '0');
 const dk = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -77,7 +77,7 @@ const IMG_MONTHS = window.TERACO_CAL_IMG_MONTHS || [];
 function showImage() {
   const [y, m] = month.split('-').map(Number), sheet = document.getElementById('sheet');
   sheet.classList.add('pic');
-  sheet.innerHTML = `<img src="calendar-img/calendar-${month}.jpg?v=1" alt="${y}年${m}月 スマホ教室TERACOカレンダー">`;
+  sheet.innerHTML = `<img src="calendar-img/calendar-${month}.jpg?v=2" alt="${y}年${m}月 スマホ教室TERACOカレンダー">`;
   document.title = `${y}年${m}月 スマホ教室TERACOカレンダー`;
   document.getElementById('msg').textContent = `${m}月の講座カレンダー`;
   history.replaceState(null, '', `?m=${month}`);

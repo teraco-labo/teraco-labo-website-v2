@@ -88,7 +88,8 @@ const dowTimeText = (c) => `${DAYS[c.dow]}曜 ${c.time}`;
 // クラス名には必ず分数を入れる（例：スマホ入門 A（45分）／個人レッスン（50分））
 function courseName(course, klass) {
   const c = COURSES[course]; if (!c) return '';
-  return c.classes && klass ? `${c.label} ${klass}（${c.min}分）` : `${c.label}（${c.min}分）`;
+  const mm = c.minLabel || c.min;   // 表示だけの分数（パソコン応用は暫定で「45・90」）
+  return c.classes && klass ? `${c.label} ${klass}（${mm}分）` : `${c.label}（${mm}分）`;
 }
 function classText(p) {
   if (!p || !p.course || !COURSES[p.course]) return '';
@@ -207,7 +208,7 @@ const eventAt = (dayKey, time) => SCHEDULE.events.find(ev => ev.day === dayKey &
 // 生徒がえらべる予定＝名前に「体験会」が入っているもの（初めての方も、在籍の方（有料）もえらべる）
 const trialEventsOn = (dayKey) => SCHEDULE.events.filter(ev => ev.day === dayKey && /体験会/.test(ev.label || '')).sort((a, b) => a.time.localeCompare(b.time));
 // 枠の表示：必ず「時刻（分数）」を出す。例「16:00（45分）」「10:00 体験会スマホ（45分）」
-const slotMin = (sl) => Number(sl.min) || ((me() && COURSES[me().course]) ? COURSES[me().course].min : 45);
+const slotMin = (sl) => Number(sl.min) || ((me() && COURSES[me().course]) ? (COURSES[me().course].minLabel || COURSES[me().course].min) : 45);
 const slotTimeText = (sl) => `${sl.start_time}${sl.event ? ' ' + sl.event : ''}（${slotMin(sl)}分）`;
 const isTrialTitle = (e) => /体験会/.test((e && (e.class_title || e.label || e.title)) || '');
 // その日に受けられる講座の一覧 [{time, klass, own}]。own=自分のクラス、false=同じコースの別クラス（振替）
