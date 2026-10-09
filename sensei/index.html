@@ -106,32 +106,7 @@
         font:inherit;font-size:15px;font-weight:700;text-align:center;text-decoration:none;}
   .save small{display:block;font-size:12px;font-weight:500;color:var(--muted);}
 
-  /* ---- 主役：Substack ---- */
-  .hero{
-    display:block;text-decoration:none;
-    background:var(--substack);
-    border-radius:16px;
-    padding:24px 24px 26px;
-    box-shadow:0 4px 16px rgba(255,103,25,.24);
-    transition:transform .15s ease;
-  }
-  .hero:hover,.hero:focus-visible{transform:translateY(-2px);outline:none;}
-  .hero-top{display:flex;align-items:center;gap:11px;margin-bottom:12px;}
-  .hero-mark{flex:0 0 auto;width:26px;height:26px;fill:var(--substack-ink);}
-  .hero-label{
-    font-size:12.5px;font-weight:700;letter-spacing:.1em;
-    color:var(--substack-ink);opacity:.92;
-  }
-  .hero-title{
-    display:block;font-size:25px;font-weight:900;line-height:1.35;
-    color:var(--substack-ink);margin-bottom:8px;
-  }
-  .hero-desc{
-    display:block;font-size:14.5px;line-height:1.7;
-    color:var(--substack-ink);opacity:.95;
-  }
-
-  /* ---- 2番目：LINE ---- */
+  /* ---- 登録カード（Substack・LINE 同じ大きさ） ---- */
   .second{
     display:flex;align-items:center;gap:16px;
     text-decoration:none;
@@ -147,6 +122,10 @@
   .second-txt{flex:1 1 auto;min-width:0;}
   .second-title{display:block;font-size:19px;font-weight:900;line-height:1.4;color:var(--line-ink);}
   .second-desc{display:block;font-size:13.5px;line-height:1.6;color:var(--line-ink);opacity:.92;margin-top:2px;}
+  /* Substack も LINE と同じ大きさ・形（色だけ違う）。2026-10-09 藤崎さん「Substack の圧が強い」 */
+  .second--substack{background:var(--substack);margin-top:0;box-shadow:0 3px 12px rgba(255,103,25,.2);}
+  .second--substack .second-ic{fill:var(--substack-ink);width:32px;height:32px;margin:0 4px;}
+  .second--substack .second-title,.second--substack .second-desc{color:var(--substack-ink);}
 
   /* ---- 公式サイト ---- */
   .site{
@@ -215,13 +194,12 @@
     </ul>
   </header>
 
-  <a class="hero" href="https://teracosensei.substack.com/embed" target="_blank" rel="noopener">
-    <span class="hero-top">
-      <svg class="hero-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.539 0H1.46v2.836h21.08V0z"/></svg>
-      <span class="hero-label">登録は無料・メールは週1回</span>
+  <a class="second second--substack" href="https://teracosensei.substack.com/embed" target="_blank" rel="noopener">
+    <svg class="second-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.539 0H1.46v2.836h21.08V0z"/></svg>
+    <span class="second-txt">
+      <span class="second-title">Teraco Newsをメールで</span>
+      <span class="second-desc">AIとスマホのニュースを、<br>週1回・無料でお届けします</span>
     </span>
-    <span class="hero-title">Teraco News</span>
-    <span class="hero-desc">AIとスマホのニュースを、<br>やさしい言葉で。<br>1週間分のまとめをメールでお届けします</span>
   </a>
 
   <a class="second" href="https://lin.ee/9c4pI82" target="_blank" rel="noopener">
