@@ -97,10 +97,13 @@
         border:3px solid var(--card);box-shadow:0 0 0 1.5px var(--green),0 6px 18px rgba(63,107,79,.18);object-fit:cover;}
   .real{font-size:14px;color:var(--muted);letter-spacing:.08em;margin:-6px 0 14px;}
   .catch{font-size:17px;font-weight:700;color:var(--green);margin:0 0 8px;line-height:1.6;}
-  .tags{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:16px 0 0;padding:0;list-style:none;}
-  .tags li{font-size:13px;color:var(--ink);background:var(--cream-deep);border:1px solid var(--rule);
-           border-radius:999px;padding:4px 12px;line-height:1.6;}
-  .group-label{font-size:12.5px;color:var(--faint);letter-spacing:.06em;text-align:center;margin:26px 0 0;}
+  .tags{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:16px 0 0;padding:0;list-style:none;}
+  .tags li{font-size:12px;color:var(--ink);background:var(--cream-deep);border:1px solid var(--rule);
+           border-radius:999px;padding:3px 10px;line-height:1.6;}
+  /* 段の見出し：両側に線（2026-10-13 区切りを分かりやすく） */
+  .group-label,.others-label{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:700;
+           color:var(--green);letter-spacing:.08em;text-align:center;margin:32px 0 0;}
+  .group-label::before,.group-label::after,.others-label::before,.others-label::after{content:"";flex:1;height:1px;background:var(--rule);}
   .save{display:block;width:100%;margin-top:28px;padding:13px 16px;border-radius:12px;
         border:1.5px dashed var(--green);background:transparent;color:var(--green);
         font:inherit;font-size:15px;font-weight:700;text-align:center;text-decoration:none;}
@@ -140,11 +143,8 @@
   .site .s-desc{display:block;font-size:13px;color:var(--muted);margin-top:2px;}
 
   /* ---- ほかの場所 ---- */
-  .others{margin-top:34px;padding-top:24px;border-top:1px solid var(--rule);text-align:center;}
-  .others-label{
-    font-size:12.5px;color:var(--faint);letter-spacing:.06em;margin:0 0 16px;
-  }
-  .others-row{display:flex;flex-wrap:wrap;justify-content:center;gap:18px 20px;}
+  .others{text-align:center;}
+  .others-row{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:16px;}
   .other{
     display:flex;flex-direction:column;align-items:center;gap:7px;
     text-decoration:none;color:var(--muted);
@@ -152,7 +152,7 @@
   }
   .other:hover,.other:focus-visible{transform:translateY(-2px);outline:none;color:var(--ink);}
   .ic{
-    width:46px;height:46px;border-radius:50%;
+    width:44px;height:44px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
   }
   .ic svg{width:22px;height:22px;}
@@ -165,7 +165,7 @@
   .ic-ig{background:linear-gradient(45deg,#F58529,#DD2A7B,#8134AF,#515BD4);}
   .ic-note{background:var(--note-bg);box-shadow:inset 0 0 0 1px var(--note-edge);}
   .ic-note text{fill:var(--note-fg);font-family:"Zen Kaku Gothic New",sans-serif;}
-  .other-label{font-size:12px;font-weight:500;line-height:1.3;}
+  .other-label{font-size:11px;font-weight:500;line-height:1.3;white-space:nowrap;}
 
   .foot{
     margin-top:36px;text-align:center;
@@ -210,7 +210,12 @@
     </span>
   </a>
 
-  <p class="group-label">番組を聴く（登録なしで聴けます）</p>
+  <p class="group-label">見る・聴く（登録なし）</p>
+
+  <a class="site" href="https://www.youtube.com/@teracosensei" target="_blank" rel="noopener">
+    <span class="s-title">講座の動画を見る</span>
+    <span class="s-desc">YouTube「てらこ先生」・講座のふりかえり</span>
+  </a>
 
   <a class="site" href="https://teraco-labo.github.io/ai-news-digest/" target="_blank" rel="noopener">
     <span class="s-title">AIニュースを聴く</span>
