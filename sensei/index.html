@@ -215,6 +215,22 @@
   .second--yt{background:#E62117;box-shadow:0 3px 12px rgba(230,33,23,.2);}
   .second--yt .second-ic{fill:#fff;} .second--yt .second-title,.second--yt .second-desc{color:#fff;}
   .duo .others-row{grid-template-columns:repeat(3,1fr);margin-top:14px;}
+  .second--lib{background:var(--green);box-shadow:0 3px 12px rgba(63,107,79,.22);}
+  .second--lib .second-ic{fill:none;stroke:#fff;} .second--lib .second-title,.second--lib .second-desc{color:#fff;}
+  .second--plain{background:var(--card);border:1.5px solid var(--green);box-shadow:none;}
+  .second--plain .second-ic{fill:none;stroke:var(--green);} .second--plain .second-title{color:var(--green);} .second--plain .second-desc{color:var(--muted);}
+  .duo--ai .others-row{grid-template-columns:repeat(6,1fr);gap:4px;}
+  .duo .ic{width:38px;height:38px;} .duo .ic svg{width:19px;height:19px;} .duo .other-label{font-size:10px;}
+  .duo{padding:18px 12px 14px;}
+  .duo .second{padding:14px 16px;gap:14px;}
+  .duo .second-ic{width:30px;height:30px;}
+  .duo .second-title{font-size:16.5px;}
+  .duo .second-desc{font-size:12.5px;}
+  .duo .news{padding:12px 16px;} .duo .news-title{font-size:16.5px;}
+  .second--plain.second--pl-line .second-ic{fill:#06A24A;} .second--plain.second--pl-line .second-title{color:#06A24A;}
+  .second--plain.second--pl-yt .second-ic{fill:#E62117;} .second--plain.second--pl-yt .second-title{color:#E62117;}
+  .duo--ai .second--plain{border-color:color-mix(in srgb,var(--ai) 55%,transparent);}
+
   .news{display:block;text-decoration:none;margin-top:10px;background:var(--card);border:1.5px solid var(--green);border-radius:14px;padding:14px 18px;}
   .news--ai{border-color:var(--ai);}
   .news-when{display:inline-block;font-size:11.5px;font-weight:700;color:#fff;background:var(--green);border-radius:999px;padding:1px 10px;}
@@ -276,20 +292,45 @@
   </a>
 
 
-  <section class="duo" aria-label="生徒さんへ">
-    <h2 class="duo-h">生徒さんへ</h2>
-    <p class="duo-name">てらこ先生｜スマホとAIの教室</p>
-    <p class="duo-lead">スマホ・パソコン・AIの「困った」を、<br>1本に1つずつ、ゆっくり解決します。</p>
-    <a class="second second--yt" href="https://www.youtube.com/@teracosensei" target="_blank" rel="noopener">
-      <svg class="second-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-      <span class="second-txt"><span class="second-title">YouTube「てらこ先生」</span><span class="second-desc">1本に1つずつ、困りごとを解決</span></span>
+  <section class="duo" aria-label="教室の生徒さんへ">
+    <h2 class="duo-h">教室の生徒さんへ</h2>
+    <p class="duo-name">スマホ教室TERACO（宮崎県西都市）</p>
+    <p class="duo-lead">授業のふりかえり・ご予約・お知らせは、<br>ここから。</p>
+    <a class="second second--lib" href="https://teraco-labo.github.io/line-outou/" target="_blank" rel="noopener">
+      <svg class="second-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7M8 11h5"/></svg>
+      <span class="second-txt"><span class="second-title">てらこ図書館</span><span class="second-desc">授業のスライド・おうちで復習テキスト・動画</span></span>
     </a>
-    <a class="second" href="https://lin.ee/tkYJ7Cw" target="_blank" rel="noopener">
+    <a class="second second--plain" href="https://teraco-labo.github.io/line-outou/yoyaku.html" target="_blank" rel="noopener">
+      <svg class="second-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      <span class="second-txt"><span class="second-title">ご予約</span><span class="second-desc">講座・個人レッスンの空いている日から</span></span>
+    </a>
+    <a class="second second--plain second--pl-line" href="https://lin.ee/tkYJ7Cw" target="_blank" rel="noopener">
       <svg class="second-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.4c-5.52 0-10 3.62-10 8.07 0 3.99 3.55 7.33 8.35 7.96.32.07.77.21.88.49.1.25.07.64.03.89l-.14.84c-.04.25-.2.97.86.53s5.7-3.35 7.77-5.74C21.13 13.87 22 12.32 22 10.47c0-4.45-4.48-8.07-10-8.07z"/></svg>
-      <span class="second-txt"><span class="second-title">スマホ教室TERACOのLINE</span><span class="second-desc">教室のご相談・ご予約（宮崎・西都）</span></span>
+      <span class="second-txt"><span class="second-title">教室のLINE</span><span class="second-desc">スマホ教室TERACO・お知らせとご相談</span></span>
     </a>
     <a class="news" href="https://teraco-labo.github.io/teraco-sumaho-news/" target="_blank" rel="noopener">
       <span class="news-when">火・木の朝6時</span><span class="news-title">スマホニュース</span><span class="news-desc">スマホの話題を、耳で聞けるニュースで</span>
+    </a>
+  </section>
+
+  <section class="duo duo--ai" aria-label="AIに関心のある方へ">
+    <h2 class="duo-h">AIに関心のある方へ</h2>
+    <p class="duo-name">てらこ先生｜やさしいAIの使い方</p>
+    <p class="duo-lead">むずかしい言葉を使わずに、<br>AIを暮らしと仕事に使う方法を届けます。</p>
+    <a class="second second--substack" href="https://teracosensei.substack.com/embed" target="_blank" rel="noopener">
+      <svg class="second-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.539 0H1.46v2.836h21.08V0z"/></svg>
+      <span class="second-txt"><span class="second-title">Teraco Newsをメールで</span><span class="second-desc">AIとスマホのニュースを、<br>週1回・無料でお届けします</span></span>
+    </a>
+    <a class="news news--ai" href="https://teraco-labo.github.io/ai-news-digest/" target="_blank" rel="noopener">
+      <span class="news-when">毎朝6時</span><span class="news-title">AIニュース</span><span class="news-desc">専門用語はぜんぶ解説つき。読んでも聞いても</span>
+    </a>
+    <a class="second second--plain second--pl-line" href="https://lin.ee/9c4pI82" target="_blank" rel="noopener">
+      <svg class="second-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.4c-5.52 0-10 3.62-10 8.07 0 3.99 3.55 7.33 8.35 7.96.32.07.77.21.88.49.1.25.07.64.03.89l-.14.84c-.04.25-.2.97.86.53s5.7-3.35 7.77-5.74C21.13 13.87 22 12.32 22 10.47c0-4.45-4.48-8.07-10-8.07z"/></svg>
+      <span class="second-txt"><span class="second-title">てらこ先生のLINE</span><span class="second-desc">AIの使い方と教材のお知らせ</span></span>
+    </a>
+    <a class="second second--plain second--pl-yt" href="https://www.youtube.com/@teracosensei" target="_blank" rel="noopener">
+      <svg class="second-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      <span class="second-txt"><span class="second-title">YouTube</span><span class="second-desc">スマホ・パソコン・AIのコツを動画で</span></span>
     </a>
     <div class="others-row">
       <a class="other" href="https://www.instagram.com/teracosensei/" target="_blank" rel="noopener">
@@ -304,28 +345,6 @@
         <span class="ic" style="background:#0866FF"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M13.5 22v-8h2.7l.4-3.2h-3.1V8.8c0-.9.3-1.5 1.6-1.5h1.7V4.4c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2.3H7.4V14h2.7v8h3.4z"/></svg></span>
         <span class="other-label">Facebook</span>
       </a>
-      
-    </div>
-  </section>
-
-  <section class="duo duo--ai" aria-label="AIに関心のある方へ">
-    <h2 class="duo-h">AIに関心のある方へ</h2>
-    <p class="duo-name">てらこ先生｜やさしいAIの使い方</p>
-    <p class="duo-lead">むずかしい言葉を使わずに、<br>AIを暮らしと仕事に使う方法を届けます。</p>
-    <a class="second second--substack" href="https://teracosensei.substack.com/embed" target="_blank" rel="noopener">
-      <svg class="second-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.539 0H1.46v2.836h21.08V0z"/></svg>
-      <span class="second-txt"><span class="second-title">Teraco Newsをメールで</span><span class="second-desc">AIとスマホのニュースを、<br>週1回・無料でお届けします</span></span>
-    </a>
-    <a class="news news--ai" href="https://teraco-labo.github.io/ai-news-digest/" target="_blank" rel="noopener">
-      <span class="news-when">毎朝6時</span><span class="news-title">毎朝のAIニュース（Teraco News）</span><span class="news-desc">専門用語はぜんぶ解説つき。読んでも聞いても</span>
-    </a>
-    <a class="second" href="https://lin.ee/9c4pI82" target="_blank" rel="noopener">
-      <svg class="second-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.4c-5.52 0-10 3.62-10 8.07 0 3.99 3.55 7.33 8.35 7.96.32.07.77.21.88.49.1.25.07.64.03.89l-.14.84c-.04.25-.2.97.86.53s5.7-3.35 7.77-5.74C21.13 13.87 22 12.32 22 10.47c0-4.45-4.48-8.07-10-8.07z"/></svg>
-      <span class="second-txt"><span class="second-title">てらこ先生のLINE</span><span class="second-desc">AIの使い方と、先生向けの教材のお知らせ</span></span>
-    </a>
-    
-    <div class="others-row">
-      
       <a class="other" href="https://open.spotify.com/show/0kuCanHapeNX2ALHYvzbf3" target="_blank" rel="noopener">
         <span class="ic ic-spotify"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.601.301.98zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg></span>
         <span class="other-label">Spotify</span>
