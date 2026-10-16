@@ -25,6 +25,7 @@
   gtag('js', new Date());
   gtag('config', 'G-3GCZQ39LS1');
 </script>
+
 <style>
   :root{
     --cream:#FAF7F1;
@@ -191,6 +192,26 @@
   .m-desc{font-size:11px;color:var(--muted);line-height:1.4;}
   .others{margin-top:18px;}
   .others-note{font-size:12px;color:var(--muted);text-align:center;margin:0;}
+
+  /* ===== 発信を2組に分ける（2026-10-16 軍配「生徒さん側」「AI側」・ニュースは大きいカード） ===== */
+  :root{--ai:#5B4A8F;--ai-soft:#EEEAF6;--st-soft:#E9F0EA;}
+  @media (prefers-color-scheme: dark){:root{--ai:#B9A8E8;--ai-soft:#2A2536;--st-soft:#1F2A22;}}
+  .duo{border-radius:16px;padding:18px 16px 16px;margin-top:22px;border:1.5px solid var(--green);background:var(--st-soft);}
+  .duo--ai{border-color:var(--ai);background:var(--ai-soft);}
+  .duo-h{font-size:18px;font-weight:900;margin:0;color:var(--green);text-align:center;letter-spacing:.04em}
+  .duo--ai .duo-h{color:var(--ai);}
+  .duo-name{font-size:12px;font-weight:700;color:var(--muted);text-align:center;margin:2px 0 6px;}
+  .duo-lead{font-size:13.5px;color:var(--ink);text-align:center;margin:0 0 12px;line-height:1.7;}
+  .duo .second{margin-top:10px;}
+  .second--yt{background:#E62117;box-shadow:0 3px 12px rgba(230,33,23,.2);}
+  .second--yt .second-ic{fill:#fff;} .second--yt .second-title,.second--yt .second-desc{color:#fff;}
+  .duo .others-row{grid-template-columns:repeat(3,1fr);margin-top:14px;}
+  .news{display:block;text-decoration:none;margin-top:10px;background:var(--card);border:1.5px solid var(--green);border-radius:14px;padding:14px 18px;}
+  .news--ai{border-color:var(--ai);}
+  .news-when{display:inline-block;font-size:11.5px;font-weight:700;color:#fff;background:var(--green);border-radius:999px;padding:1px 10px;}
+  .news--ai .news-when{background:var(--ai);}
+  .news-title{display:block;font-size:18px;font-weight:900;color:var(--ink);line-height:1.45;margin-top:4px;}
+  .news-desc{display:block;font-size:13px;color:var(--muted);line-height:1.6;}
 </style>
 </head>
 <body>
@@ -241,37 +262,23 @@
     <span class="s-desc">スマホ教室TERACO（宮崎県西都市）のご案内</span>
   </a>
 
-  <p class="group-label">発信をフォローする</p>
 
-  <a class="second second--substack" href="https://teracosensei.substack.com/embed" target="_blank" rel="noopener">
-    <svg class="second-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.539 0H1.46v2.836h21.08V0z"/></svg>
-    <span class="second-txt">
-      <span class="second-title">Teraco Newsをメールで</span>
-      <span class="second-desc">AIとスマホのニュースを、<br>週1回・無料でお届けします</span>
-    </span>
-  </a>
-
-  <div class="mini-row">
-    <a class="mini" href="https://www.youtube.com/@teracosensei" target="_blank" rel="noopener"><span class="m-title">講座の動画</span><span class="m-desc">YouTube</span></a>
-    <a class="mini" href="https://teraco-labo.github.io/ai-news-digest/" target="_blank" rel="noopener"><span class="m-title">AIニュース</span><span class="m-desc">毎朝6時</span></a>
-    <a class="mini" href="https://teraco-labo.github.io/teraco-sumaho-news/" target="_blank" rel="noopener"><span class="m-title">スマホニュース</span><span class="m-desc">火・木の朝6時</span></a>
-  </div>
-
-  <section class="others" aria-label="ほかのSNS">
-    <p class="others-note">SNSでも発信しています</p>
+  <section class="duo" aria-label="生徒さんへ">
+    <h2 class="duo-h">生徒さんへ</h2>
+    <p class="duo-name">てらこ先生｜スマホとAIの教室</p>
+    <p class="duo-lead">スマホ・パソコン・AIの「困った」を、<br>1本に1つずつ、ゆっくり解決します。</p>
+    <a class="second second--yt" href="https://www.youtube.com/@teracosensei" target="_blank" rel="noopener">
+      <svg class="second-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      <span class="second-txt"><span class="second-title">YouTube「てらこ先生」</span><span class="second-desc">1本に1つずつ、困りごとを解決</span></span>
+    </a>
+    <a class="second" href="https://lin.ee/tkYJ7Cw" target="_blank" rel="noopener">
+      <svg class="second-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.4c-5.52 0-10 3.62-10 8.07 0 3.99 3.55 7.33 8.35 7.96.32.07.77.21.88.49.1.25.07.64.03.89l-.14.84c-.04.25-.2.97.86.53s5.7-3.35 7.77-5.74C21.13 13.87 22 12.32 22 10.47c0-4.45-4.48-8.07-10-8.07z"/></svg>
+      <span class="second-txt"><span class="second-title">スマホ教室TERACOのLINE</span><span class="second-desc">教室のご相談・ご予約（宮崎・西都）</span></span>
+    </a>
+    <a class="news" href="https://teraco-labo.github.io/teraco-sumaho-news/" target="_blank" rel="noopener">
+      <span class="news-when">火・木の朝6時</span><span class="news-title">スマホニュース</span><span class="news-desc">スマホの話題を、耳で聞けるニュースで</span>
+    </a>
     <div class="others-row">
-      <a class="other" href="https://x.com/teracosensei" target="_blank" rel="noopener">
-        <span class="ic ic-x"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></span>
-        <span class="other-label">X</span>
-      </a>
-      <a class="other" href="https://www.youtube.com/@teracosensei" target="_blank" rel="noopener">
-        <span class="ic ic-yt"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></span>
-        <span class="other-label">YouTube</span>
-      </a>
-      <a class="other" href="https://open.spotify.com/show/0kuCanHapeNX2ALHYvzbf3" target="_blank" rel="noopener">
-        <span class="ic ic-spotify"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.601.301.98zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg></span>
-        <span class="other-label">Spotify</span>
-      </a>
       <a class="other" href="https://www.instagram.com/teracosensei/" target="_blank" rel="noopener">
         <span class="ic ic-ig"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg></span>
         <span class="other-label">Instagram</span>
@@ -280,12 +287,47 @@
         <span class="ic ic-threads"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.263 11.097c-.03-3.486-1.92-5.586-5.111-5.586-2.13 0-3.922.963-4.863 2.499l2.062 1.438c.535-.843 1.272-1.543 2.628-1.543 1.528 0 2.318.85 2.544 2.431a15 15 0 0 0-2.236-.173c-4.125 0-6.068 1.867-6.068 4.336s1.943 3.99 4.804 3.99c3.139 0 5.013-2.115 5.781-4.735.798.361 1.348 1.204 1.348 2.47 0 3.387-3.907 5.232-7.22 5.232-4.885 0-8.077-3.207-8.077-8.424 0-6.392 4.223-10.487 9.9-10.487 3.808 0 5.69 1.671 6.97 3.914l2.108-1.475C21.44 2.078 18.331 0 13.663 0 6.227 0 1.168 5.277 1.168 12.934c0 7 4.953 11.066 10.856 11.066 4.878 0 9.809-2.846 9.809-7.716 0-2.545-1.46-4.231-3.569-5.187m-6.33 4.855c-1.077 0-2.026-.512-2.026-1.453 0-1.483 1.822-1.934 3.606-1.934.678 0 1.34.045 1.927.173-.422 1.927-1.671 3.215-3.508 3.214Z"/></svg></span>
         <span class="other-label">Threads</span>
       </a>
+      <a class="other" href="https://www.facebook.com/profile.php?id=61595142751592" target="_blank" rel="noopener">
+        <span class="ic" style="background:#0866FF"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M13.5 22v-8h2.7l.4-3.2h-3.1V8.8c0-.9.3-1.5 1.6-1.5h1.7V4.4c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2.3H7.4V14h2.7v8h3.4z"/></svg></span>
+        <span class="other-label">Facebook</span>
+      </a>
+      
+    </div>
+  </section>
+
+  <section class="duo duo--ai" aria-label="AIに関心のある方へ">
+    <h2 class="duo-h">AIに関心のある方へ</h2>
+    <p class="duo-name">てらこ先生｜やさしいAIの使い方</p>
+    <p class="duo-lead">むずかしい言葉を使わずに、<br>AIを暮らしと仕事に使う方法を届けます。</p>
+    <a class="second second--substack" href="https://teracosensei.substack.com/embed" target="_blank" rel="noopener">
+      <svg class="second-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.539 0H1.46v2.836h21.08V0z"/></svg>
+      <span class="second-txt"><span class="second-title">Teraco Newsをメールで</span><span class="second-desc">AIとスマホのニュースを、<br>週1回・無料でお届けします</span></span>
+    </a>
+    <a class="news news--ai" href="https://teraco-labo.github.io/ai-news-digest/" target="_blank" rel="noopener">
+      <span class="news-when">毎朝6時</span><span class="news-title">毎朝のAIニュース（Teraco News）</span><span class="news-desc">専門用語はぜんぶ解説つき。読んでも聞いても</span>
+    </a>
+    <a class="second" href="https://lin.ee/9c4pI82" target="_blank" rel="noopener">
+      <svg class="second-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.4c-5.52 0-10 3.62-10 8.07 0 3.99 3.55 7.33 8.35 7.96.32.07.77.21.88.49.1.25.07.64.03.89l-.14.84c-.04.25-.2.97.86.53s5.7-3.35 7.77-5.74C21.13 13.87 22 12.32 22 10.47c0-4.45-4.48-8.07-10-8.07z"/></svg>
+      <span class="second-txt"><span class="second-title">てらこ先生のLINE</span><span class="second-desc">AIの使い方と、先生向けの教材のお知らせ</span></span>
+    </a>
+    
+    <div class="others-row">
+      
+      <a class="other" href="https://open.spotify.com/show/0kuCanHapeNX2ALHYvzbf3" target="_blank" rel="noopener">
+        <span class="ic ic-spotify"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.601.301.98zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg></span>
+        <span class="other-label">Spotify</span>
+      </a>
       <a class="other" href="https://note.com/teraco_labo" target="_blank" rel="noopener">
         <span class="ic ic-note"><svg viewBox="0 0 24 24" aria-hidden="true"><text x="12" y="17.5" text-anchor="middle" font-size="17" font-weight="700">n</text></svg></span>
         <span class="other-label">note</span>
       </a>
+      <a class="other" href="https://x.com/teracosensei" target="_blank" rel="noopener">
+        <span class="ic ic-x"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></span>
+        <span class="other-label">X</span>
+      </a>
     </div>
   </section>
+
 
 
   <p class="foot"><a href="https://teraco-labo.com/">TERACO.LABO</a></p>
