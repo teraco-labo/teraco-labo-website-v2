@@ -203,10 +203,12 @@
   .others-note{font-size:12px;color:var(--muted);text-align:center;margin:0;}
 
   /* ===== 発信を2組に分ける（2026-10-16 軍配「生徒さん側」「AI側」・ニュースは大きいカード） ===== */
-  :root{--ai:#5B4A8F;--ai-soft:#EEEAF6;--st-soft:#E9F0EA;}
-  @media (prefers-color-scheme: dark){:root{--ai:#B9A8E8;--ai-soft:#2A2536;--st-soft:#1F2A22;}}
+  /* 分野の色（正本 ~/.openclaw/workspace/terako-sensei/content/brand/分野の色.json。2026-10-20 AI を紫→オレンジ） */
+  :root{--cat-ai-main:#EF6C00;--cat-ai-ink:#B34700;--cat-ai-soft:#FFF3E8;
+        --ai:var(--cat-ai-ink);--ai-line:var(--cat-ai-main);--ai-soft:var(--cat-ai-soft);--st-soft:#E9F0EA;}
+  @media (prefers-color-scheme: dark){:root{--ai:#FFB067;--ai-line:#F28A2E;--ai-soft:#2E2117;--st-soft:#1F2A22;}}
   .duo{border-radius:16px;padding:18px 16px 16px;margin-top:22px;border:1.5px solid var(--green);background:var(--st-soft);}
-  .duo--ai{border-color:var(--ai);background:var(--ai-soft);}
+  .duo--ai{border-color:var(--ai-line);background:var(--ai-soft);}
   .duo-h{font-size:18px;font-weight:900;margin:0;color:var(--green);text-align:center;letter-spacing:.04em}
   .duo--ai .duo-h{color:var(--ai);}
   .duo-name{font-size:12px;font-weight:700;color:var(--muted);text-align:center;margin:2px 0 6px;}
@@ -239,7 +241,7 @@
   .ai-copy{display:block;width:100%;margin-top:6px;padding:8px;border:none;background:none;font:inherit;font-size:12.5px;font-weight:700;color:var(--green);text-decoration:underline;cursor:pointer;}
 
   .news{display:block;text-decoration:none;margin-top:10px;background:var(--card);border:1.5px solid var(--green);border-radius:14px;padding:14px 18px;}
-  .news--ai{border-color:var(--ai);}
+  .news--ai{border-color:var(--ai-line);}
   .news-when{display:inline-block;font-size:11.5px;font-weight:700;color:#fff;background:var(--green);border-radius:999px;padding:1px 10px;}
   .news--ai .news-when{background:var(--ai);}
   .news-title{display:block;font-size:18px;font-weight:900;color:var(--ink);line-height:1.45;margin-top:4px;}
