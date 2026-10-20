@@ -449,6 +449,12 @@
     }
     .btn-outline-footer:hover { background: rgba(255,255,255,.1); transform: translateY(-2px); }
 
+    .hero2-access { display: inline-block; margin-top: .9rem; font-size: 15px; font-weight: 700; color: var(--forest); text-decoration: underline; text-underline-offset: 4px; }
+    .access-map { margin: 10px 0 6px; max-width: 520px; }
+    .access-map img { width: 100%; height: auto; border-radius: 12px; background: var(--white); display: block; }
+    .access-map figcaption { margin-top: 8px; font-size: 14px; line-height: 1.8; color: #e8eee9; }
+    .access-map figcaption b { display: block; color: var(--white); }
+    #access { scroll-margin-top: 70px; }
     .access-qr { display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .access-qr img { width: 110px; height: 110px; border-radius: 10px; background: var(--white); padding: 8px; }
     .access-qr span { font-size: 12px; color: var(--footer-sub); }
@@ -715,6 +721,7 @@
                         <a href="#services" class="btn-forest btn-green">教室のご案内を見る</a>
                         <a href="https://lin.ee/tkYJ7Cw" class="btn-line-solid btn-line" target="_blank" rel="noopener" aria-label="LINEで気軽に相談する（外部リンク）">LINEで気軽に相談</a>
                     </div>
+                    <a href="#access" class="hero2-access">教室の場所と駐車場（地図）を見る →</a>
                 </div>
             </div>
         </section>
@@ -947,14 +954,18 @@
     <!-- ===================================================
          アクセス + フッター
     =================================================== -->
-    <footer class="access-footer">
+    <footer class="access-footer" id="access">
         <div class="container">
             <div class="access-grid reveal">
                 <div>
                     <h2 class="access-heading">無料見学・ご相談、いつでもどうぞ。</h2>
                     <div class="access-info">
                         <a href="https://maps.google.com/?q=宮崎県西都市大字三宅9437-9" target="_blank" rel="noopener">宮崎県西都市大字三宅9437-9（駐車場あり）</a>
-                        <a class="access-map-link" href="map.html">駐車場と教室の地図を見る →</a>
+                        <figure class="access-map">
+                            <img src="images/parking-map.png" alt="教室と駐車場の地図。教室の隣が駐車場です" loading="lazy">
+                            <figcaption><b>駐車場は教室の隣、砂利の空き地です。</b>教室の正面には停めないでください。</figcaption>
+                        </figure>
+                        <a class="access-map-link" href="https://www.google.com/maps/search/?api=1&amp;query=%E5%AE%AE%E5%B4%8E%E7%9C%8C%E8%A5%BF%E9%83%BD%E5%B8%82%E5%A4%A7%E5%AD%97%E4%B8%89%E5%AE%859437-9" target="_blank" rel="noopener">Googleマップで道順を見る →</a>
                         <span>電話 <a href="tel:090-6738-1469">090-6738-1469</a>｜メール <a href="mailto:fujisaki@teraco-labo.com">fujisaki@teraco-labo.com</a></span>
                     </div>
                     <div class="access-actions">
