@@ -611,6 +611,10 @@
     .tc-sheet .tc-go { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
     .tc-sheet .tc-go a { flex: 1 1 200px; min-height: 48px; padding: 12px 18px; font-size: 15px; }
 
+    .tc-card-list { cursor: pointer; transition: transform .2s ease, box-shadow .2s ease; }
+    .tc-card-list:hover, .tc-card-list:focus-visible { transform: translateY(-2px); outline: none; box-shadow: 0 8px 22px rgba(63,107,79,.18); }
+    .tc-more { display: block; text-align: right; margin-top: 8px; font-size: 14px; font-weight: 700; color: var(--forest, #3F6B4F); }
+
     .hero2-topics li { padding: 0; }
     .hero2-topics button { font: inherit; font-size: 13.5px; font-weight: 700; color: var(--forest-dark); background: none; border: none;
         padding: 6px 15px; cursor: pointer; border-radius: 999px; min-height: 36px; }
@@ -1042,17 +1046,20 @@
                 </div>
 
                 <div class="voice-grid">
-                    <article class="voice-card reveal d1">
+                    <article class="voice-card reveal d1 tc-card-list" role="button" tabindex="0" data-sheet="sheet-sp" aria-haspopup="dialog">
                         <p class="voice-text"><strong>「スマホが怖くて、さわれない」</strong><br>電源の入れ方、電話のかけ方、LINEで文字と写真を送るところから。最初の1か月はここだけで十分です。</p>
                         <div class="voice-meta">スマホ・タブレット教室</div>
+                        <span class="tc-more">くわしく見る ›</span>
                     </article>
-                    <article class="voice-card reveal d2">
+                    <article class="voice-card reveal d2 tc-card-list" role="button" tabindex="0" data-sheet="sheet-kishu" aria-haspopup="dialog">
                         <p class="voice-text"><strong>「機種変更したら、全部わからなくなった」</strong><br>前の使い方に戻すところから始めます。その日のうちに、いつもの電話とLINEが使える状態を目指します。</p>
                         <div class="voice-meta">個人レッスン</div>
+                        <span class="tc-more">くわしく見る ›</span>
                     </article>
-                    <article class="voice-card reveal d3">
+                    <article class="voice-card reveal d3 tc-card-list" role="button" tabindex="0" data-sheet="sheet-ai" aria-haspopup="dialog">
                         <p class="voice-text"><strong>「会社でAIを使えと言われたけれど、何から？」</strong><br>いまの仕事の中身に合わせて、どこで使えるかを一緒に考えます。研修は現場の水準に合わせて組み立てます。</p>
                         <div class="voice-meta">パソコンAI教室・企業研修</div>
+                        <span class="tc-more">くわしく見る ›</span>
                     </article>
                 </div>
             </div>
@@ -1268,6 +1275,22 @@
         <div class="tc-go"><a class="btn-forest" href="lesson.html">個人レッスンを見る</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
     </div></dialog>
 
+    <!-- 小窓：機種変更（個人レッスンのページの小窓と同じ文。2026-10-22） -->
+    <dialog id="sheet-kishu" class="tc-sheet" aria-labelledby="sheet-kishu-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-kishu-t">機種変更のあとも、動かなくなったときも。個人レッスン（50分）</h3>
+        <p>「新しいスマホに替えたけど、写真や電話帳、LINE がちゃんと移っているか不安」「急に動かなくなったけど、故障なのか分からない」。そんなときは個人レッスンへどうぞ。50分、先生と1対1で、次のことを一緒にします。</p>
+        <ul>
+            <li>写真・電話帳・LINE などを、新しいスマホへ移す</li>
+            <li>Google アカウントや Apple ID など、大事な設定を確かめる</li>
+            <li>移したあとの使い方（電話・LINE・写真）を、その場で一緒に練習する</li>
+            <li>「動かない」の原因を一緒に探す（故障かもしれないときは、どこに相談すればよいかをお伝えします）</li>
+        </ul>
+        <p><strong>料金：50分 8,000円（税込）。月謝制の教室の会員さまは 5,000円です。</strong></p>
+        <p class="tc-note">※ 機種やスマホの状態によっては、移せないデータもあります。</p>
+        <div class="tc-go"><a class="btn-forest" href="lesson.html">個人レッスンを見る</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+
 <script>
 /* 押すと詳しく出る小窓（2026-10-22）。data-sheet="<dialog の id>" のボタンで開き、×・外側・Esc で閉じる */
 document.addEventListener('click', function (e) {
@@ -1275,6 +1298,11 @@ document.addEventListener('click', function (e) {
   if (b) { var d = document.getElementById(b.getAttribute('data-sheet')); if (d && d.showModal) { e.preventDefault(); d.showModal(); } return; }
   if (e.target.matches('dialog.tc-sheet')) e.target.close();
   var c = e.target.closest('.tc-close'); if (c) c.closest('dialog').close();
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  var b = e.target.closest('[role="button"][data-sheet]'); if (!b) return;
+  var d = document.getElementById(b.getAttribute('data-sheet')); if (d && d.showModal) { e.preventDefault(); d.showModal(); }
 });
 </script>
 </body>

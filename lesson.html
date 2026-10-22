@@ -143,6 +143,8 @@
     .tc-card-btn { font: inherit; text-align: center; cursor: pointer; width: 100%; border: 1.5px solid var(--forest, #3F6B4F); }
     .tc-card-btn:hover, .tc-card-btn:focus-visible { transform: translateY(-2px); outline: none; box-shadow: 0 8px 22px rgba(63,107,79,.18); }
     .tc-more { display: inline-block; margin-top: 8px; font-size: 14px; font-weight: 700; color: var(--forest, #3F6B4F); }
+    .tc-card-list { text-align: left; }
+    .tc-card-list .tc-more { display: block; text-align: right; }
 </style>
 </head>
 <body>
@@ -203,23 +205,26 @@
                     <p class="tl-desc">グループ講座とは別に、あなただけの時間をご用意します。</p>
                 </div>
                 <div class="text-card-grid">
-                    <div class="text-card reveal">
+                    <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-kikinikui" aria-haspopup="dialog">
                         <h4>みんなの前では聞きにくい</h4>
                         <p>「こんなこと聞いていいのかな」と遠慮してしまう方。誰も見ていないので、何度でもどうぞ。</p>
-                    </div>
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
                     <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-kishu" aria-haspopup="dialog">
                         <h4>機種変更のあと・動かなくなったとき</h4>
                         <p>写真や LINE の引っ越し、「動かない」の原因さがしを、先生と一緒に。</p>
                         <span class="tc-more">くわしく見る ›</span>
                     </button>
-                    <div class="text-card reveal">
+                    <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-pace" aria-haspopup="dialog">
                         <h4>自分のペースで進めたい</h4>
                         <p>まわりに合わせず、ゆっくりでも早くでも。あなたの理解に合わせて進みます。</p>
-                    </div>
-                    <div class="text-card reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-yobi" aria-haspopup="dialog">
                         <h4>決まった曜日に通いにくい</h4>
                         <p>お仕事やご都合に合わせて、ご予約のたびに日時を調整できます。</p>
-                    </div>
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -307,7 +312,7 @@
                     <p class="tl-desc">スマホ・タブレット・パソコン・AIまで、何でもご相談ください。</p>
                 </div>
                 <div class="feature-grid">
-                    <div class="feature-card2 reveal">
+                    <div class="feature-card2 reveal tc-card-btn tc-card-list" role="button" tabindex="0" data-sheet="sheet-c-sp" aria-haspopup="dialog">
                         <h4>スマホ・タブレット</h4>
                         <ul>
                             <li>基本操作・文字入力</li>
@@ -316,8 +321,9 @@
                             <li>キャッシュレス決済</li>
                             <li>アプリの入れ方・使い方</li>
                         </ul>
+                        <span class="tc-more">くわしく見る ›</span>
                     </div>
-                    <div class="feature-card2 reveal">
+                    <div class="feature-card2 reveal tc-card-btn tc-card-list" role="button" tabindex="0" data-sheet="sheet-c-pc" aria-haspopup="dialog">
                         <h4>パソコン</h4>
                         <ul>
                             <li>文書・表計算の基本</li>
@@ -326,8 +332,9 @@
                             <li>印刷・スキャン</li>
                             <li>写真や動画の取り込み</li>
                         </ul>
+                        <span class="tc-more">くわしく見る ›</span>
                     </div>
-                    <div class="feature-card2 reveal">
+                    <div class="feature-card2 reveal tc-card-btn tc-card-list" role="button" tabindex="0" data-sheet="sheet-c-ai" aria-haspopup="dialog">
                         <h4>AI・ChatGPT</h4>
                         <ul>
                             <li>AIの始め方・使い方</li>
@@ -336,8 +343,9 @@
                             <li>仕事や趣味への活かし方</li>
                             <li>安全な使い方・注意点</li>
                         </ul>
+                        <span class="tc-more">くわしく見る ›</span>
                     </div>
-                    <div class="feature-card2 reveal">
+                    <div class="feature-card2 reveal tc-card-btn tc-card-list" role="button" tabindex="0" data-sheet="sheet-c-trouble" aria-haspopup="dialog">
                         <h4>お困りごと・トラブル</h4>
                         <ul>
                             <li>機種変更後の設定</li>
@@ -346,6 +354,7 @@
                             <li>迷惑メール・詐欺対策</li>
                             <li>「急に使えなくなった」の解決</li>
                         </ul>
+                        <span class="tc-more">くわしく見る ›</span>
                     </div>
                 </div>
             </div>
@@ -420,17 +429,20 @@
                     <h2 class="tl-title">個人レッスンでよくあるご相談</h2>
                 </div>
                 <div class="voice-grid2">
-                    <div class="voice-card2 reveal">
+                    <div class="voice-card2 reveal tc-card-btn tc-card-list" role="button" tabindex="0" data-sheet="sheet-kikinikui" aria-haspopup="dialog">
                         <p class="voice-text2"><strong>「グループだと質問しづらい」</strong><br>聞きたいことだけを、その場で解決します。50分をまるごと自分の質問に使えます。</p>
                         <div class="voice-meta2">月1回や月2回のペースで通う方に</div>
+                        <span class="tc-more">くわしく見る ›</span>
                     </div>
-                    <div class="voice-card2 reveal">
+                    <div class="voice-card2 reveal tc-card-btn tc-card-list" role="button" tabindex="0" data-sheet="sheet-kishu" aria-haspopup="dialog">
                         <p class="voice-text2"><strong>「機種変更したあと、設定が全部わからない」</strong><br>前の使い方に戻すところから。その日のうちに、いつもの電話とLINEが使える状態を目指します。</p>
                         <div class="voice-meta2">単発で受けられます</div>
+                        <span class="tc-more">くわしく見る ›</span>
                     </div>
-                    <div class="voice-card2 reveal">
+                    <div class="voice-card2 reveal tc-card-btn tc-card-list" role="button" tabindex="0" data-sheet="sheet-workai" aria-haspopup="dialog">
                         <p class="voice-text2"><strong>「仕事でAIを使いたい」</strong><br>いまの業務に合わせて、どこで使えるかを一緒に考えます。持ち込みの資料で進められます。</p>
                         <div class="voice-meta2">AI活用の相談</div>
+                        <span class="tc-more">くわしく見る ›</span>
                     </div>
                 </div>
             </div>
@@ -578,6 +590,109 @@
         <div class="tc-go"><a class="btn-forest" href="contact.html?service=lesson">相談・予約する</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
     </div></dialog>
 
+
+    <!-- 小窓：こんな方に・相談できること・よくあるご相談（2026-10-22 藤崎さん「押したら詳しく見られるように」。数字はこのページの料金・受付時間と同じ） -->
+    <dialog id="sheet-kikinikui" class="tc-sheet" aria-labelledby="sheet-kikinikui-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-kikinikui-t">みんなの前では聞きにくい方へ</h3>
+        <p>「こんなこと聞いていいのかな」「前にも教わったのに、また忘れてしまった」。個人レッスンは先生と1対1なので、ほかの人の目を気にせずに聞けます。</p>
+        <ul>
+            <li>同じことを何度聞いても大丈夫です</li>
+            <li>いつも使っているスマホやパソコンを持ってきて、そのまま教わります</li>
+            <li>メモを取りながら、ゆっくり進められます</li>
+        </ul>
+        <p>50分をまるごと、あなたの質問に使えます。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=lesson">相談・予約する</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-pace" class="tc-sheet" aria-labelledby="sheet-pace-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-pace-t">自分のペースで進めたい方へ</h3>
+        <p>グループ講座は、みんなで同じ内容を進めます。個人レッスンは、あなたが分かるまで次へ進みません。</p>
+        <ul>
+            <li><strong>ゆっくり</strong>：1つの操作を、できるようになるまで何回でも</li>
+            <li><strong>早く</strong>：もう知っているところは飛ばして、知りたいところへ</li>
+            <li><strong>中身</strong>：その日に聞きたいことを中心に進めます</li>
+        </ul>
+        <p>わからないところは、何度でも聞いてくださいね。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=lesson">相談・予約する</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-yobi" class="tc-sheet" aria-labelledby="sheet-yobi-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-yobi-t">決まった曜日に通いにくい方へ</h3>
+        <p>個人レッスンは、通う曜日が決まっていません。ご予約のたびに、日時を相談して決めます。</p>
+        <ul>
+            <li><strong>受付</strong>：火曜日・木曜日　午前 10:00〜12:00／午後 14:00〜17:00（この時間内でご予約時に調整します）</li>
+            <li><strong>都度払い</strong>：1回 8,000円（必要なときだけ）</li>
+            <li><strong>月謝制</strong>：月2回 14,000円／月4回 24,000円（その月のうちに受けます）</li>
+            <li><strong>チケット制</strong>：4回 24,000円（6か月有効）／8回 45,000円（1年有効）。期限内なら、ご自分のペースで使えます</li>
+        </ul>
+        <p class="tc-note">料金はすべて税込。1回50分です。月謝制の教室（スマホ・パソコンAI教室）の会員さまは、個人レッスン1回 5,000円です。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=lesson">相談・予約する</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-c-sp" class="tc-sheet" aria-labelledby="sheet-c-sp-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-c-sp-t">スマホ・タブレットで相談できること</h3>
+        <ul>
+            <li><strong>基本操作・文字入力</strong>：画面の押し方・めくり方、文字の打ち方。声で話して文字にする「音声入力」も練習できます</li>
+            <li><strong>LINE・メール・電話</strong>：メッセージや写真を送る、友だちを追加する、電話をかける・出る</li>
+            <li><strong>写真・動画の撮影と整理</strong>：上手な撮り方、見たい写真を探す、いらない写真を消す</li>
+            <li><strong>キャッシュレス決済</strong>：現金のかわりに、スマホで支払うこと（PayPay など）。準備と使い方を一緒に</li>
+            <li><strong>アプリの入れ方・使い方</strong>：アプリ（スマホに入れる道具）を、アプリのお店から入れて使うまで</li>
+        </ul>
+        <p>ここにないことも、遠慮なく聞いてくださいね。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=lesson">相談・予約する</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-c-pc" class="tc-sheet" aria-labelledby="sheet-c-pc-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-c-pc-t">パソコンで相談できること</h3>
+        <ul>
+            <li><strong>文書・表計算の基本</strong>：お知らせや案内の文書づくり（ワードなど）、名簿や家計簿のような表づくり（エクセルなど）</li>
+            <li><strong>インターネット・メール</strong>：調べもの、ホームページの見方、メールの送り方・受け取り方</li>
+            <li><strong>ファイルの整理・保存</strong>：作ったものをどこに保存したか、迷わないための整理のしかた</li>
+            <li><strong>印刷・スキャン</strong>：プリンターで印刷する。紙を読み取ってパソコンに入れる（スキャン）</li>
+            <li><strong>写真や動画の取り込み</strong>：スマホで撮った写真や動画を、パソコンに移す</li>
+        </ul>
+        <p>いつも使っているパソコンを持ってきて、そのまま教わることもできます。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=lesson">相談・予約する</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-c-ai" class="tc-sheet" aria-labelledby="sheet-c-ai-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-c-ai-t">AI・ChatGPTで相談できること</h3>
+        <p>ChatGPT（チャットジーピーティー）は、話しかけるように文字で質問すると、答えを返してくれるAIです。</p>
+        <ul>
+            <li><strong>AIの始め方・使い方</strong>：アプリの入れ方から、最初の質問のしかたまで</li>
+            <li><strong>調べもの・文章づくり</strong>：分からないことを聞く、あいさつ文や案内文の下書きを頼む</li>
+            <li><strong>画像生成を試してみる</strong>：言葉で頼むと、AIが絵や画像を作ってくれます</li>
+            <li><strong>仕事や趣味への活かし方</strong>：あなたの毎日のどこで使えるかを、一緒に考えます</li>
+            <li><strong>安全な使い方・注意点</strong>：名前や住所などの大事な情報は入れない。AIの答えはまちがうこともあるので、確かめてから使う</li>
+        </ul>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=lesson">相談・予約する</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-c-trouble" class="tc-sheet" aria-labelledby="sheet-c-trouble-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-c-trouble-t">お困りごと・トラブルの相談</h3>
+        <ul>
+            <li><strong>機種変更後の設定</strong>：新しいスマホを、前と同じように使えるようにします</li>
+            <li><strong>データの移行・バックアップ</strong>：写真や電話帳を新しい機械へ移す。大事なデータの控え（バックアップ）を取っておく</li>
+            <li><strong>パスワードの管理</strong>：忘れないための控え方、確かめ方</li>
+            <li><strong>迷惑メール・詐欺対策</strong>：あやしいメールやメッセージの見分け方と、届いたときの対応</li>
+            <li><strong>「急に使えなくなった」の解決</strong>：原因を一緒に探します。故障かもしれないときは、どこに相談すればよいかをお伝えします</li>
+        </ul>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=lesson">相談・予約する</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-workai" class="tc-sheet" aria-labelledby="sheet-workai-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-workai-t">「仕事でAIを使いたい」とき</h3>
+        <p>いまの業務の中身を伺って、AIを使えそうなところを一緒に探します。ふだん使っている資料を持ち込んで、それを使いながら進められます。</p>
+        <ul>
+            <li>どんな作業に時間がかかっているかを、まず聞かせてください</li>
+            <li>文章の下書き・まとめ・言い換えなど、試せるところから実際に使ってみます</li>
+            <li>会社の大事な情報をAIに入れるときの注意も、あわせてお伝えします</li>
+        </ul>
+        <p class="tc-note">会社や団体で、まとめて学びたいときは <a href="instructor.html">研修・講師派遣</a> もご覧ください。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=lesson">相談・予約する</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+
 <script>
 /* 押すと詳しく出る小窓（2026-10-22）。data-sheet="<dialog の id>" のボタンで開き、×・外側・Esc で閉じる */
 document.addEventListener('click', function (e) {
@@ -585,6 +700,11 @@ document.addEventListener('click', function (e) {
   if (b) { var d = document.getElementById(b.getAttribute('data-sheet')); if (d && d.showModal) { e.preventDefault(); d.showModal(); } return; }
   if (e.target.matches('dialog.tc-sheet')) e.target.close();
   var c = e.target.closest('.tc-close'); if (c) c.closest('dialog').close();
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  var b = e.target.closest('[role="button"][data-sheet]'); if (!b) return;
+  var d = document.getElementById(b.getAttribute('data-sheet')); if (d && d.showModal) { e.preventDefault(); d.showModal(); }
 });
 </script>
 </body>
