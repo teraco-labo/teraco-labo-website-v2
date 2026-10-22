@@ -32,6 +32,30 @@
     <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Shippori+Mincho:wght@600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="theme-warm.css">
+    <style>
+    /* 押すと詳しく出る小窓（2026-10-22 藤崎さん「押すと、どういうことなのか細かく教えてくれる構造」）。lesson.html と同じ */
+    dialog.tc-sheet { margin: auto; border: none; border-radius: 18px; padding: 0; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px);
+        box-shadow: 0 18px 48px rgba(0,0,0,.22); color: var(--body-text, #2B2823); background: #FFFDF8; }
+    dialog.tc-sheet::backdrop { background: rgba(30,28,24,.45); }
+    .tc-sheet-in { padding: 26px 24px 22px; overflow-y: auto; max-height: calc(100vh - 48px); }
+    .tc-sheet h3 { font-size: 19px; line-height: 1.55; margin: 0 2em 10px 0; color: var(--forest-dark, #2C5139); }
+    .tc-sheet p, .tc-sheet li { font-size: 15px; line-height: 1.85; }
+    .tc-sheet ul { padding-left: 1.3em; margin: .5em 0 .9em; }
+    .tc-sheet li { margin: .2em 0; }
+    .tc-sheet .tc-note { font-size: 13.5px; color: #6A6458; }
+    .tc-sheet .tc-close { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; border: none;
+        background: rgba(0,0,0,.06); font-size: 22px; line-height: 40px; cursor: pointer; color: inherit; }
+    .tc-sheet .tc-go { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .tc-sheet .tc-go a { flex: 1 1 200px; min-height: 48px; padding: 12px 18px; font-size: 15px; }
+
+    .tc-card-btn { font: inherit; text-align: center; cursor: pointer; width: 100%; border: 1.5px solid var(--forest, #3F6B4F); }
+    .tc-card-btn:hover, .tc-card-btn:focus-visible { transform: translateY(-2px); outline: none; box-shadow: 0 8px 22px rgba(63,107,79,.18); }
+    .tc-more { display: inline-block; margin-top: 8px; font-size: 14px; font-weight: 700; color: var(--forest, #3F6B4F); }
+
+    /* 講座内容カード（feature-card2）をボタンにしても、元の左寄せのリストのまま見せる */
+    .feature-card2.tc-card-btn { display: flex; flex-direction: column; align-items: stretch; text-align: left; color: inherit; }
+    .feature-card2.tc-card-btn .tc-more { margin-top: auto; padding-top: 10px; align-self: flex-start; }
+    </style>
 </head>
 <body>
     <a href="#main-content" class="skip-link">メインコンテンツへスキップ</a>
@@ -88,7 +112,7 @@
                     <h2 class="tl-title">講座内容</h2>
                 </div>
                 <div class="feature-grid">
-                    <div class="feature-card2 reveal">
+                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-ai-1" aria-haspopup="dialog">
                         <h4>ChatGPT基礎講座</h4>
                         <ul>
                             <li>ChatGPTの基本的な使い方</li>
@@ -97,8 +121,9 @@
                             <li>文章作成のサポート</li>
                             <li>情報収集のテクニック</li>
                         </ul>
-                    </div>
-                    <div class="feature-card2 reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-ai-2" aria-haspopup="dialog">
                         <h4>ビジネス活用講座</h4>
                         <ul>
                             <li>業務効率化への応用</li>
@@ -107,8 +132,9 @@
                             <li>データ分析の補助</li>
                             <li>プレゼン資料作成</li>
                         </ul>
-                    </div>
-                    <div class="feature-card2 reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-ai-3" aria-haspopup="dialog">
                         <h4>画像・動画AI活用</h4>
                         <ul>
                             <li>画像生成AIの使い方</li>
@@ -117,8 +143,9 @@
                             <li>デザイン制作支援</li>
                             <li>創作活動への応用</li>
                         </ul>
-                    </div>
-                    <div class="feature-card2 reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-ai-4" aria-haspopup="dialog">
                         <h4>安全・倫理的利用</h4>
                         <ul>
                             <li>AI利用時の注意点</li>
@@ -127,7 +154,8 @@
                             <li>著作権への配慮</li>
                             <li>適切な利用ガイドライン</li>
                         </ul>
-                    </div>
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -292,5 +320,76 @@
         }
     }());
     </script>
+    <!-- 小窓：講座内容カードの「くわしく見る」（2026-10-22） -->
+    <dialog id="sheet-ai-1" class="tc-sheet" aria-labelledby="sheet-ai-1-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-ai-1-t">ChatGPT基礎講座：AIに「話しかけて」みるところから</h3>
+        <p>ChatGPT（チャットジーピーティー）は、文字で質問したりお願いしたりすると、文章で答えてくれるAI（人工知能）です。</p>
+        <p>むずかしい言葉を使わずに、実際に一緒に使ってみながら覚えます。</p>
+        <ul>
+            <li><strong>ChatGPTの基本的な使い方</strong>：始め方、質問の入れ方、答えの読み方。</li>
+            <li><strong>効果的な質問の仕方</strong>：AIへの上手な頼み方。「何のために」「だれに向けて」「どのくらいの長さで」を伝えると、ほしい答えに近づきます。</li>
+            <li><strong>日常生活での活用法</strong>：献立を考える、旅行の計画を立てる、など、くらしの中での使い方。</li>
+            <li><strong>文章作成のサポート</strong>：お礼の手紙やあいさつ文などの下書きを手伝ってもらう方法。最後は自分の言葉で整えます。</li>
+            <li><strong>情報収集のテクニック</strong>：調べものにAIを使うコツ。</li>
+        </ul>
+        <p class="tc-note">AIの答えは、まちがっていることもあります。大事なことは、役所や会社の公式の情報で確かめましょう。</p>
+        <p>わからないところは、何度でも聞いてくださいね。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=ai">申し込む・相談</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-ai-2" class="tc-sheet" aria-labelledby="sheet-ai-2-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-ai-2-t">ビジネス活用講座：いつもの仕事を、AIに手伝ってもらう</h3>
+        <p>「会社でAIを使えと言われたけれど、何から？」という方に。いまの仕事の中身に合わせて、どこで使えるかを一緒に考えます。</p>
+        <ul>
+            <li><strong>業務効率化への応用</strong>：業務効率化とは、同じ仕事を、より短い時間で終わらせる工夫のこと。くり返しの作業や下準備を、AIに手伝ってもらいます。</li>
+            <li><strong>メール・文書作成支援</strong>：お客さまへのメールや、社内の文書の下書きを手伝ってもらう方法。</li>
+            <li><strong>アイデア発想のサポート</strong>：企画やチラシの文句などを考えるとき、もとになる案をAIにたくさん出してもらう方法。</li>
+            <li><strong>データ分析の補助</strong>：データ分析とは、数字の表から「増えた・減った」などの様子を読みとること。表のまとめ方や見方を、AIに手伝ってもらいます。</li>
+            <li><strong>プレゼン資料作成</strong>：人の前で説明するときの資料（スライド）の組み立てや、文章の案づくり。</li>
+        </ul>
+        <p class="tc-note">会社の大事な情報や、お客さまの個人情報は、AIに入れないのが基本です。</p>
+        <p>わからないところは、何度でも聞いてくださいね。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=ai">申し込む・相談</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-ai-3" class="tc-sheet" aria-labelledby="sheet-ai-3-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-ai-3-t">画像・動画AI活用：AIと一緒に、絵や動画を作る</h3>
+        <p>AIは、文章だけでなく、絵を描いたり、写真や動画の手直しを手伝ったりもできます。まずは一緒に試して、「こんなことができるんだ」を体験してみましょう。</p>
+        <ul>
+            <li><strong>画像生成AIの使い方</strong>：「こんな絵がほしい」と言葉で伝えると、AIが絵を描いてくれる道具の使い方。</li>
+            <li><strong>写真編集AIツール</strong>：写真の明るさを整えるなど、写真の手直しをAIに手伝ってもらう道具。</li>
+            <li><strong>動画編集AI活用</strong>：動画を切ったりつないだりする作業を、AIに手伝ってもらう方法。</li>
+            <li><strong>デザイン制作支援</strong>：チラシやカードなどの見た目を整える作業を、AIに手伝ってもらう方法。</li>
+            <li><strong>創作活動への応用</strong>：趣味の作品づくりなどに、AIを活かす方法。</li>
+        </ul>
+        <p class="tc-note">AIで作った絵や動画を人に見せたり使ったりするときの注意（著作権など）は、「安全・倫理的利用」の講座で一緒に確かめます。</p>
+        <p>わからないところは、何度でも聞いてくださいね。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=ai">申し込む・相談</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-ai-4" class="tc-sheet" aria-labelledby="sheet-ai-4-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-ai-4-t">安全・倫理的利用：AIと上手につきあうための約束ごと</h3>
+        <p>AIはとても便利ですが、気をつけたいこともあります。倫理的（りんりてき）な利用とは、人に迷惑をかけない、正しい使い方のことです。安心して使い続けるための注意点を、一緒に確かめます。</p>
+        <ul>
+            <li><strong>AI利用時の注意点</strong>：AIの答えは、いつも正しいとは限りません。そのまま信じこまないことが大切です。</li>
+            <li><strong>情報の信頼性確認</strong>：信頼性とは、その情報を信じてよいかどうかのこと。役所や会社の公式の情報などで確かめる方法。</li>
+            <li><strong>プライバシー保護</strong>：プライバシーとは、人に知られたくない自分の情報のこと。住所・電話番号などを、むやみにAIに入れないようにします。</li>
+            <li><strong>著作権への配慮</strong>：著作権とは、絵や文章、音楽などを作った人の権利のこと。AIで作ったものでも、人の作品に似すぎていないか気をつけます。</li>
+            <li><strong>適切な利用ガイドライン</strong>：ガイドラインとは、使うときの目安になる決まりのこと。会社や学校に決まりがあるときは、それに合わせて使います。</li>
+        </ul>
+        <p>わからないところは、何度でも聞いてくださいね。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=ai">申し込む・相談</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+
+<script>
+/* 押すと詳しく出る小窓（2026-10-22）。data-sheet="<dialog の id>" のボタンで開き、×・外側・Esc で閉じる */
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-sheet]');
+  if (b) { var d = document.getElementById(b.getAttribute('data-sheet')); if (d && d.showModal) { e.preventDefault(); d.showModal(); } return; }
+  if (e.target.matches('dialog.tc-sheet')) e.target.close();
+  var c = e.target.closest('.tc-close'); if (c) c.closest('dialog').close();
+});
+</script>
 </body>
 </html>

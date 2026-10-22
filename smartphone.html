@@ -33,6 +33,30 @@
     <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Shippori+Mincho:wght@600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="theme-warm.css">
+    <style>
+    /* 押すと詳しく出る小窓（2026-10-22 藤崎さん「押すと、どういうことなのか細かく教えてくれる構造」）。lesson.html と同じ */
+    dialog.tc-sheet { margin: auto; border: none; border-radius: 18px; padding: 0; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px);
+        box-shadow: 0 18px 48px rgba(0,0,0,.22); color: var(--body-text, #2B2823); background: #FFFDF8; }
+    dialog.tc-sheet::backdrop { background: rgba(30,28,24,.45); }
+    .tc-sheet-in { padding: 26px 24px 22px; overflow-y: auto; max-height: calc(100vh - 48px); }
+    .tc-sheet h3 { font-size: 19px; line-height: 1.55; margin: 0 2em 10px 0; color: var(--forest-dark, #2C5139); }
+    .tc-sheet p, .tc-sheet li { font-size: 15px; line-height: 1.85; }
+    .tc-sheet ul { padding-left: 1.3em; margin: .5em 0 .9em; }
+    .tc-sheet li { margin: .2em 0; }
+    .tc-sheet .tc-note { font-size: 13.5px; color: #6A6458; }
+    .tc-sheet .tc-close { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; border: none;
+        background: rgba(0,0,0,.06); font-size: 22px; line-height: 40px; cursor: pointer; color: inherit; }
+    .tc-sheet .tc-go { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .tc-sheet .tc-go a { flex: 1 1 200px; min-height: 48px; padding: 12px 18px; font-size: 15px; }
+
+    .tc-card-btn { font: inherit; text-align: center; cursor: pointer; width: 100%; border: 1.5px solid var(--forest, #3F6B4F); }
+    .tc-card-btn:hover, .tc-card-btn:focus-visible { transform: translateY(-2px); outline: none; box-shadow: 0 8px 22px rgba(63,107,79,.18); }
+    .tc-more { display: inline-block; margin-top: 8px; font-size: 14px; font-weight: 700; color: var(--forest, #3F6B4F); }
+
+    /* 講座内容カード（feature-card2）をボタンにしても、元の左寄せのリストのまま見せる */
+    .feature-card2.tc-card-btn { display: flex; flex-direction: column; align-items: stretch; text-align: left; color: inherit; }
+    .feature-card2.tc-card-btn .tc-more { margin-top: auto; padding-top: 10px; align-self: flex-start; }
+    </style>
 </head>
 <body>
     <a href="#main-content" class="skip-link">メインコンテンツへスキップ</a>
@@ -91,7 +115,7 @@
                     <h2 class="tl-title">サービス内容</h2>
                 </div>
                 <div class="feature-grid">
-                    <div class="feature-card2 reveal">
+                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-sp-1" aria-haspopup="dialog">
                         <h4>基本操作</h4>
                         <ul>
                             <li>電源の入れ方・切り方</li>
@@ -100,8 +124,9 @@
                             <li>電話のかけ方・受け方</li>
                             <li>連絡先の登録・管理</li>
                         </ul>
-                    </div>
-                    <div class="feature-card2 reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-sp-2" aria-haspopup="dialog">
                         <h4>コミュニケーション</h4>
                         <ul>
                             <li>LINEの使い方</li>
@@ -110,8 +135,9 @@
                             <li>ビデオ通話の方法</li>
                             <li>グループの作り方</li>
                         </ul>
-                    </div>
-                    <div class="feature-card2 reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-sp-3" aria-haspopup="dialog">
                         <h4>写真・カメラ</h4>
                         <ul>
                             <li>写真の撮り方</li>
@@ -120,8 +146,9 @@
                             <li>家族との写真共有</li>
                             <li>プリント方法</li>
                         </ul>
-                    </div>
-                    <div class="feature-card2 reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-sp-4" aria-haspopup="dialog">
                         <h4>便利機能</h4>
                         <ul>
                             <li>インターネット検索</li>
@@ -130,7 +157,8 @@
                             <li>キャッシュレス決済</li>
                             <li>アプリのダウンロード</li>
                         </ul>
-                    </div>
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -329,5 +357,76 @@
         }
     }());
     </script>
+    <!-- 小窓：講座内容カードの「くわしく見る」（2026-10-22） -->
+    <dialog id="sheet-sp-1" class="tc-sheet" aria-labelledby="sheet-sp-1-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-sp-1-t">基本操作：スマホを「こわくない」道具にするところから</h3>
+        <p>スマホをはじめて持った方、まだ自信がない方は、ここから始めます。むずかしい言葉は使わずに、実際にスマホをさわりながら、一つずつ一緒に練習します。</p>
+        <p>最初は、ここだけで十分です。あせらず、ゆっくり進みましょう。</p>
+        <ul>
+            <li><strong>電源の入れ方・切り方</strong>：どのボタンを、どのくらい押すのか。画面が消えるだけの「スリープ（おやすみ）」と、電源を切ることのちがいも確かめます。</li>
+            <li><strong>画面の見方・操作方法</strong>：指で軽くたたく「タップ」、画面をなぞる「スワイプ」など、指の動かし方。アイコン（アプリの小さな絵）の見方も。</li>
+            <li><strong>文字入力の基本</strong>：画面に出るキーボード（文字を打つところ）で、ひらがな・漢字・数字を打つ方法と、まちがえたときの消し方。</li>
+            <li><strong>電話のかけ方・受け方</strong>：かかってきた電話の出方・切り方と、こちらからのかけ方。</li>
+            <li><strong>連絡先の登録・管理</strong>：家族や友だちの電話番号を登録して、名前を選ぶだけで電話できるようにします。</li>
+        </ul>
+        <p>わからないところは、何度でも聞いてくださいね。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=smartphone">申し込む・相談</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-sp-2" class="tc-sheet" aria-labelledby="sheet-sp-2-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-sp-2-t">コミュニケーション：LINEで、家族や友だちとつながる</h3>
+        <p>LINE（ライン）は、文字のやりとり、写真を送る、顔を見ながら話す、といったことができる連絡のためのアプリ（スマホに入れて使う道具）です。</p>
+        <p>少人数（2〜8名）の教室なので、わからないところは、その場で聞けます。</p>
+        <ul>
+            <li><strong>LINEの使い方</strong>：友だちの追加のしかたと、やりとりの画面（トーク）の見方。</li>
+            <li><strong>メッセージの送受信</strong>：文字やスタンプ（気持ちを伝える絵）を送る方法と、届いたものの読み方。</li>
+            <li><strong>写真・動画の共有</strong>：撮った写真や動画をLINEで送る方法と、もらった写真をスマホに残す方法。</li>
+            <li><strong>ビデオ通話の方法</strong>：おたがいの顔を見ながら話せる電話のかけ方・出方。</li>
+            <li><strong>グループの作り方</strong>：家族など何人かで、同じ画面でいっしょにやりとりできる「グループ」の作り方。</li>
+        </ul>
+        <p>わからないところは、何度でも聞いてくださいね。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=smartphone">申し込む・相談</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-sp-3" class="tc-sheet" aria-labelledby="sheet-sp-3-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-sp-3-t">写真・カメラ：撮って、残して、家族に見せる</h3>
+        <p>スマホのカメラで、きれいに撮るところから、撮った写真の整理、家族に見せるところまで、一緒に練習します。</p>
+        <p>「写真が増えすぎて、どこに何があるか分からない」という方も、一緒に整理していきましょう。</p>
+        <ul>
+            <li><strong>写真の撮り方</strong>：カメラの開き方、シャッターの押し方、ぼやけない撮り方。</li>
+            <li><strong>動画の撮影方法</strong>：動画（動く映像）の撮り始め方と、止め方。</li>
+            <li><strong>写真の保存・整理</strong>：撮った写真がどこに入っているか、いらない写真の消し方、アルバム（写真をまとめる入れ物）の使い方。</li>
+            <li><strong>家族との写真共有</strong>：写真をLINEなどで家族に送ったり、見てもらったりする方法。</li>
+            <li><strong>プリント方法</strong>：スマホの写真を、紙に印刷する方法。</li>
+        </ul>
+        <p>わからないところは、何度でも聞いてくださいね。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=smartphone">申し込む・相談</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-sp-4" class="tc-sheet" aria-labelledby="sheet-sp-4-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-sp-4-t">便利機能：毎日のくらしに、スマホを役立てる</h3>
+        <p>スマホは、電話やLINEのほかにも、調べもの・道案内・お天気・お買い物の支払いなど、毎日のくらしに役立つことがたくさんできます。よく使うものから、一緒に試していきます。</p>
+        <ul>
+            <li><strong>インターネット検索</strong>：知りたいことを言葉で入れて調べること。お店の場所や、知りたい言葉の意味などを調べてみます。</li>
+            <li><strong>地図・ナビゲーション</strong>：地図のアプリで行きたい場所を探す方法。ナビゲーションは、目的地までの道順を案内してくれる機能です。</li>
+            <li><strong>天気予報の確認</strong>：今日・明日のお天気や、雨が降りそうかどうかを、スマホで見る方法。</li>
+            <li><strong>キャッシュレス決済</strong>：現金のかわりに、スマホでお買い物の支払いをすること。PayPay（ペイペイ）などのアプリを使います。</li>
+            <li><strong>アプリのダウンロード</strong>：アプリ（スマホに入れて使う道具）を、スマホに入れること。入れ方を一緒に確かめます。</li>
+        </ul>
+        <p class="tc-note">お金にかかわる操作は、あわてずに一つずつ進めましょう。暗証番号やパスワードは、人に教えないでくださいね。</p>
+        <p>わからないところは、何度でも聞いてくださいね。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=smartphone">申し込む・相談</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+
+<script>
+/* 押すと詳しく出る小窓（2026-10-22）。data-sheet="<dialog の id>" のボタンで開き、×・外側・Esc で閉じる */
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-sheet]');
+  if (b) { var d = document.getElementById(b.getAttribute('data-sheet')); if (d && d.showModal) { e.preventDefault(); d.showModal(); } return; }
+  if (e.target.matches('dialog.tc-sheet')) e.target.close();
+  var c = e.target.closest('.tc-close'); if (c) c.closest('dialog').close();
+});
+</script>
 </body>
 </html>
