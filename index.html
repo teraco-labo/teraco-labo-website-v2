@@ -655,6 +655,77 @@
     footer.access-footer { background: var(--deep) !important; border-top: none !important; }
 
     a:focus-visible, button:focus-visible { outline: none !important; box-shadow: 0 0 0 3px rgba(63,107,79,.35) !important; border-color: var(--forest) !important; }
+
+    /* ---- 最初の画面：教室の場所（地図へ）2026-10-22 ---- */
+    .hero2 a.hero2-where {
+        display: flex; align-items: center; gap: 12px; max-width: 420px;
+        margin-top: .1rem; padding: 12px 14px 12px 14px;
+        background: rgba(255,255,255,.78); border: 1px solid var(--chip-border); border-radius: 14px;
+        color: var(--tl-text) !important; text-decoration: none !important;
+        transition: border-color .2s ease, background .2s ease;
+    }
+    .hero2 a.hero2-where:hover { border-color: var(--forest); background: var(--white); }
+    .hero2 a.hero2-where * { text-decoration: none !important; }
+    .hero2-where-pin { width: 22px; height: 22px; flex: none; fill: var(--forest); }
+    .hero2-where-text { display: flex; flex-direction: column; line-height: 1.5; flex: 1; min-width: 0; }
+    .hero2-where-main { font-size: 14.5px; font-weight: 700; color: var(--tl-text) !important; }
+    .hero2-where-sub { font-size: 12.5px; color: var(--tl-muted) !important; }
+    .hero2-where-go {
+        flex: none; font-size: 13px; font-weight: 700; color: var(--forest-dark) !important;
+        border: 1px solid var(--chip-border); border-radius: 99px; padding: 4px 12px 4px 14px; background: var(--cream);
+    }
+    .hero2-where-go::after { content: "›"; margin-left: 6px; }
+
+    /* theme-white.css の「main a:not(...)」（下線・青）より強くするため :not(#_) を付ける */
+    .hero2 a.hero2-where:not(#_), a.pr-more:not(#_) { text-decoration: none !important; }
+    .hero2 a.hero2-where:not(#_) { color: var(--tl-text) !important; }
+    a.pr-more:not(#_) { color: var(--forest-dark) !important; }
+
+    /* ---- 料金（2026年9月改定の料金表）2026-10-22 ---- */
+    .pr-group { max-width: 980px; margin: 0 auto 44px; }
+    .pr-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 14px; margin-bottom: 14px; }
+    .pr-title { font-family: var(--font-serif); font-size: 21px; font-weight: 700; color: var(--tl-text); }
+    .pr-lead { font-size: 13px; color: var(--tl-muted); }
+    .pr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .pr-grid-5 { grid-template-columns: repeat(5, 1fr); }
+    .pr-card {
+        position: relative; display: flex; flex-direction: column; align-items: center; text-align: center;
+        padding: 20px 8px 16px; border-radius: 14px; border: 1.5px solid; background: var(--white);
+    }
+    .pr-card.is-pick { border-width: 2.5px; }
+    .pr-beg { background: #fbf0dc; border-color: #e5b26a; }
+    .pr-beg.is-pick { border-color: #d9913a; }
+    .pr-adv { background: #e6f2e4; border-color: #8fbf8c; }
+    .pr-pcb { background: #f3e6f4; border-color: #b58bc0; }
+    .pr-pcb.is-pick { border-color: #9a64a8; }
+    .pr-pca { background: #dff0f6; border-color: #79b6cf; }
+    .pr-one { background: var(--white); border-color: #e2c27a; }
+    .pr-one.is-pick { background: #fdf6e3; border-color: #d4a93f; }
+    .pr-badge {
+        position: absolute; top: -12px; left: 50%; transform: translateX(-50%); white-space: nowrap;
+        background: var(--forest); color: var(--white); font-size: 12px; font-weight: 700; padding: 2px 12px; border-radius: 99px;
+    }
+    .pr-name { font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--tl-text); }
+    .pr-price { font-size: 28px; font-weight: 900; color: var(--forest-dark); line-height: 1.3; margin-top: 4px; letter-spacing: .01em; }
+    .pr-month, .pr-yen { font-size: 14px; font-weight: 700; }
+    .pr-month { margin-right: 3px; }
+    .pr-unit { font-size: 13.5px; color: var(--body-text); margin-top: 2px; }
+    .pr-note { font-size: 12px; color: var(--tl-muted); margin-top: 4px; line-height: 1.5; }
+    a.pr-more {
+        display: inline-flex; align-items: center; margin-top: 14px; min-height: 40px; padding: 0 18px;
+        border-radius: 99px; border: 1px solid var(--chip-border); background: var(--cream);
+        color: var(--forest-dark) !important; font-size: 13.5px; font-weight: 700; text-decoration: none !important;
+    }
+    a.pr-more::after { content: "›"; margin-left: 8px; }
+    a.pr-more:hover { border-color: var(--forest); }
+    .pr-foot { max-width: 980px; margin: 0 auto; padding: 18px 20px; border-radius: 14px; background: var(--cream); border-left: 4px solid var(--forest); }
+    .pr-foot-main { display: block; font-weight: 700; color: var(--tl-text); }
+    .pr-foot-sub { display: block; font-size: 13.5px; color: var(--body-text); margin-top: 4px; line-height: 1.8; }
+    #price { scroll-margin-top: 70px; }
+    @media (max-width: 860px) {
+        .pr-grid, .pr-grid-5 { grid-template-columns: repeat(2, 1fr); gap: 16px 10px; }
+        .pr-price { font-size: 25px; }
+    }
     </style>
 </head>
 <body>
@@ -674,6 +745,7 @@
                 <div class="nav-wrap" id="nav-wrap">
                     <ul class="nav-menu" id="nav-menu" role="menubar">
                         <li role="none"><a href="#services" role="menuitem">教室のご案内</a></li>
+                        <li role="none"><a href="#price" role="menuitem">料金</a></li>
                         <li role="none"><a href="#business" role="menuitem">法人・行政の方</a></li>
                         <li role="none"><a href="lesson.html" role="menuitem">個人レッスン</a></li>
                         <li role="none"><a href="#about" role="menuitem">代表紹介</a></li>
@@ -716,12 +788,15 @@
                         <li>動画編集</li>
                     </ul>
                     <p class="hero2-lead">はじめての方も、もっと使いこなしたい方も。<br>2〜8名の少人数で、あなたのペースに合わせます。<br>マンツーマンの個人レッスンも承ります。</p>
-                    <p class="hero2-place"><span>宮崎県西都市の教室（駐車場あり）</span><span class="hero2-place-sep">｜</span><span>県内は出張も承ります</span></p>
+                    <a href="#access" class="hero2-where" aria-label="教室の場所と駐車場の地図を見る">
+                        <svg class="hero2-where-pin" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+                        <span class="hero2-where-text"><span class="hero2-where-main">宮崎県西都市の教室</span><span class="hero2-where-sub">駐車場あり・県内は出張もOK</span></span>
+                        <span class="hero2-where-go">地図</span>
+                    </a>
                     <div class="hero2-actions">
                         <a href="#services" class="btn-forest btn-green">教室のご案内を見る</a>
                         <a href="https://lin.ee/tkYJ7Cw" class="btn-line-solid btn-line" target="_blank" rel="noopener" aria-label="LINEで気軽に相談する（外部リンク）">LINEで気軽に相談</a>
                     </div>
-                    <a href="#access" class="hero2-access">教室の場所と駐車場（地図）を見る →</a>
                 </div>
             </div>
         </section>
@@ -802,6 +877,57 @@
                     </a>
                 </div>
 
+            </div>
+        </section>
+
+        <!-- ===================================================
+             料金（2026年9月改定の料金表と同じ内容）
+        =================================================== -->
+        <section id="price" class="tl-section bg-white">
+            <div class="container">
+                <div class="tl-head reveal">
+                    <h2 class="tl-title">料金</h2>
+                    <div class="tl-desc">2026年9月改定・すべて税込です</div>
+                </div>
+
+                <div class="pr-group reveal">
+                    <div class="pr-head"><h3 class="pr-title">スマホ・タブレット教室</h3><span class="pr-lead">2〜8名の少人数　何回でも質問できます</span></div>
+                    <div class="pr-grid">
+                        <div class="pr-card pr-beg"><span class="pr-name">スマホ入門2</span><span class="pr-price"><span class="pr-month">月</span>5,000<span class="pr-yen">円</span></span><span class="pr-unit">45分 × 月2回</span></div>
+                        <div class="pr-card pr-beg is-pick"><span class="pr-badge">おすすめ</span><span class="pr-name">スマホ入門4</span><span class="pr-price"><span class="pr-month">月</span>8,000<span class="pr-yen">円</span></span><span class="pr-unit">45分 × 月4回</span></div>
+                        <div class="pr-card pr-adv"><span class="pr-name">スマホ応用2</span><span class="pr-price"><span class="pr-month">月</span>8,000<span class="pr-yen">円</span></span><span class="pr-unit">90分 × 月2回</span></div>
+                        <div class="pr-card pr-adv"><span class="pr-name">スマホ応用4</span><span class="pr-price"><span class="pr-month">月</span>12,000<span class="pr-yen">円</span></span><span class="pr-unit">90分 × 月4回</span></div>
+                    </div>
+                    <a href="smartphone.html" class="pr-more">講座の内容を見る</a>
+                </div>
+
+                <div class="pr-group reveal">
+                    <div class="pr-head"><h3 class="pr-title">パソコンAI教室</h3><span class="pr-lead">ChatGPTやAIツールを、生活や仕事に活かす</span></div>
+                    <div class="pr-grid">
+                        <div class="pr-card pr-pcb"><span class="pr-name">パソコン入門2</span><span class="pr-price"><span class="pr-month">月</span>5,000<span class="pr-yen">円</span></span><span class="pr-unit">45分 × 月2回</span></div>
+                        <div class="pr-card pr-pcb is-pick"><span class="pr-badge">おすすめ</span><span class="pr-name">パソコン入門4</span><span class="pr-price"><span class="pr-month">月</span>9,000<span class="pr-yen">円</span></span><span class="pr-unit">45分 × 月4回</span></div>
+                        <div class="pr-card pr-pca"><span class="pr-name">パソコン応用2</span><span class="pr-price"><span class="pr-month">月</span>9,000<span class="pr-yen">円</span></span><span class="pr-unit">90分 × 月2回</span></div>
+                        <div class="pr-card pr-pca"><span class="pr-name">パソコン応用4</span><span class="pr-price"><span class="pr-month">月</span>14,000<span class="pr-yen">円</span></span><span class="pr-unit">90分 × 月4回</span></div>
+                    </div>
+                    <a href="ai.html" class="pr-more">講座の内容を見る</a>
+                </div>
+
+                <div class="pr-group reveal">
+                    <div class="pr-head"><h3 class="pr-title">個人レッスン</h3><span class="pr-lead">1回50分、完全マンツーマン　まずは1回だけ、も歓迎です</span></div>
+                    <div class="pr-grid pr-grid-5">
+                        <div class="pr-card pr-one"><span class="pr-name">単発受講</span><span class="pr-price">8,000<span class="pr-yen">円</span></span><span class="pr-unit">50分 × 1回</span><span class="pr-note">1回だけでも</span></div>
+                        <div class="pr-card pr-one"><span class="pr-name">月2回コース</span><span class="pr-price">14,000<span class="pr-yen">円</span></span><span class="pr-unit">50分 × 月2回</span><span class="pr-note">1回あたり 7,000円</span></div>
+                        <div class="pr-card pr-one is-pick"><span class="pr-badge">おすすめ</span><span class="pr-name">月4回コース</span><span class="pr-price">24,000<span class="pr-yen">円</span></span><span class="pr-unit">50分 × 月4回</span><span class="pr-note">1回あたり 6,000円</span></div>
+                        <div class="pr-card pr-one"><span class="pr-name">4回チケット</span><span class="pr-price">24,000<span class="pr-yen">円</span></span><span class="pr-unit">50分 × 4回</span><span class="pr-note">1回 6,000円・6か月有効</span></div>
+                        <div class="pr-card pr-one is-pick"><span class="pr-badge">一番お得</span><span class="pr-name">8回チケット</span><span class="pr-price">45,000<span class="pr-yen">円</span></span><span class="pr-unit">50分 × 8回</span><span class="pr-note">1回 5,625円・1年有効</span></div>
+                    </div>
+                    <a href="lesson.html" class="pr-more">レッスンの内容を見る</a>
+                </div>
+
+                <div class="pr-foot reveal">
+                    <span class="pr-foot-main">無料見学、いつでもどうぞ。</span>
+                    <span class="pr-foot-sub">講座日に都合が合わないときは、同じコースの別クラスへ振り替えできます。お申し込み・ご相談は、お電話またはLINEで。</span>
+                </div>
             </div>
         </section>
 
