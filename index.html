@@ -595,7 +595,28 @@
         .hero2-lead { font-size: 13px; }
         .trust-bar { gap: 14px; }
     }
-    </style>
+    
+    /* 押すと詳しく出る小窓（2026-10-22 藤崎さん「押すと、どういうことなのか細かく教えてくれる構造」） */
+    dialog.tc-sheet { margin: auto; border: none; border-radius: 18px; padding: 0; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px);
+        box-shadow: 0 18px 48px rgba(0,0,0,.22); color: var(--body-text, #2B2823); background: #FFFDF8; }
+    dialog.tc-sheet::backdrop { background: rgba(30,28,24,.45); }
+    .tc-sheet-in { padding: 26px 24px 22px; overflow-y: auto; max-height: calc(100vh - 48px); }
+    .tc-sheet h3 { font-size: 19px; line-height: 1.55; margin: 0 2em 10px 0; color: var(--forest-dark, #2C5139); }
+    .tc-sheet p, .tc-sheet li { font-size: 15px; line-height: 1.85; }
+    .tc-sheet ul { padding-left: 1.3em; margin: .5em 0 .9em; }
+    .tc-sheet li { margin: .2em 0; }
+    .tc-sheet .tc-note { font-size: 13.5px; color: #6A6458; }
+    .tc-sheet .tc-close { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; border: none;
+        background: rgba(0,0,0,.06); font-size: 22px; line-height: 40px; cursor: pointer; color: inherit; }
+    .tc-sheet .tc-go { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .tc-sheet .tc-go a { flex: 1 1 200px; min-height: 48px; padding: 12px 18px; font-size: 15px; }
+
+    .hero2-topics li { padding: 0; }
+    .hero2-topics button { font: inherit; font-size: 13.5px; font-weight: 700; color: var(--forest-dark); background: none; border: none;
+        padding: 6px 15px; cursor: pointer; border-radius: 999px; min-height: 36px; }
+    .hero2-topics button::after { content: " ›"; opacity: .7; }
+    .hero2-topics li:hover, .hero2-topics li:focus-within { background: #fff; border-color: var(--forest); }
+</style>
 
     <!--
         theme-white.css は他ページとの共有ファイルのため読み込む。
@@ -781,11 +802,11 @@
                     <p class="hero2-eyebrow">まちのデジタル寺子屋</p>
                     <p class="hero2-shop">スマホ教室 TERACO<small>てらこ</small></p>
                     <h1 class="hero2-title">なんでも、<br>何度でも聞いてください。</h1>
-                    <ul class="hero2-topics" aria-label="学べる内容">
-                        <li>スマホ・タブレット</li>
-                        <li>パソコン</li>
-                        <li>AI・ChatGPT</li>
-                        <li>動画編集</li>
+                    <ul class="hero2-topics" aria-label="学べる内容（押すと、よくあるお困りごとが出ます）">
+                        <li><button type="button" data-sheet="sheet-sp" aria-haspopup="dialog">スマホ・タブレット</button></li>
+                        <li><button type="button" data-sheet="sheet-pc" aria-haspopup="dialog">パソコン</button></li>
+                        <li><button type="button" data-sheet="sheet-ai" aria-haspopup="dialog">AI・ChatGPT</button></li>
+                        <li><button type="button" data-sheet="sheet-video" aria-haspopup="dialog">動画編集</button></li>
                     </ul>
                     <p class="hero2-lead">はじめての方も、もっと使いこなしたい方も。<br>2〜8名の少人数で、あなたのペースに合わせます。<br>マンツーマンの個人レッスンも承ります。</p>
                     <a href="#access" class="hero2-where" aria-label="教室の場所と駐車場の地図を見る">
@@ -1213,5 +1234,48 @@
     }());
     </script>
 <script src="https://teraco-labo.github.io/line-outou/applink.js" defer></script>
+
+    <dialog id="sheet-sp" class="tc-sheet" aria-labelledby="sheet-sp-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-sp-t">スマホ・タブレットの、よくあるお困りごと</h3>
+        <p>こんなことで困っていませんか。教室で、何度でも一緒に練習します。</p>
+        <ul><li>文字が小さくて読みにくい・打つのが大変</li><li>LINE で写真を送りたい・友だちを追加したい</li><li>機種変更で、写真や電話帳を移したい</li><li>キャッシュレス決済を使ってみたい</li><li>迷惑メールや詐欺のメッセージが心配</li></ul>
+        
+        <div class="tc-go"><a class="btn-forest" href="smartphone.html">スマホ・タブレット教室を見る</a><a class="btn-line-solid" href="https://lin.ee/tkYJ7Cw" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-pc" class="tc-sheet" aria-labelledby="sheet-pc-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-pc-t">パソコンの、よくあるお困りごと</h3>
+        <p>こんなことで困っていませんか。教室や個人レッスンで、一緒に操作しながら覚えます。</p>
+        <ul><li>文字を打つのに時間がかかる</li><li>書類（文書・表）を作りたい</li><li>ファイルをどこに保存したか分からなくなる</li><li>印刷・スキャンがうまくいかない</li><li>急に英字しか打てなくなった</li></ul>
+        
+        <div class="tc-go"><a class="btn-forest" href="ai.html">パソコンAI教室を見る</a><a class="btn-line-solid" href="https://lin.ee/tkYJ7Cw" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-ai" class="tc-sheet" aria-labelledby="sheet-ai-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-ai-t">AI・ChatGPT の、よくあるお困りごと</h3>
+        <p>こんなことで困っていませんか。むずかしい言葉を使わずに、一緒に使ってみます。</p>
+        <ul><li>AI で何ができるのか分からない</li><li>上手な頼み方を知りたい</li><li>調べもの・文章づくりに使いたい</li><li>仕事や趣味に活かしたい</li><li>安全な使い方・注意点を知りたい</li></ul>
+        
+        <div class="tc-go"><a class="btn-forest" href="ai.html">パソコンAI教室を見る</a><a class="btn-line-solid" href="https://lin.ee/tkYJ7Cw" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-video" class="tc-sheet" aria-labelledby="sheet-video-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-video-t">動画編集</h3>
+        <p>新しく始めたサービスです。スマホやパソコンで、動画の作り方を一緒に覚えます。</p>
+        <ul><li>家族や趣味の動画を、自分でまとめたい</li><li>お店や仕事の紹介動画を作りたい</li><li>動画編集を仕事にして、副業で収入を得たい（このご相談も好評です）</li></ul>
+        <p class="tc-note">動画編集のくわしいご案内は、LINE でお気軽にどうぞ。</p>
+        <div class="tc-go"><a class="btn-forest" href="lesson.html">個人レッスンを見る</a><a class="btn-line-solid" href="https://lin.ee/tkYJ7Cw" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+
+<script>
+/* 押すと詳しく出る小窓（2026-10-22）。data-sheet="<dialog の id>" のボタンで開き、×・外側・Esc で閉じる */
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-sheet]');
+  if (b) { var d = document.getElementById(b.getAttribute('data-sheet')); if (d && d.showModal) { e.preventDefault(); d.showModal(); } return; }
+  if (e.target.matches('dialog.tc-sheet')) e.target.close();
+  var c = e.target.closest('.tc-close'); if (c) c.closest('dialog').close();
+});
+</script>
 </body>
 </html>
