@@ -687,7 +687,7 @@
     .pr-title { font-family: var(--font-serif); font-size: 21px; font-weight: 700; color: var(--tl-text); }
     .pr-lead { font-size: 13px; color: var(--tl-muted); }
     .pr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    .pr-grid-5 { grid-template-columns: repeat(5, 1fr); }
+    .pr-grid-6 { grid-template-columns: repeat(3, 1fr); row-gap: 22px; }
     .pr-card {
         position: relative; display: flex; flex-direction: column; align-items: center; text-align: center;
         padding: 20px 8px 16px; border-radius: 14px; border: 1.5px solid; background: var(--white);
@@ -723,7 +723,7 @@
     .pr-foot-sub { display: block; font-size: 13.5px; color: var(--body-text); margin-top: 4px; line-height: 1.8; }
     #price { scroll-margin-top: 70px; }
     @media (max-width: 860px) {
-        .pr-grid, .pr-grid-5 { grid-template-columns: repeat(2, 1fr); gap: 16px 10px; }
+        .pr-grid, .pr-grid-6 { grid-template-columns: repeat(2, 1fr); gap: 16px 10px; }
         .pr-price { font-size: 25px; }
     }
     </style>
@@ -914,7 +914,8 @@
 
                 <div class="pr-group reveal">
                     <div class="pr-head"><h3 class="pr-title">個人レッスン</h3><span class="pr-lead">1回50分、完全マンツーマン　まずは1回だけ、も歓迎です</span></div>
-                    <div class="pr-grid pr-grid-5">
+                    <div class="pr-grid pr-grid-6">
+                        <div class="pr-card pr-one"><span class="pr-name">会員さま</span><span class="pr-price">5,000<span class="pr-yen">円</span></span><span class="pr-unit">50分 × 1回</span><span class="pr-note">月謝制の会員さま</span></div>
                         <div class="pr-card pr-one"><span class="pr-name">単発受講</span><span class="pr-price">8,000<span class="pr-yen">円</span></span><span class="pr-unit">50分 × 1回</span><span class="pr-note">1回だけでも</span></div>
                         <div class="pr-card pr-one"><span class="pr-name">月2回コース</span><span class="pr-price">14,000<span class="pr-yen">円</span></span><span class="pr-unit">50分 × 月2回</span><span class="pr-note">1回あたり 7,000円</span></div>
                         <div class="pr-card pr-one is-pick"><span class="pr-badge">おすすめ</span><span class="pr-name">月4回コース</span><span class="pr-price">24,000<span class="pr-yen">円</span></span><span class="pr-unit">50分 × 月4回</span><span class="pr-note">1回あたり 6,000円</span></div>
@@ -1053,7 +1054,7 @@
                     </div>
                     <div class="faq2-item reveal d2">
                         <div class="faq2-q"><span class="faq2-q-mark">Q</span><span class="faq2-q-text">料金はいくらですか？</span></div>
-                        <p class="faq2-a">スマホ教室・パソコンAI教室は月2回5,000円〜のコース制です。個人レッスン（マンツーマン50分）は単発8,000円から、月謝制・チケット制もございます。</p>
+                        <p class="faq2-a">スマホ教室・パソコンAI教室は月2回5,000円〜のコース制です。個人レッスン（マンツーマン50分）は単発8,000円から（月謝制の教室の会員さまは1回5,000円）、月謝制・チケット制もございます。</p>
                     </div>
                     <div class="faq2-item reveal d3">
                         <div class="faq2-q"><span class="faq2-q-mark">Q</span><span class="faq2-q-text">出張・訪問での指導は可能ですか？</span></div>
