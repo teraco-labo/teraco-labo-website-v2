@@ -18,7 +18,10 @@ const ADMIN_TIMES   = TT.adminTimes;
 const CATEGORIES    = TT.categories;
 const COURSES       = TT.courses;
 const FURIKAE = true;    // 同じコースの別クラス（A↔B・分数は同じ）の日もえらべる（2026-09-25 藤崎さん指示）。false にすると自分のクラスの日だけ
-const OLD_COURSE_KEYS = { intro: 'sp-intro', applied: 'sp-adv', basic: 'pc-intro', advance: 'pc-adv' };
+const OLD_COURSE_KEYS = { intro: 'sp-intro', applied: 'sp-adv', basic: 'pc-intro', advance: 'pc-intro' };
+// いま時間割にない講座（closed）を選んでいた人の行き先（2026-11〜 パソコン応用→パソコン入門、A/B はそのまま）
+const CLOSED_TO = { 'pc-adv': 'pc-intro' };
+const liveCourse = (k) => (COURSES[k] && COURSES[k].closed && CLOSED_TO[k]) ? CLOSED_TO[k] : (OLD_COURSE_KEYS[k] || k);
 
 // 講座カレンダー。正本はサーバー（管理者画面「講座カレンダー」で編集）。下はサーバーから受け取る前の予備の値
 let SCHEDULE = {
@@ -88,7 +91,7 @@ const dowTimeText = (c) => `${DAYS[c.dow]}曜 ${c.time}`;
 // クラス名には必ず分数を入れる（例：スマホ入門 A（45分）／個人レッスン（50分））
 function courseName(course, klass) {
   const c = COURSES[course]; if (!c) return '';
-  const mm = c.minLabel || c.min;   // 表示だけの分数（パソコン応用は暫定で「45・90」）
+  const mm = c.minLabel || c.min;   // 表示だけの分数（minLabel があればそれ。2026-11〜はどの講座にも付けていない）
   return c.classes && klass ? `${c.label} ${klass}（${mm}分）` : `${c.label}（${mm}分）`;
 }
 function classText(p) {
@@ -111,7 +114,7 @@ function inferClass(e) {
   const pc = /パソコン|PC|ベーシック|アドバンス/.test(t);
   let course = null;
   if (/個人/.test(t)) course = 'private';
-  else if (/応用|アドバンス/.test(t)) course = pc ? 'pc-adv' : 'sp-adv';
+  else if (/応用|アドバンス/.test(t)) course = pc ? liveCourse('pc-adv') : 'sp-adv';
   else if (/入門|ベーシック/.test(t)) course = pc ? 'pc-intro' : 'sp-intro';
   if (!course) return null;
   let klass = null;
@@ -384,7 +387,7 @@ function viewNameConfirm() {
 function viewCourse() {
   const back = S.proxy ? (S.proxy.course ? 'home' : 'admin-home') : (S.edit === 'class' ? 'home' : 'ob-back-name');
   return `<h1>どの講座ですか？</h1>
-  ${Object.keys(COURSES).map(k => `<button class="choice" data-act="course" data-v="${k}" style="border-left:16px solid ${COURSES[k].color};"><b>${esc(courseName(k))}</b>${k === 'private' ? '<span>先生と1対1</span>' : ''}</button>`).join('')}
+  ${Object.keys(COURSES).filter(k => !COURSES[k].closed).map(k => `<button class="choice" data-act="course" data-v="${k}" style="border-left:16px solid ${COURSES[k].color};"><b>${esc(courseName(k))}</b>${k === 'private' ? '<span>先生と1対1</span>' : ''}</button>`).join('')}
   <p class="muted center" style="margin:6px 0 14px;">わからないときは、先生におたずねください。</p>
   <button class="btn quiet" data-act="${back}">もどる</button>`;
 }
@@ -895,7 +898,7 @@ async function loadAdminStudents() {
 async function pickPerson(raw) {
   const name = normName(raw); if (!name) return;
   const saved = store.get('tr_admin_people', {})[name] || {};
-  S.proxy = { name, category: saved.category || null, course: OLD_COURSE_KEYS[saved.course] || saved.course || null, klass: saved.klass || null, usual: saved.usual || null };
+  S.proxy = { name, category: saved.category || null, course: saved.course ? liveCourse(saved.course) : null, klass: saved.klass || null, usual: saved.usual || null };
   const recent = [name].concat(store.get('tr_admin_recent', []).filter(n => n !== name)).slice(0, 10); store.set('tr_admin_recent', recent);
   resetPicks(); S.loaded = false; S.existing = []; S.admin.history = null; S.admin.query = '';
   busy(true, `${name}さんの予約を開いています…`); await loadData({ quiet: true }); busy(false);
@@ -1032,7 +1035,7 @@ function act(a, el) {
 // ---------- 起動 ----------
 (function start() {
   lineInit();
-  if (S.profile && OLD_COURSE_KEYS[S.profile.course]) { S.profile.course = OLD_COURSE_KEYS[S.profile.course]; S.profile.usual = null; store.set('tr_profile', S.profile); }
+  if (S.profile && S.profile.course && liveCourse(S.profile.course) !== S.profile.course) { S.profile.course = liveCourse(S.profile.course); S.profile.usual = null; store.set('tr_profile', S.profile); }
   if (isAdmin()) { act('admin-home', document.body); return; }
   const c = S.profile && COURSES[S.profile.course];
   if (S.profile && S.profile.name && c && (!c.classes || S.profile.klass)) { S.view = 'home'; loadData(); }

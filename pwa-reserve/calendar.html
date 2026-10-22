@@ -53,7 +53,7 @@
   <span class="msg" id="msg">読み込み中…</span>
 </div>
 <div class="sheet" id="sheet"><div class="err">講座カレンダーを読み込んでいます…</div></div>
-<script src="timetable.js?v=2"></script>
+<script src="timetable.js?v=3"></script>
 <script src="calendar-img/months.js?v=1"></script>
 <script>
 'use strict';
@@ -63,7 +63,7 @@ const ROWS = ['10:00', '11:00', '14:00', '15:00', '16:00'];                 // �
 const TT = window.TERACO_TIMETABLE;
 const SOLO = TT.courses['private'];
 const TIMETABLE = {};
-Object.values(TT.courses).forEach(c => { if (!c.classes) return;
+Object.values(TT.courses).forEach(c => { if (!c.classes || c.closed) return;
   Object.keys(c.classes).forEach(k => { const cl = c.classes[k];
     (TIMETABLE[cl.dow] = TIMETABLE[cl.dow] || []).push({ time: cl.time, span: c.min > 60 ? 2 : 1, label: `${c.label} ${k}（${c.minLabel || c.min}分）`, color: c.color }); }); });
 const pad = n => String(n).padStart(2, '0');
@@ -77,7 +77,7 @@ const IMG_MONTHS = window.TERACO_CAL_IMG_MONTHS || [];
 function showImage() {
   const [y, m] = month.split('-').map(Number), sheet = document.getElementById('sheet');
   sheet.classList.add('pic');
-  sheet.innerHTML = `<img src="calendar-img/calendar-${month}.jpg?v=4" alt="${y}年${m}月 スマホ教室TERACOカレンダー">`;
+  sheet.innerHTML = `<img src="calendar-img/calendar-${month}.jpg?v=5" alt="${y}年${m}月 スマホ教室TERACOカレンダー">`;
   document.title = `${y}年${m}月 スマホ教室TERACOカレンダー`;
   document.getElementById('msg').textContent = `${m}月の講座カレンダー`;
   history.replaceState(null, '', `?m=${month}`);
@@ -95,7 +95,7 @@ function dayColumn(date, inMonth) {
   if (!evs.length) return `<div class="col">${soloBlock(5, 1)}</div>`;
   let html = ''; let last = 0;
   evs.forEach((e, i) => { const r = ROWS.indexOf(e.time) + 1; last = Math.max(last, r);
-    html += `<div class="blk" style="grid-row:${r};background:${/パソコン|PC/.test(e.label) ? TT.courses['pc-adv'].color : TT.courses['sp-adv'].color};">${esc(e.label)}（${e.min}分）</div>`; });
+    html += `<div class="blk" style="grid-row:${r};background:${/パソコン|PC/.test(e.label) ? TT.courses['pc-intro'].color : TT.courses['sp-adv'].color};">${esc(e.label)}（${e.min}分）</div>`; });
   if (evs.some(e => /体験会/.test(e.label)) && last < 5) { last++; html += `<div class="blk note" style="grid-row:${last};">↑↑↑<br>体験会は初回無料です<br>※2回目以降は有料となります</div>`; }
   if (last < 5) html += soloBlock(5 - last, last + 1);
   return `<div class="col">${html}</div>`;
