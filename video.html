@@ -32,6 +32,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Shippori+Mincho:wght@600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="theme-warm.css">
+    <style>
+    /* 押すと詳しく出る小窓（2026-10-22 藤崎さん「押すと、どういうことなのか細かく教えてくれる構造」。lesson.html と同じ） */
+    dialog.tc-sheet { margin: auto; border: none; border-radius: 18px; padding: 0; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px);
+        box-shadow: 0 18px 48px rgba(0,0,0,.22); color: var(--body-text, #2B2823); background: #FFFDF8; }
+    dialog.tc-sheet::backdrop { background: rgba(30,28,24,.45); }
+    .tc-sheet-in { padding: 26px 24px 22px; overflow-y: auto; max-height: calc(100vh - 48px); }
+    .tc-sheet h3 { font-size: 19px; line-height: 1.55; margin: 0 2em 10px 0; color: var(--forest-dark, #2C5139); }
+    .tc-sheet p, .tc-sheet li { font-size: 15px; line-height: 1.85; }
+    .tc-sheet p { margin: 0 0 .7em; }
+    .tc-sheet ul { padding-left: 1.3em; margin: .5em 0 .9em; }
+    .tc-sheet li { margin: .2em 0; }
+    .tc-sheet .tc-note { font-size: 13.5px; color: #6A6458; }
+    .tc-sheet a:not(.btn-forest):not(.btn-line-solid) { color: var(--forest, #3F6B4F); text-decoration: underline; }
+    .tc-sheet .tc-close { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; border: none;
+        background: rgba(0,0,0,.06); font-size: 22px; line-height: 40px; cursor: pointer; color: inherit; }
+    .tc-sheet .tc-go { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .tc-sheet .tc-go a { flex: 1 1 200px; min-height: 48px; padding: 12px 18px; font-size: 15px; }
+
+    .tc-card-btn { font: inherit; text-align: center; cursor: pointer; width: 100%; border: 1.5px solid var(--forest, #3F6B4F); }
+    .tc-card-btn:hover, .tc-card-btn:focus-visible { transform: translateY(-2px); outline: none; box-shadow: 0 8px 22px rgba(63,107,79,.18); }
+    .tc-more { display: inline-block; margin-top: 8px; font-size: 14px; font-weight: 700; color: var(--forest, #3F6B4F); }
+    /* ボタンにしたカードも、元のカードと同じ並び（上から順・リストは左揃え）にする */
+    .tc-card-btn { display: flex; flex-direction: column; justify-content: flex-start; }
+    .feature-card2.tc-card-btn { text-align: left; }
+    .tc-card-btn .tc-more { margin-top: auto; padding-top: 8px; }
+    </style>
 </head>
 <body>
     <a href="#main-content" class="skip-link">メインコンテンツへスキップ</a>
@@ -85,22 +111,26 @@
         <section class="tl-section">
             <div class="container">
                 <div class="text-card-grid">
-                    <div class="text-card reveal">
+                    <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-video-1" aria-haspopup="dialog">
                         <h4>企業PR動画</h4>
                         <p>事業内容や企業理念を分かりやすく伝える動画制作</p>
-                    </div>
-                    <div class="text-card reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-video-2" aria-haspopup="dialog">
                         <h4>地域PR動画</h4>
                         <p>観光地や地域の魅力を効果的にアピールする映像</p>
-                    </div>
-                    <div class="text-card reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-video-3" aria-haspopup="dialog">
                         <h4>ドローン撮影</h4>
                         <p>空撮による迫力ある映像で印象的な作品を制作</p>
-                    </div>
-                    <div class="text-card reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-video-4" aria-haspopup="dialog">
                         <h4>ポートレート</h4>
                         <p>モデルや被写体を最高の映像美と演出で表現</p>
-                    </div>
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -252,5 +282,73 @@
     }());
     </script>
 <script src="https://teraco-labo.github.io/line-outou/applink.js" defer></script>
+
+    <!-- 押すと詳しく出る小窓（2026-10-22）。事実はこのページと index.html に書いてあることだけ -->
+    <dialog id="sheet-video-1" class="tc-sheet" aria-labelledby="sheet-video-1-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-video-1-t">会社の「していること」「大切にしていること」を映像で伝える、企業PR動画</h3>
+        <p>文字や写真だけでは伝わりにくい仕事の様子や、会社として大切にしている考え（企業理念）を、分かりやすい映像にまとめます。ホームページや SNS、説明会など、見てほしい相手と使う場所に合わせて中身を組み立てます。</p>
+        <p>進め方の一例です。</p>
+        <ul>
+            <li>ご相談：伝えたいこと・見てほしい相手・使う場所をうかがいます</li>
+            <li>中身を決める：どの場面を、どんな順番で見せるかを一緒に考えます</li>
+            <li>撮影・編集：撮影から編集まで、まとめてお引き受けします</li>
+        </ul>
+        <p>ご相談のときにあると話が早いもの：会社の紹介資料やパンフレット、「この人・この場所は映してほしい」という希望、使いたい時期の目安。まだ決まっていないことが多くても、ご相談いただけます。</p>
+        <p class="tc-note">※ 費用は、内容に合わせてお見積もりします。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=video">メールで問い合わせる</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-video-2" class="tc-sheet" aria-labelledby="sheet-video-2-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-video-2-t">まちの魅力を、外の人に届ける地域PR動画</h3>
+        <p>景色、行事、食べもの、そこで暮らす人。地域ならではの良さを、見た人が「行ってみたい」と感じられる映像にまとめます。行政や地域の団体のご担当の方も、お気軽にご相談ください。代表の藤崎は、地域おこし協力隊の任期中に映像制作の事業を立ち上げました。</p>
+        <p>ご相談の前に考えておくと進めやすいこと：</p>
+        <ul>
+            <li>だれに見てほしいか（まちの外の人・地元の人など）</li>
+            <li>どこで流すか（ホームページ・SNS・イベントでの上映など）</li>
+            <li>撮りたい場所や行事と、その時期</li>
+        </ul>
+        <p>季節の行事など、撮れる日が限られるものもあります。撮りたい時期が決まっているときは、早めにお知らせください。空からの撮影（ドローン撮影）と組み合わせることもできます。</p>
+        <p class="tc-note">※ 費用は、内容に合わせてお見積もりします。これまでの作品は、このページの「制作実績」でご覧いただけます。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=video">メールで問い合わせる</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-video-3" class="tc-sheet" aria-labelledby="sheet-video-3-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-video-3-t">空から撮る「ドローン撮影（空撮）」</h3>
+        <p>ドローン（カメラを積んだ、小さな無人の飛行機）を飛ばして、人の目の高さでは撮れない高さや角度から撮影します。広い景色や、建物・敷地の全体、まちの広がりを、ひと目で伝えられるのが空撮の良さです。</p>
+        <p>たとえば、こんな使い方があります。</p>
+        <ul>
+            <li>会社や施設の紹介動画で、建物や敷地の全体を見せる</li>
+            <li>地域PR動画で、景色やまち並みを空から見せる</li>
+            <li>地上での撮影と組み合わせて、1本の動画にまとめる</li>
+        </ul>
+        <p>撮る場所や日時によっては、飛ばす前に手続きや、土地の持ち主・管理者の方への確認が必要になることがあります。天候によっては、日を改めることもあります。撮りたい場所と時期が決まったら、早めにご相談ください。</p>
+        <p class="tc-note">※ どんな形で空撮を使うかも含めて、内容に合わせてご提案します。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=video">メールで問い合わせる</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-video-4" class="tc-sheet" aria-labelledby="sheet-video-4-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-video-4-t">人を主役に撮る「ポートレート」</h3>
+        <p>ポートレートは、人物を主役にした撮影のことです。モデルさんや撮りたい方を主役に、光の当て方や構図（画面の中での配置）、動きの演出まで考えて、映像として表現します。</p>
+        <p>ご相談のときに教えていただきたいこと：</p>
+        <ul>
+            <li>どなたを撮るか（人数も）</li>
+            <li>何に使うか（作品として残す・紹介に使う・SNS に載せるなど）</li>
+            <li>撮りたい雰囲気や場所の希望（参考になる映像があれば、それも）</li>
+        </ul>
+        <p>「どんな雰囲気がいいか、まだはっきりしない」という段階でもかまいません。お話をうかがいながら、内容に合わせてご提案します。</p>
+        <p class="tc-note">※ 費用は、内容に合わせてお見積もりします。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=video">メールで問い合わせる</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+
+<script>
+/* 押すと詳しく出る小窓（2026-10-22）。data-sheet="<dialog の id>" のボタンで開き、×・外側・Esc で閉じる */
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-sheet]');
+  if (b) { var d = document.getElementById(b.getAttribute('data-sheet')); if (d && d.showModal) { e.preventDefault(); d.showModal(); } return; }
+  if (e.target.matches('dialog.tc-sheet')) e.target.close();
+  var c = e.target.closest('.tc-close'); if (c) c.closest('dialog').close();
+});
+</script>
 </body>
 </html>

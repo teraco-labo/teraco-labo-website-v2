@@ -52,6 +52,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Shippori+Mincho:wght@600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="theme-warm.css">
+    <style>
+    /* 押すと詳しく出る小窓（2026-10-22 藤崎さん「押すと、どういうことなのか細かく教えてくれる構造」。lesson.html と同じ） */
+    dialog.tc-sheet { margin: auto; border: none; border-radius: 18px; padding: 0; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px);
+        box-shadow: 0 18px 48px rgba(0,0,0,.22); color: var(--body-text, #2B2823); background: #FFFDF8; }
+    dialog.tc-sheet::backdrop { background: rgba(30,28,24,.45); }
+    .tc-sheet-in { padding: 26px 24px 22px; overflow-y: auto; max-height: calc(100vh - 48px); }
+    .tc-sheet h3 { font-size: 19px; line-height: 1.55; margin: 0 2em 10px 0; color: var(--forest-dark, #2C5139); }
+    .tc-sheet p, .tc-sheet li { font-size: 15px; line-height: 1.85; }
+    .tc-sheet p { margin: 0 0 .7em; }
+    .tc-sheet ul { padding-left: 1.3em; margin: .5em 0 .9em; }
+    .tc-sheet li { margin: .2em 0; }
+    .tc-sheet .tc-note { font-size: 13.5px; color: #6A6458; }
+    .tc-sheet a:not(.btn-forest):not(.btn-line-solid) { color: var(--forest, #3F6B4F); text-decoration: underline; }
+    .tc-sheet .tc-close { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; border: none;
+        background: rgba(0,0,0,.06); font-size: 22px; line-height: 40px; cursor: pointer; color: inherit; }
+    .tc-sheet .tc-go { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .tc-sheet .tc-go a { flex: 1 1 200px; min-height: 48px; padding: 12px 18px; font-size: 15px; }
+
+    .tc-card-btn { font: inherit; text-align: center; cursor: pointer; width: 100%; border: 1.5px solid var(--forest, #3F6B4F); }
+    .tc-card-btn:hover, .tc-card-btn:focus-visible { transform: translateY(-2px); outline: none; box-shadow: 0 8px 22px rgba(63,107,79,.18); }
+    .tc-more { display: inline-block; margin-top: 8px; font-size: 14px; font-weight: 700; color: var(--forest, #3F6B4F); }
+    /* ボタンにしたカードも、元のカードと同じ並び（上から順・リストは左揃え）にする */
+    .tc-card-btn { display: flex; flex-direction: column; justify-content: flex-start; }
+    .feature-card2.tc-card-btn { text-align: left; }
+    .tc-card-btn .tc-more { margin-top: auto; padding-top: 8px; }
+    </style>
 </head>
 <body>
     <a href="#main-content" class="skip-link">メインコンテンツへスキップ</a>
@@ -108,22 +134,26 @@
                     <h2 class="tl-title">スペースの特徴</h2>
                 </div>
                 <div class="text-card-grid">
-                    <div class="text-card reveal">
+                    <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-rental-1" aria-haspopup="dialog">
                         <h4>定員8名</h4>
                         <p>少人数での密度の濃い学習や会議に最適なサイズです。</p>
-                    </div>
-                    <div class="text-card reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-rental-2" aria-haspopup="dialog">
                         <h4>駐車場無料</h4>
                         <p>お車でお越しの際も安心。無料駐車場をご利用いただけます。</p>
-                    </div>
-                    <div class="text-card reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-rental-3" aria-haspopup="dialog">
                         <h4>大型モニター完備</h4>
                         <p>プレゼンテーションや映像視聴に便利な大型モニターを設置。</p>
-                    </div>
-                    <div class="text-card reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-rental-4" aria-haspopup="dialog">
                         <h4>落ち着いた環境</h4>
                         <p>集中して学習や作業ができる静かで快適な空間です。</p>
-                    </div>
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -134,7 +164,7 @@
                     <h2 class="tl-title">スペース詳細</h2>
                 </div>
                 <div class="feature-grid">
-                    <div class="feature-card2 reveal">
+                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-rental-5" aria-haspopup="dialog">
                         <h4>設備・備品</h4>
                         <ul>
                             <li>大型モニター（HDMI・AirPlay2接続可能）</li>
@@ -143,8 +173,9 @@
                             <li>エアコン</li>
                             <li>延長コード・電源タップ</li>
                         </ul>
-                    </div>
-                    <div class="feature-card2 reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-rental-6" aria-haspopup="dialog">
                         <h4>利用用途例</h4>
                         <ul>
                             <li>少人数セミナー・勉強会</li>
@@ -154,8 +185,9 @@
                             <li>個人指導・コーチング</li>
                             <li>撮影・配信</li>
                         </ul>
-                    </div>
-                    <div class="feature-card2 reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-rental-7" aria-haspopup="dialog">
                         <h4>アクセス</h4>
                         <ul>
                             <li>宮崎県西都市大字三宅9437-9</li>
@@ -164,8 +196,9 @@
                             <li>公共交通機関でのアクセス可</li>
                             <li>静かな住宅地に立地</li>
                         </ul>
-                    </div>
-                    <div class="feature-card2 reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-rental-8" aria-haspopup="dialog">
                         <h4>利用時間</h4>
                         <ul>
                             <li>平日：10:00〜18:00</li>
@@ -174,7 +207,8 @@
                             <li>事前予約制</li>
                             <li>当日予約も相談可</li>
                         </ul>
-                    </div>
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -320,5 +354,127 @@
         }
     }());
     </script>
+
+    <!-- 押すと詳しく出る小窓（2026-10-22）。事実はこのページと index.html に書いてあることだけ -->
+    <dialog id="sheet-rental-1" class="tc-sheet" aria-labelledby="sheet-rental-1-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-rental-1-t">8名までの、少人数向けのスペースです</h3>
+        <p>テーブルと椅子は8名分あります。講師1人と受講者数名の教室、少人数の勉強会や会議など、少人数で集中して学んだり話し合ったりするのに向いた広さです。</p>
+        <ul>
+            <li>定員：8名</li>
+            <li>料金：1時間 3,000円〜（1人600円）</li>
+            <li>ご利用は5名様以上、料金は3,000円からお受けしています</li>
+        </ul>
+        <p>ご予約のときは、利用したい日時と人数をお知らせください。空き状況を確認して、ご連絡します。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=rental">予約・問い合わせる</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-rental-2" class="tc-sheet" aria-labelledby="sheet-rental-2-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-rental-2-t">車で来られる方も安心の、無料駐車場</h3>
+        <p>無料の駐車場をご利用いただけます。受講者の方に案内を出すときも、「駐車場は無料」とそのままお伝えいただけます。</p>
+        <ul>
+            <li>住所：宮崎県西都市大字三宅9437-9</li>
+            <li>西都IC（西都インターチェンジ）から車で約10分</li>
+            <li>公共交通機関でもお越しいただけます</li>
+        </ul>
+        <p>停められる台数など、気になることはご予約のときにお問い合わせください。場所は <a href="https://maps.google.com/?q=宮崎県西都市大字三宅9437-9" target="_blank" rel="noopener">Google マップで見る</a> からご確認いただけます。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=rental">予約・問い合わせる</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-rental-3" class="tc-sheet" aria-labelledby="sheet-rental-3-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-rental-3-t">パソコンやスマホの画面を、大きく映せます</h3>
+        <p>スライドを使った説明や、動画をみんなで見るときに便利な大型モニターがあります。つなぎ方は2通りです。</p>
+        <ul>
+            <li>HDMI（エイチディーエムアイ）：パソコンとモニターを線でつなぐ方法です</li>
+            <li>AirPlay 2（エアプレイ・ツー）：iPhone・iPad・Mac の画面を、線を使わずに映す仕組みです</li>
+        </ul>
+        <p>お使いのパソコンによっては差し込み口の形が違い、変換アダプターが必要になることがあります。手持ちの機器でつながるか心配なときは、ご予約のときにご相談ください。Wi-Fi（無線のインターネット）もご利用いただけます。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=rental">予約・問い合わせる</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-rental-4" class="tc-sheet" aria-labelledby="sheet-rental-4-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-rental-4-t">静かな住宅地で、集中して過ごせます</h3>
+        <p>スペースは静かな住宅地の中にあり、学習や作業、話し合いに集中しやすい環境です。エアコンも備えています。</p>
+        <p>気持ちよくご利用いただくために、次のことをお願いしています。</p>
+        <ul>
+            <li>敷地内での飲食・喫煙はご遠慮ください</li>
+            <li>ゴミは各自でお持ち帰りください</li>
+            <li>トイレは、徒歩圏内のコンビニエンスストアをご利用ください（オーナー不在時は、施設内のトイレはご利用いただけません）</li>
+            <li>防犯のため、セキュリティカメラで録画をしています</li>
+        </ul>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=rental">予約・問い合わせる</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-rental-5" class="tc-sheet" aria-labelledby="sheet-rental-5-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-rental-5-t">スペースにある設備・備品</h3>
+        <p>次の設備・備品を、ご利用の時間内にお使いいただけます。</p>
+        <ul>
+            <li>大型モニター（HDMI〈線でつなぐ〉・AirPlay 2〈iPhone や Mac から線なしで映す〉で接続できます）</li>
+            <li>テーブル・椅子（8名分）</li>
+            <li>Wi-Fi（無線のインターネット）</li>
+            <li>エアコン</li>
+            <li>延長コード・電源タップ</li>
+        </ul>
+        <p>ここにない物が必要なときは、ご予約のときにお問い合わせください。</p>
+        <p class="tc-note">※ 万が一、家屋や機材に著しい破損があった場合は、修理・交換にかかる費用をご請求させていただくことがございます。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=rental">予約・問い合わせる</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-rental-6" class="tc-sheet" aria-labelledby="sheet-rental-6-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-rental-6-t">こんな使い方ができます</h3>
+        <p>講師や先生が教室を開くなど、営利目的のご利用もできます。1時間単位で、必要な時間だけ借りられます。</p>
+        <ul>
+            <li>少人数セミナー・勉強会：大型モニターにスライドを映して説明できます</li>
+            <li>ワークショップ・講座：テーブルを囲んで、手を動かす講座に</li>
+            <li>会議・打ち合わせ：Wi-Fi があり、画面を映しながら話し合えます</li>
+            <li>読書会・サークル活動</li>
+            <li>個人指導・コーチング</li>
+            <li>撮影・配信</li>
+        </ul>
+        <p>「こういう使い方はできる？」と迷ったら、内容と日時をお知らせください。空き状況とあわせてご連絡します。</p>
+        <p class="tc-note">※ 料金は1時間 3,000円〜（1人600円）。ご利用は5名様以上、3,000円からお受けしています。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=rental">予約・問い合わせる</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-rental-7" class="tc-sheet" aria-labelledby="sheet-rental-7-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-rental-7-t">場所と行き方</h3>
+        <ul>
+            <li>住所：宮崎県西都市大字三宅9437-9</li>
+            <li>西都IC（西都インターチェンジ）から車で約10分</li>
+            <li>無料駐車場があります</li>
+            <li>公共交通機関でもお越しいただけます</li>
+            <li>静かな住宅地の中にあります</li>
+        </ul>
+        <p>初めて来られる方への案内には、地図のリンクを添えると迷いにくくなります。<a href="https://maps.google.com/?q=宮崎県西都市大字三宅9437-9" target="_blank" rel="noopener">Google マップで見る</a></p>
+        <p>くわしい行き方で分からないことは、ご予約のときにお問い合わせください。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=rental">予約・問い合わせる</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-rental-8" class="tc-sheet" aria-labelledby="sheet-rental-8-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-rental-8-t">利用できる時間と、予約のしかた</h3>
+        <ul>
+            <li>平日・土日祝とも 10:00〜18:00</li>
+            <li>1時間単位でご利用いただけます</li>
+            <li>事前予約制です。ご予約は前日の17:00までにお願いします</li>
+            <li>当日のご予約も、ご相談ください</li>
+        </ul>
+        <p>予約の流れ</p>
+        <ul>
+            <li>利用したい日時・人数・使い方を、メール・電話・LINE のどれかでお知らせください</li>
+            <li>空き状況を確認して、ご連絡します</li>
+        </ul>
+        <p class="tc-note">※ 料金は1時間 3,000円〜（1人600円）です。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=rental">予約・問い合わせる</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+
+<script>
+/* 押すと詳しく出る小窓（2026-10-22）。data-sheet="<dialog の id>" のボタンで開き、×・外側・Esc で閉じる */
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-sheet]');
+  if (b) { var d = document.getElementById(b.getAttribute('data-sheet')); if (d && d.showModal) { e.preventDefault(); d.showModal(); } return; }
+  if (e.target.matches('dialog.tc-sheet')) e.target.close();
+  var c = e.target.closest('.tc-close'); if (c) c.closest('dialog').close();
+});
+</script>
 </body>
 </html>

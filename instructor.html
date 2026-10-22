@@ -32,6 +32,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Shippori+Mincho:wght@600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="theme-warm.css">
+    <style>
+    /* 押すと詳しく出る小窓（2026-10-22 藤崎さん「押すと、どういうことなのか細かく教えてくれる構造」。lesson.html と同じ） */
+    dialog.tc-sheet { margin: auto; border: none; border-radius: 18px; padding: 0; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px);
+        box-shadow: 0 18px 48px rgba(0,0,0,.22); color: var(--body-text, #2B2823); background: #FFFDF8; }
+    dialog.tc-sheet::backdrop { background: rgba(30,28,24,.45); }
+    .tc-sheet-in { padding: 26px 24px 22px; overflow-y: auto; max-height: calc(100vh - 48px); }
+    .tc-sheet h3 { font-size: 19px; line-height: 1.55; margin: 0 2em 10px 0; color: var(--forest-dark, #2C5139); }
+    .tc-sheet p, .tc-sheet li { font-size: 15px; line-height: 1.85; }
+    .tc-sheet p { margin: 0 0 .7em; }
+    .tc-sheet ul { padding-left: 1.3em; margin: .5em 0 .9em; }
+    .tc-sheet li { margin: .2em 0; }
+    .tc-sheet .tc-note { font-size: 13.5px; color: #6A6458; }
+    .tc-sheet a:not(.btn-forest):not(.btn-line-solid) { color: var(--forest, #3F6B4F); text-decoration: underline; }
+    .tc-sheet .tc-close { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; border: none;
+        background: rgba(0,0,0,.06); font-size: 22px; line-height: 40px; cursor: pointer; color: inherit; }
+    .tc-sheet .tc-go { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .tc-sheet .tc-go a { flex: 1 1 200px; min-height: 48px; padding: 12px 18px; font-size: 15px; }
+
+    .tc-card-btn { font: inherit; text-align: center; cursor: pointer; width: 100%; border: 1.5px solid var(--forest, #3F6B4F); }
+    .tc-card-btn:hover, .tc-card-btn:focus-visible { transform: translateY(-2px); outline: none; box-shadow: 0 8px 22px rgba(63,107,79,.18); }
+    .tc-more { display: inline-block; margin-top: 8px; font-size: 14px; font-weight: 700; color: var(--forest, #3F6B4F); }
+    /* ボタンにしたカードも、元のカードと同じ並び（上から順・リストは左揃え）にする */
+    .tc-card-btn { display: flex; flex-direction: column; justify-content: flex-start; }
+    .feature-card2.tc-card-btn { text-align: left; }
+    .tc-card-btn .tc-more { margin-top: auto; padding-top: 8px; }
+    </style>
 </head>
 <body>
     <a href="#main-content" class="skip-link">メインコンテンツへスキップ</a>
@@ -85,22 +111,26 @@
         <section class="tl-section">
             <div class="container">
                 <div class="text-card-grid">
-                    <div class="text-card reveal">
+                    <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-inst-1" aria-haspopup="dialog">
                         <h4>企業研修</h4>
                         <p>DX推進、AI活用、デジタルスキル向上など企業のニーズに合わせた研修</p>
-                    </div>
-                    <div class="text-card reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-inst-2" aria-haspopup="dialog">
                         <h4>行政向け講座</h4>
                         <p>自治体職員向けICT研修、住民向けデジタル講座の企画・実施</p>
-                    </div>
-                    <div class="text-card reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-inst-3" aria-haspopup="dialog">
                         <h4>AI活用支援</h4>
                         <p>ChatGPT等のAIツール導入支援、業務効率化コンサルティング</p>
-                    </div>
-                    <div class="text-card reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-inst-4" aria-haspopup="dialog">
                         <h4>ICT推進支援</h4>
                         <p>デジタル化、業務効率化、ICT活用を一貫してサポート</p>
-                    </div>
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -108,7 +138,7 @@
         <section class="tl-section bg-white">
             <div class="container">
                 <div class="feature-grid">
-                    <div class="feature-card2 reveal">
+                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-inst-5" aria-haspopup="dialog">
                         <h4>研修・講座内容</h4>
                         <ul>
                             <li>デジタルリテラシー向上</li>
@@ -118,8 +148,9 @@
                             <li>SNS活用・情報発信</li>
                             <li>セキュリティ対策</li>
                         </ul>
-                    </div>
-                    <div class="feature-card2 reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-inst-6" aria-haspopup="dialog">
                         <h4>対象組織</h4>
                         <ul>
                             <li>地方自治体・行政機関</li>
@@ -129,8 +160,9 @@
                             <li>商工会・経済団体</li>
                             <li>医療・福祉施設</li>
                         </ul>
-                    </div>
-                    <div class="feature-card2 reveal">
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
+                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-inst-7" aria-haspopup="dialog">
                         <h4>実施形式</h4>
                         <ul>
                             <li>対面講座・セミナー</li>
@@ -140,7 +172,8 @@
                             <li>継続サポート</li>
                             <li>カスタマイズ対応</li>
                         </ul>
-                    </div>
+                        <span class="tc-more">くわしく見る ›</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -293,5 +326,109 @@
         }
     }());
     </script>
+
+    <!-- 押すと詳しく出る小窓（2026-10-22）。事実はこのページと index.html に書いてあることだけ -->
+    <dialog id="sheet-inst-1" class="tc-sheet" aria-labelledby="sheet-inst-1-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-inst-1-t">会社の課題に合わせて組み立てる「企業研修」</h3>
+        <p>「DX（ディーエックス：デジタルの力で仕事の進め方を変えること）を進めたい」「AI を使えと言われたけれど、何から始めればいいか分からない」。そんなご相談に合わせて、研修の中身を組み立てます。研修は、受ける方の今の水準に合わせて組み立てます。</p>
+        <p>進め方</p>
+        <ul>
+            <li>ご相談：目的・受ける方・人数・日程・場所をうかがいます</li>
+            <li>ご提案とお見積もり（お見積もりは無料です）</li>
+            <li>研修の実施：会場・オンライン・その両方（ハイブリッド）から選べます</li>
+        </ul>
+        <p class="tc-note">※ 料金の目安：講座1コマ（90分）50,000円〜。資料作成・教材費などは別途ご相談。内容・人数・開催地により変わります。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=instructor">見積もり・相談する</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-inst-2" class="tc-sheet" aria-labelledby="sheet-inst-2-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-inst-2-t">職員の方向けの研修も、住民の方向けの講座も</h3>
+        <p>行政向けには、2つの形があります。</p>
+        <ul>
+            <li>自治体職員向け ICT 研修：ICT（アイシーティー：パソコン・スマホ・インターネットなどを使う技術）を、職員の方が仕事で使えるようにする研修です</li>
+            <li>住民向けデジタル講座：住民の方向けのスマホやデジタルの講座を、企画から当日の実施までお引き受けします</li>
+        </ul>
+        <p>代表の藤崎は、高齢者向けのスマホ講座から学生向けの AI 研修まで、年間300講座・延べ1,000人以上を指導しています。行政機関・公民館・地域団体からの講座のご依頼も多数いただいています。</p>
+        <p>時期や内容がまだ固まっていない段階でも、ご相談ください。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=instructor">見積もり・相談する</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-inst-3" class="tc-sheet" aria-labelledby="sheet-inst-3-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-inst-3-t">AI を、仕事で使えるところまで。AI活用支援</h3>
+        <p>ChatGPT（チャットジーピーティー：文章で質問やお願いをすると、文章で答えてくれる AI）などの AI ツールを、職場で使い始めるためのお手伝いです。</p>
+        <ul>
+            <li>導入支援：AI ツールを職場で使い始めるところを、使い方とあわせて支援します</li>
+            <li>業務効率化コンサルティング：いまの仕事の中身をうかがい、AI を使うと手間が減りそうなところを一緒に考えます</li>
+        </ul>
+        <p>「会社で AI を使えと言われたけれど、何から？」という段階からで大丈夫です。研修の形でも、担当の方との個別のご相談（個別コンサルティング）の形でもお引き受けします。</p>
+        <p class="tc-note">※ 内容に合わせてお見積もりします（お見積もりは無料です）。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=instructor">見積もり・相談する</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-inst-4" class="tc-sheet" aria-labelledby="sheet-inst-4-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-inst-4-t">デジタル化を、一貫してサポートする「ICT推進支援」</h3>
+        <p>ICT推進支援は、紙や手作業の多い仕事をデジタルに置きかえたり（デジタル化）、パソコン・スマホ・インターネットを仕事にうまく使えるようにしたりするお手伝いです。デジタル化、業務効率化、ICT の活用を、一貫してサポートします。</p>
+        <ul>
+            <li>いまの仕事の進め方と、困っていることをうかがいます</li>
+            <li>どこから手をつけるかを、内容に合わせてご提案します</li>
+            <li>使う方向けの研修や、続けてのサポート（継続サポート）も組み合わせられます</li>
+        </ul>
+        <p>「何から手をつければよいか分からない」という段階から、ご相談ください。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=instructor">見積もり・相談する</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-inst-5" class="tc-sheet" aria-labelledby="sheet-inst-5-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-inst-5-t">研修・講座で扱える内容</h3>
+        <ul>
+            <li>デジタルリテラシー向上：パソコン・スマホ・インターネットを、安全に正しく使いこなす力をつけます</li>
+            <li>AI・ChatGPT活用研修：仕事の中で AI を使う練習をします</li>
+            <li>スマートフォン・タブレット操作：基本の操作からお伝えします</li>
+            <li>動画編集・配信技術：撮った動画をまとめたり、インターネットで配信したりする方法です</li>
+            <li>SNS活用・情報発信：SNS（エスエヌエス：Instagram・Facebook・X などの交流サービス）を使った発信の方法です</li>
+            <li>セキュリティ対策：だましのメールやパスワードの扱いなど、被害にあわないための備えです</li>
+        </ul>
+        <p>いくつかを組み合わせることもできます。受ける方の水準や目的に合わせて、中身を組み立てます。ここにない内容も、まずはご相談ください。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=instructor">見積もり・相談する</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-inst-6" class="tc-sheet" aria-labelledby="sheet-inst-6-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-inst-6-t">こんな組織・団体のご担当の方へ</h3>
+        <ul>
+            <li>地方自治体・行政機関</li>
+            <li>中小企業・ベンチャー企業</li>
+            <li>NPO・市民団体</li>
+            <li>教育機関・学校</li>
+            <li>商工会・経済団体</li>
+            <li>医療・福祉施設</li>
+        </ul>
+        <p>受ける方の年齢や、パソコン・スマホへの慣れ具合は、組織によってさまざまです。高齢者向けのスマホ講座から学生向けの AI 研修まで指導してきた経験をもとに、受ける方に合わせて中身を組み立てます。</p>
+        <p>学校・塾向けには、講師の派遣ではなく、先生ご自身が授業を進められる「<a href="kit.html">AI講座 完全実施キット</a>」もあります。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=instructor">見積もり・相談する</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+    <dialog id="sheet-inst-7" class="tc-sheet" aria-labelledby="sheet-inst-7-t"><div class="tc-sheet-in">
+        <button type="button" class="tc-close" aria-label="閉じる">×</button>
+        <h3 id="sheet-inst-7-t">会場でも、オンラインでも。実施の形</h3>
+        <ul>
+            <li>対面講座・セミナー：会場に集まって行います</li>
+            <li>オンライン研修：インターネットのビデオ通話でつないで行います</li>
+            <li>ハイブリッド形式：会場に集まる方と、オンラインで参加する方が、同時に受けられる形です</li>
+            <li>個別コンサルティング：ご担当の方と個別にお話ししながら進めます</li>
+            <li>継続サポート：1回で終わらせず、続けてサポートします</li>
+            <li>カスタマイズ対応：内容・形式をご要望に合わせて調整します</li>
+        </ul>
+        <p class="tc-note">※ 料金の目安：講座1コマ（90分）50,000円〜。内容・人数・開催地により変わるため、お見積もりにて承ります（お見積もりは無料です）。</p>
+        <div class="tc-go"><a class="btn-forest" href="contact.html?service=instructor">見積もり・相談する</a><a class="btn-line-solid" href="https://lin.ee/WACibGu" target="_blank" rel="noopener">LINEで相談</a></div>
+    </div></dialog>
+
+<script>
+/* 押すと詳しく出る小窓（2026-10-22）。data-sheet="<dialog の id>" のボタンで開き、×・外側・Esc で閉じる */
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-sheet]');
+  if (b) { var d = document.getElementById(b.getAttribute('data-sheet')); if (d && d.showModal) { e.preventDefault(); d.showModal(); } return; }
+  if (e.target.matches('dialog.tc-sheet')) e.target.close();
+  var c = e.target.closest('.tc-close'); if (c) c.closest('dialog').close();
+});
+</script>
 </body>
 </html>
