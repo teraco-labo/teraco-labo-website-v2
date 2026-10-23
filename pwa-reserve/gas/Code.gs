@@ -1,4 +1,4 @@
-// TERACO予約システム v51 (LINEお知らせ: LIFFの本人確認・予約/取消のプッシュ・月200通の見張り) ← v50 (新デザイン用に next_data / schedule_get / schedule_set を追加。既存の処理は変更なし。分数はコース名の「(45分)」を優先)
+// TERACO予約システム v52（お休みを「欠席:氏名」で残す batch_absent）← v51 (LINEお知らせ: LIFFの本人確認・予約/取消のプッシュ・月200通の見張り) ← v50 (新デザイン用に next_data / schedule_get / schedule_set を追加。既存の処理は変更なし。分数はコース名の「(45分)」を優先)
 
 var CONFIG = {
   TIMEZONE: 'Asia/Tokyo',
@@ -161,7 +161,9 @@ function getAdminCalendarEvents(passcode, startStr, endStr) {
       title: ev.getTitle(),
       start: ev.getStartTime().toISOString(),
       end: ev.getEndTime().toISOString(),
-      names: names
+      names: names,
+      absent: (ev.getDescription() || '').split('\n').map(function(l) { return l.trim(); })
+        .filter(function(l) { return l.indexOf(ABSENT_PREFIX) === 0; }).map(function(l) { return l.slice(ABSENT_PREFIX.length).trim(); })
     };
   });
   return { ok: true, events: result };
@@ -326,6 +328,7 @@ function doPost(e) {
   if (body.action === 'line_test') return jsonOut(lineTest_(body.passcode));
   if (body.action === 'batch_reserve') return jsonOut(reserve(body.name, body.slots, body.class_details, body.email, body.add_to_calendar, body.passcode));
   if (body.action === 'batch_cancel') return jsonOut(cancel(body.name, body.event_ids, body.email, body.passcode));
+  if (body.action === 'batch_absent') return jsonOut(markAbsent_(body.name, body.event_ids, body.passcode));
   if (body.action === 'attendance_history') return jsonOut(getAttendanceHistory(body.passcode, body.name || '', body.email || '', Number(body.months) || 3));
   return jsonOut({ok: false, message: '不明なアクション'});
 }
@@ -701,6 +704,7 @@ function hasName(desc, userName) {
   var search = normalize(userName), lines = desc.split('\n');
   for (var i = 0; i < lines.length; i++) {
     var line = lines[i].trim();
+    if (line.indexOf(ABSENT_PREFIX) === 0) continue;
     if (line && (normalize(line) === search || normalize(line).indexOf(search) >= 0)) return true;
   }
   return false;
@@ -734,9 +738,12 @@ function removeName(desc, userName) {
   }
   return result.join('\n');
 }
+// 欠席の印（2026-10-23 藤崎さん「予定に入っていて欠席した人は、名前を残して欠席と書いておくといい。まっさらに消えるといたのかいなかったのか分からない」）
+//   説明欄の「欠席:氏名」の行。予約している人には数えない（人数・本人の予約一覧にも出ない）
+var ABSENT_PREFIX = '欠席:';
 function isJunkLine(line) {
   var lower = line.toLowerCase();
-  return lower.indexOf('namekey') >= 0 || line.indexOf('予約者') >= 0 || line === '---' || line.indexOf('email:') === 0;
+  return lower.indexOf('namekey') >= 0 || line.indexOf('予約者') >= 0 || line === '---' || line.indexOf('email:') === 0 || line.indexOf(ABSENT_PREFIX) === 0;
 }
 function normalize(s) {
   return String(s || '').replace(/\s+/g, '').toLowerCase().replace(/﨑/g, '崎').replace(/髙/g, '高').replace(/濵/g, '浜').replace(/邊/g, '辺').replace(/邉/g, '辺').replace(/齋/g, '斎');
@@ -1000,3 +1007,27 @@ function lineNotify_(type, userName, items, label) {
   } catch (e) { return { sent: false, reason: 'error' }; }
 }
 
+
+
+// 管理者用：予約していた人のお休み。名前を消さずに「欠席:氏名」に書き換える（2026-10-23）。お知らせのメールは送らない
+function markAbsent_(userName, eventIds, passcode) {
+  if (passcode !== CONFIG.ADMIN_PASSCODE) return { ok: false, message: 'パスコードが正しくありません' };
+  var cal = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID), done = [], search = normalize(userName);
+  (eventIds || []).forEach(function(id) {
+    var ev = cal.getEventById(id); if (!ev) return;
+    var lines = (ev.getDescription() || '').split('\n'), out = [], hit = false;
+    lines.forEach(function(l) {
+      var t = l.trim();
+      if (t && t.indexOf(ABSENT_PREFIX) !== 0 && !isJunkLine(t) && normalize(t) === search) { hit = true; return; }
+      if (t.indexOf('email:' + userName + ':') === 0) return;   // その人のメールの控えも外す
+      out.push(l);
+    });
+    var already = out.some(function(l) { return normalize(l.trim()) === normalize(ABSENT_PREFIX + userName); });
+    if (!hit && already) { done.push({ event_id: id, already: true }); return; }
+    if (!hit) return;
+    out.push(ABSENT_PREFIX + userName);
+    ev.setDescription(out.join('\n'));
+    done.push({ event_id: id, start: ev.getStartTime().toISOString(), title: ev.getTitle() });
+  });
+  return { ok: true, message: done.length + '件を欠席にしました', done: done };
+}
