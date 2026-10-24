@@ -57,6 +57,27 @@
     .tc-card-btn { display: flex; flex-direction: column; justify-content: flex-start; }
     .feature-card2.tc-card-btn { text-align: left; }
     .tc-card-btn .tc-more { margin-top: auto; padding-top: 8px; }
+    
+    /* 2026-10-24 すっきり版：カードは見出しと一言、くわしくは小窓 */
+    .inst-cards .text-card p { font-size: 13px; }
+    @media (max-width: 768px) {
+        .inst-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
+        .inst-cards .text-card { padding: 16px 12px 12px; }
+        .inst-cards .text-card h4 { font-size: 15px; margin-bottom: 4px; }
+    }
+    .inst-rows { max-width: 760px; margin: 0 auto; border: 1px solid var(--tl-border, #eae4d8); border-radius: 14px; overflow: hidden; background: #fff; }
+    .inst-row { display: flex; align-items: center; gap: 14px; width: 100%; padding: 16px 18px; border: none; border-top: 1px solid var(--tl-border, #eae4d8); background: none; font: inherit; text-align: left; cursor: pointer; color: inherit; }
+    .inst-row:first-child { border-top: none; }
+    .inst-row:hover, .inst-row:focus-visible { background: #f6f3ec; outline: none; }
+    .inst-row-k { flex: none; width: 8.5em; font-weight: 700; color: var(--forest, #3F6B4F); }
+    .inst-row-v { flex: 1; font-size: 14px; color: var(--body-text, #5a554c); line-height: 1.6; }
+    .inst-row-go { flex: none; font-size: 20px; color: var(--forest, #3F6B4F); }
+    @media (max-width: 768px) {
+        .inst-row { flex-wrap: wrap; gap: 2px 10px; padding: 14px 14px; }
+        .inst-row-k { width: auto; }
+        .inst-row-v { flex-basis: calc(100% - 30px); order: 3; font-size: 13.5px; }
+        .inst-row-go { margin-left: auto; order: 2; }
+    }
     </style>
 </head>
 <body>
@@ -110,25 +131,29 @@
 
         <section class="tl-section">
             <div class="container">
-                <div class="text-card-grid">
+                <div class="tl-head reveal">
+                    <h2 class="tl-title">できること</h2>
+                    <p class="tl-desc">押すと、くわしい内容が出ます。</p>
+                </div>
+                <div class="text-card-grid inst-cards">
                     <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-inst-1" aria-haspopup="dialog">
                         <h4>企業研修</h4>
-                        <p>DX推進、AI活用、デジタルスキル向上など企業のニーズに合わせた研修</p>
+                        <p>DX・AI活用・ITスキル</p>
                         <span class="tc-more">くわしく見る ›</span>
                     </button>
                     <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-inst-2" aria-haspopup="dialog">
                         <h4>行政向け講座</h4>
-                        <p>自治体職員向けICT研修、住民向けデジタル講座の企画・実施</p>
+                        <p>職員研修・住民向け講座</p>
                         <span class="tc-more">くわしく見る ›</span>
                     </button>
                     <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-inst-3" aria-haspopup="dialog">
                         <h4>AI活用支援</h4>
-                        <p>ChatGPT等のAIツール導入支援、業務効率化コンサルティング</p>
+                        <p>AIの導入と業務の効率化</p>
                         <span class="tc-more">くわしく見る ›</span>
                     </button>
                     <button type="button" class="text-card reveal tc-card-btn" data-sheet="sheet-inst-4" aria-haspopup="dialog">
                         <h4>ICT推進支援</h4>
-                        <p>デジタル化、業務効率化、ICT活用を一貫してサポート</p>
+                        <p>デジタル化を一貫支援</p>
                         <span class="tc-more">くわしく見る ›</span>
                     </button>
                 </div>
@@ -137,43 +162,13 @@
 
         <section class="tl-section bg-white">
             <div class="container">
-                <div class="feature-grid">
-                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-inst-5" aria-haspopup="dialog">
-                        <h4>研修・講座内容</h4>
-                        <ul>
-                            <li>デジタルリテラシー向上</li>
-                            <li>AI・ChatGPT活用研修</li>
-                            <li>スマートフォン・タブレット操作</li>
-                            <li>動画編集・配信技術</li>
-                            <li>SNS活用・情報発信</li>
-                            <li>セキュリティ対策</li>
-                        </ul>
-                        <span class="tc-more">くわしく見る ›</span>
-                    </button>
-                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-inst-6" aria-haspopup="dialog">
-                        <h4>対象組織</h4>
-                        <ul>
-                            <li>地方自治体・行政機関</li>
-                            <li>中小企業・ベンチャー企業</li>
-                            <li>NPO・市民団体</li>
-                            <li>教育機関・学校</li>
-                            <li>商工会・経済団体</li>
-                            <li>医療・福祉施設</li>
-                        </ul>
-                        <span class="tc-more">くわしく見る ›</span>
-                    </button>
-                    <button type="button" class="feature-card2 reveal tc-card-btn" data-sheet="sheet-inst-7" aria-haspopup="dialog">
-                        <h4>実施形式</h4>
-                        <ul>
-                            <li>対面講座・セミナー</li>
-                            <li>オンライン研修</li>
-                            <li>ハイブリッド形式</li>
-                            <li>個別コンサルティング</li>
-                            <li>継続サポート</li>
-                            <li>カスタマイズ対応</li>
-                        </ul>
-                        <span class="tc-more">くわしく見る ›</span>
-                    </button>
+                <div class="tl-head reveal">
+                    <h2 class="tl-title">内容・対象・実施の形</h2>
+                </div>
+                <div class="inst-rows reveal">
+                    <button type="button" class="inst-row" data-sheet="sheet-inst-5" aria-haspopup="dialog"><span class="inst-row-k">研修・講座内容</span><span class="inst-row-v">AI・ChatGPT、スマホ、SNS、セキュリティ など</span><span class="inst-row-go">›</span></button>
+                    <button type="button" class="inst-row" data-sheet="sheet-inst-6" aria-haspopup="dialog"><span class="inst-row-k">対象</span><span class="inst-row-v">自治体・企業・学校・団体・福祉施設 など</span><span class="inst-row-go">›</span></button>
+                    <button type="button" class="inst-row" data-sheet="sheet-inst-7" aria-haspopup="dialog"><span class="inst-row-k">実施の形</span><span class="inst-row-v">対面・オンライン・個別相談・継続サポート</span><span class="inst-row-go">›</span></button>
                 </div>
             </div>
         </section>
@@ -192,12 +187,7 @@
                         <li>※内容・人数・開催地により変動いたします</li>
                     </ul>
                 </div>
-            </div>
-        </section>
-
-        <section class="tl-section">
-            <div class="container">
-                <div class="notice-box reveal" style="max-width:640px;margin:0 auto;text-align:center;">
+                <div class="notice-box reveal" style="max-width:640px;margin:18px auto 0;text-align:center;">
                     <h4>教材だけの導入もできます</h4>
                     <p style="margin:10px 0 16px;">講師の派遣ではなく、貴校の先生が実施できる「AI講座 完全実施キット」もご用意しています。スライド・台本・ワークシート・つまずき対応まで揃った授業一式です。</p>
                     <a href="kit.html" class="btn-forest" style="display:inline-flex;">教材キットの詳細を見る →</a>
