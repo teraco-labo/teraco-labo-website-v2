@@ -500,7 +500,8 @@
                 <div class="tl-head reveal">
                     <span class="kit-eyebrow">まずは中身をご覧ください</span>
                     <h2 class="tl-title">サンプル単元を無料でお送りします</h2>
-                    <p class="tl-lead">第1回「AIの基本を知る」のスライド・台本・ワークシートを、11月中旬から順次お送りします。貴校で使えるか、じっくりご確認ください。</p>
+                    <p class="tl-lead">第1回「AIの基本を知る」のスライド・講師台本・ワークシートを、いますぐご覧いただけます。いちばん早いのは LINE です。「見本」と送ると、すぐ届きます。メールでのお届けをご希望の方は、下のフォームからどうぞ。</p>
+                    <p style="text-align:center;margin-top:18px"><a class="btn-line-solid" href="https://lin.ee/9c4pI82" target="_blank" rel="noopener">LINEで「見本」を受け取る</a></p>
                 </div>
                 <form class="kit-form-card reveal" id="kit-sample-form" novalidate>
                     <div class="kit-form-row">
@@ -650,7 +651,7 @@
                 var EMAIL_SERVICE_ID = window.EMAILJS_SERVICE_ID || 'TERACO_Gmail';
                 await emailjs.send(EMAIL_SERVICE_ID, 'template_5p9czck', emailData);
                 await emailjs.send(EMAIL_SERVICE_ID, 'template_xmm6v7c', emailData);
-                responseBox.innerHTML = '<div class="success-message">ありがとうございます。確認メールをお送りしました。サンプル単元は11月中旬から順次、メールでお届けします。</div>';
+                responseBox.innerHTML = '<div class="success-message">ありがとうございます。確認メールをお送りしました。サンプル単元のリンクを、追ってメールでお届けします。お急ぎの方は、LINE で「見本」と送ると、すぐご覧いただけます。</div>';
                 if (typeof gtag === 'function') {
                     gtag('event', 'generate_lead', {
                         form_name: 'kit_sample_request',
