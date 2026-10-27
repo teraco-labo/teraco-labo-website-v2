@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>コピペで使える AIプロンプト集｜てらこ先生</title>
+<style>
+  :root {
+    --ai: #EF6C00; --ink: #B34700; --soft: #FFF3E8;
+    --text: #2b2b2b; --muted: #6b6b6b; --line: #eadfd4; --bg: #fffdfb;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+         line-height: 1.75; font-size: 17px; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { background: var(--ai); color: #fff; border-radius: 18px; padding: 26px 22px; }
+  header .by { font-size: 14px; opacity: .92; }
+  header h1 { margin: 6px 0 4px; font-size: 28px; line-height: 1.35; }
+  header .sub { font-size: 16px; }
+  .how { background: #fff; border: 2px solid var(--line); border-radius: 14px; padding: 16px 18px; margin: 20px 0; }
+  .how h2, section h2 { font-size: 20px; color: var(--ink); margin: 0 0 8px; }
+  .how ol { margin: 0; padding-left: 1.3em; }
+  .tip { font-size: 15px; color: var(--muted); }
+  section { margin-top: 34px; }
+  section h2 { border-left: 6px solid var(--ai); padding-left: 10px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin: 14px 0; }
+  .card h3 { margin: 0 0 6px; font-size: 18px; }
+  .when { font-size: 15px; color: var(--muted); margin-bottom: 8px; }
+  .prompt { background: var(--soft); border-radius: 10px; padding: 12px 14px; white-space: pre-wrap;
+            font-size: 16px; line-height: 1.7; }
+  .prompt b { color: var(--ink); }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .point { font-size: 14px; color: var(--muted); flex: 1 1 240px; }
+  button.copy { background: var(--ai); color: #fff; border: 0; border-radius: 999px; padding: 8px 18px;
+                font-size: 15px; font-weight: 700; cursor: pointer; }
+  button.copy.done { background: #1F6B4E; }
+  .fix { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .fix div { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+  .fix b { color: var(--ink); }
+  .care { background: #fff7f2; border: 2px solid #f3c9a6; border-radius: 14px; padding: 16px 18px; }
+  .care ul { margin: 0; padding-left: 1.2em; }
+  .teacher { background: var(--soft); border-radius: 16px; padding: 18px; }
+  .teacher .card { margin: 12px 0; }
+  .next { background: #fff; border: 2px solid var(--ai); border-radius: 14px; padding: 16px 18px; margin-top: 16px; }
+  footer { margin-top: 40px; font-size: 14px; color: var(--muted); text-align: center; }
+  @media print {
+    body { font-size: 12.5px; background: #fff; }
+    .wrap { padding: 0; max-width: none; }
+    header { border-radius: 0; padding: 14px 16px; }
+    button.copy { display: none; }
+    .card { break-inside: avoid; }
+    section { break-inside: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="by">てらこ先生｜スマホとAIの教室</div>
+  <h1>コピペで使える<br>AIプロンプト集</h1>
+  <div class="sub">AIへの頼み方の見本（ChatGPT・Gemini・Claude で使えます）</div>
+</header>
+
+<div class="how">
+  <h2>使い方</h2>
+  <ol>
+    <li>使いたい見本の「コピー」を押す</li>
+    <li>AI の入力欄に貼り付ける</li>
+    <li><b>【 】</b>の中を、自分のことに書きかえて送る</li>
+  </ol>
+  <p class="tip">「プロンプト」は、AI に送る頼みごとの文のことです。頼み方を少し変えるだけで、答えがぐっと使いやすくなります。</p>
+</div>
+
+<section>
+  <h2>まずはこれだけ：頼み方の基本の形</h2>
+  <div class="card">
+    <h3>4つを入れると、ねらった答えが返ってくる</h3>
+    <div class="when">「だれとして」「何のために」「どんな条件で」「どんな形で」を書きます。</div>
+    <div class="prompt">あなたは<b>【家電にくわしい店員さん】</b>です。
+<b>【はじめてロボット掃除機を買う私】</b>のために、
+<b>【予算3万円まで・ペットの毛が多い家】</b>という条件で、
+選び方のポイントを<b>【3つ、箇条書きで】</b>教えてください。</div>
+    <div class="row"><span class="point">【 】を入れかえれば、どんな頼みごとにも使える形です。</span><button class="copy">コピー</button></div>
+  </div>
+</section>
+
+<section>
+  <h2>毎日の暮らし</h2>
+  <div class="card">
+    <h3>冷蔵庫の残りで献立</h3>
+    <div class="prompt">冷蔵庫に<b>【キャベツ半分・卵4個・豚こま肉200g】</b>があります。
+<b>【2人分・20分以内】</b>で作れる晩ごはんを3案ください。
+足りない調味料があれば、それも書いてください。</div>
+    <div class="row"><span class="point">人数と時間を書くと、現実的な案になります。</span><button class="copy">コピー</button></div>
+  </div>
+  <div class="card">
+    <h3>旅行の行き先と1日の予定</h3>
+    <div class="prompt"><b>【11月の土日・1泊2日・大人2人】</b>で、<b>【宮崎市】</b>から車で行ける旅行先を3つ提案してください。
+それぞれ「見どころ」「移動時間のめやす」「雨の日の過ごし方」を表にしてください。</div>
+    <div class="row"><span class="point">「表にして」と頼むと、見比べやすくなります。</span><button class="copy">コピー</button></div>
+  </div>
+  <div class="card">
+    <h3>説明書をかんたんに</h3>
+    <div class="prompt">次の説明書の文を、<b>【機械が苦手な人】</b>にも分かるように、手順を1つずつ番号つきで書き直してください。
+むずかしい言葉は、ふつうの言葉に言いかえてください。
+
+<b>【ここに説明書の文を貼り付け】</b></div>
+    <div class="row"><span class="point">写真から文字を読み取れる AI なら、説明書の写真をそのまま送っても使えます。</span><button class="copy">コピー</button></div>
+  </div>
+  <div class="card">
+    <h3>贈り物えらび</h3>
+    <div class="prompt"><b>【70代の母】</b>への<b>【誕生日】</b>のプレゼントを考えています。
+好きなものは<b>【園芸と甘いもの】</b>、予算は<b>【5,000円くらい】</b>です。
+喜ばれそうなものを5つ、理由といっしょに挙げてください。</div>
+    <div class="row"><span class="point">相手の好みを1つでも書くと、ぐっと的が絞れます。</span><button class="copy">コピー</button></div>
+  </div>
+</section>
+
+<section>
+  <h2>文章・メッセージ</h2>
+  <div class="card">
+    <h3>ていねいなお礼の文</h3>
+    <div class="prompt"><b>【近所の方に野菜をいただいた】</b>お礼を、LINE で送る短い文にしてください。
+<b>【ていねいだけど、かたすぎない】</b>感じで、2パターンください。</div>
+    <div class="row"><span class="point">「2パターン」と頼むと、選べるので楽です。</span><button class="copy">コピー</button></div>
+  </div>
+  <div class="card">
+    <h3>角が立たない断り方</h3>
+    <div class="prompt"><b>【地域の役員】</b>のお誘いを断りたいです。理由は<b>【平日の夜は家族の用事があるため】</b>です。
+相手を気づかいながら、やわらかく断る文を作ってください。</div>
+    <div class="row"><span class="point">断る理由を書くと、うそのない自然な文になります。</span><button class="copy">コピー</button></div>
+  </div>
+  <div class="card">
+    <h3>長い文を短く</h3>
+    <div class="prompt">次の文を、言いたいことは変えずに<b>【半分くらいの長さ】</b>にしてください。
+
+<b>【ここに文章を貼り付け】</b></div>
+    <div class="row"><span class="point">「3行で」「100文字で」のように数で言うのもおすすめ。</span><button class="copy">コピー</button></div>
+  </div>
+</section>
+
+<section>
+  <h2>調べもの・学び</h2>
+  <div class="card">
+    <h3>むずかしい言葉をやさしく</h3>
+    <div class="prompt"><b>【生成AI】</b>とは何か、<b>【中学生】</b>にも分かるように、身近なたとえを1つ使って説明してください。</div>
+    <div class="row"><span class="point">「〇〇にも分かるように」は、いちばん使える一言です。</span><button class="copy">コピー</button></div>
+  </div>
+  <div class="card">
+    <h3>2つを比べる</h3>
+    <div class="prompt"><b>【格安スマホ】</b>と<b>【大手の携帯会社】</b>の違いを、
+「料金」「通信の速さ」「お店での相談」「向いている人」で表にして比べてください。</div>
+    <div class="row"><span class="point">比べる観点を自分で決めると、知りたいことだけが並びます。</span><button class="copy">コピー</button></div>
+  </div>
+  <div class="card">
+    <h3>聞きたいことを整理する</h3>
+    <div class="prompt"><b>【来週、役所で年金の手続きの相談】</b>に行きます。
+窓口で聞き忘れがないように、聞いておくとよいことをリストにしてください。
+持って行ったほうがよい物も教えてください。</div>
+    <div class="row"><span class="point">AI の答えは「準備のメモ」として使い、最後は窓口や専門の人に確かめましょう。</span><button class="copy">コピー</button></div>
+  </div>
+</section>
+
+<section>
+  <h2>仕事・お店</h2>
+  <div class="card">
+    <h3>メモから要点のまとめ</h3>
+    <div class="prompt">次は打ち合わせのメモです。
+「決まったこと」「次にやること（だれが・いつまでに）」「まだ決まっていないこと」に分けて、箇条書きにまとめてください。
+
+<b>【ここにメモを貼り付け】</b></div>
+    <div class="row"><span class="point">分け方を先に指定すると、そのまま共有できる形で返ってきます。</span><button class="copy">コピー</button></div>
+  </div>
+  <div class="card">
+    <h3>チラシ・お知らせの文案</h3>
+    <div class="prompt"><b>【パン屋の新商品・かぼちゃのあんぱん】</b>のお知らせ文を作ってください。
+読む人は<b>【近所の家族連れ】</b>です。見出し1行と、本文3行を、3案ください。</div>
+    <div class="row"><span class="point">「読む人」を書くと、言葉づかいが合ってきます。</span><button class="copy">コピー</button></div>
+  </div>
+  <div class="card">
+    <h3>SNS の投稿文</h3>
+    <div class="prompt"><b>【今日入荷した秋の花の鉢植え】</b>を紹介する Instagram の投稿文を作ってください。
+<b>【親しみやすい感じ】</b>で、絵文字は2つまで。最後にハッシュタグを5つ付けてください。</div>
+    <div class="row"><span class="point">絵文字やハッシュタグの数まで決めると、毎回同じ雰囲気で出せます。</span><button class="copy">コピー</button></div>
+  </div>
+</section>
+
+<section>
+  <h2>思った答えが来ないときの「ひと言」</h2>
+  <div class="fix">
+    <div><b>「もっと短く」</b>「3行で」 … 長すぎるとき</div>
+    <div><b>「〇〇にも分かるように」</b> … むずかしいとき</div>
+    <div><b>「表にして」「箇条書きで」</b> … 読みにくいとき</div>
+    <div><b>「別の案を3つ」</b> … しっくりこないとき</div>
+    <div><b>「足りない情報があれば、先に質問して」</b> … 何を書けばいいか分からないとき</div>
+    <div><b>「その理由も教えて」</b> … 本当かな？と思ったとき</div>
+  </div>
+  <p class="tip">一度で決めなくて大丈夫です。返ってきた答えに、ひと言ずつ足して直していくのがコツです。</p>
+</section>
+
+<section>
+  <h2>気をつけること</h2>
+  <div class="care">
+    <ul>
+      <li><b>名前・住所・電話番号・暗証番号</b>などの大事な情報は入れない</li>
+      <li>AI は<b>まちがったことを、もっともらしく言う</b>ことがあります。お金・健康・法律のことは、必ず公式の情報や専門の人に確かめる</li>
+      <li>日付や最新の情報は古いことがあります。「いつの情報？」と聞くと確かめやすくなります</li>
+    </ul>
+  </div>
+</section>
+
+<section class="teacher">
+  <h2>先生・講師の方へ：授業づくりの見本</h2>
+  <div class="card">
+    <h3>授業の導入のネタ</h3>
+    <div class="prompt"><b>【中学2年・理科・電流】</b>の授業の最初の5分で使える、生徒が「え？」と思う問いかけを3つ考えてください。
+身近な例を使ってください。</div>
+    <div class="row"><span class="point">学年・教科・単元を書くのがコツです。</span><button class="copy">コピー</button></div>
+  </div>
+  <div class="card">
+    <h3>ワークシートのたたき台</h3>
+    <div class="prompt"><b>【小学5年・社会・米づくり】</b>の授業で使うワークシートを作ってください。
+「調べる問い」3つと「自分の考えを書く欄」1つ。答えの例も別に付けてください。</div>
+    <div class="row"><span class="point">AI の案は「たたき台」。最後は先生の目で直して使いましょう。</span><button class="copy">コピー</button></div>
+  </div>
+  <div class="next">
+    <b>AI の授業そのものを任せたい先生へ</b><br>
+    AI に詳しくなくても、短い準備で「AI の授業」ができる教材（スライド・台本・ワークシート）を用意しています。くわしくは LINE でお気軽にどうぞ。
+  </div>
+</section>
+
+<footer>
+  てらこ先生（藤﨑秀一）｜スマホとAIの教室　TERACO.LABO<br>
+  この資料は個人での利用にお使いください。転載・再配布はご遠慮ください。
+</footer>
+
+</div>
+<script>
+  document.querySelectorAll("button.copy").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var t = b.closest(".card").querySelector(".prompt").innerText;
+      var done = function () { b.textContent = "コピーしました"; b.classList.add("done");
+        setTimeout(function () { b.textContent = "コピー"; b.classList.remove("done"); }, 1800); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(t).then(done, function () { fallback(t); done(); });
+      } else { fallback(t); done(); }
+    });
+  });
+  function fallback(t) {
+    var a = document.createElement("textarea"); a.value = t; document.body.appendChild(a);
+    a.select(); try { document.execCommand("copy"); } catch (e) {} document.body.removeChild(a);
+  }
+</script>
+</body>
+</html>
