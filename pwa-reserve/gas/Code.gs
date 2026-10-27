@@ -1,4 +1,4 @@
-// TERACO予約システム v52（お休みを「欠席:氏名」で残す batch_absent）← v51 (LINEお知らせ: LIFFの本人確認・予約/取消のプッシュ・月200通の見張り) ← v50 (新デザイン用に next_data / schedule_get / schedule_set を追加。既存の処理は変更なし。分数はコース名の「(45分)」を優先)
+// TERACO予約システム v61（教室の箱：水・金のグループ講座は0人でも予定を置き、題名の最後に人数。2026-10-28）← v52（お休みを「欠席:氏名」で残す batch_absent）← v51 (LINEお知らせ: LIFFの本人確認・予約/取消のプッシュ・月200通の見張り) ← v50 (新デザイン用に next_data / schedule_get / schedule_set を追加。既存の処理は変更なし。分数はコース名の「(45分)」を優先)
 
 var CONFIG = {
   TIMEZONE: 'Asia/Tokyo',
@@ -133,7 +133,7 @@ function getAdminStudents_(passcode) {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var action = p.action || 'overview';
-  if (action === 'version') return jsonOut({ok: true, version: 'v60', timestamp: new Date().toISOString()});
+  if (action === 'version') return jsonOut({ok: true, version: 'v61', timestamp: new Date().toISOString()});
   if (action === 'overview') return jsonOut(getOverview(p.name || '', Number(p.days) || CONFIG.OVERVIEW_DAYS));
   if (action === 'schedule_get') return jsonOut({ ok: true, schedule: getSchedule_() });
   if (action === 'admin_summary') return jsonOut(getAdminSummary(p.passcode));
@@ -158,7 +158,7 @@ function getAdminCalendarEvents(passcode, startStr, endStr) {
     var names = (ev.getDescription() || '').split('\n').filter(function(l) { return l.trim() && !isJunkLine(l.trim()); });
     return {
       event_id: ev.getId(),
-      title: ev.getTitle(),
+      title: baseTitle_(ev.getTitle()),
       start: ev.getStartTime().toISOString(),
       end: ev.getEndTime().toISOString(),
       names: names,
@@ -256,7 +256,7 @@ function getAdminSummary(passcode) {
       
       days[dayKey].slots.forEach(function(slot) {
         if (slot.time === timeStr) {
-          slot.title = ev.getTitle();
+          slot.title = baseTitle_(ev.getTitle());
           slot.count = names.length;
           slot.names = names;
         }
@@ -323,6 +323,7 @@ function doPost(e) {
   if (body.action === 'schedule_set') return jsonOut(setSchedule_(body.passcode, body.schedule));
   if (body.action === 'admin_merge_duplicates') return jsonOut(mergeDuplicateLessons_(body.passcode, body.start || '', body.end || '', !!body.dry));
   if (body.action === 'admin_students') return jsonOut(getAdminStudents_(body.passcode));
+  if (body.action === 'admin_boxes') return jsonOut(ensureBoxes_(body.passcode, body.month || '', !!body.dry));
   LINE_CTX = { idToken: body.id_token || '', label: body.line_label || '', silent: !!body.line_silent };
   if (body.action === 'line_link') return jsonOut(lineLink_(body.id_token || '', body.name || ''));
   if (body.action === 'line_test') return jsonOut(lineTest_(body.passcode));
@@ -393,12 +394,14 @@ function reserve(name, slotIds, classDetails, email, addToCalendar, passcode) {
         if (!hasName(desc, userName)) {
           existing.setDescription(addName(desc, userName, email));
         }
+        syncBoxTitle_(existing);
       } else {
         var ev = cal.createEvent(newTitle, startTime, endTime, {
           description: addName('', userName, email),
           location: CONFIG.LOCATION,
           sendInvites: false
         });
+        syncBoxTitle_(ev);
         eventId = ev.getId();
       }
       
@@ -489,13 +492,15 @@ function cancel(name, eventIds, email, passcode) {
       var desc = ev.getDescription() || '';
       // 「名前」または「メールアドレス」のどちらかが一致する予約だけを、このユーザーの予約として扱う
       if (!hasName(desc, userName) && !eventHasEmail(ev, email)) continue;
-      if (!title) title = ev.getTitle();
+      if (!title) title = baseTitle_(ev.getTitle());
       removed.push({slot_id: String(ev.getStartTime().getTime()), start: ev.getStartTime().toISOString()});
 
       var newDesc = removeName(desc, userName);
-      if (newDesc.trim()) {
+      if (newDesc.trim() || isBoxEvent_(ev)) {
         // まだ他の予約者がいる場合：この生徒だけを削除して通知
+        // 教室の箱（水・金のグループ講座）は最後の1人が取り消しても消さずに「0人」に戻す（2026-10-28）
         ev.setDescription(newDesc);
+        syncBoxTitle_(ev);
         // 管理者キャンセル時はemailが渡らないので、説明欄に保存していればそこから取得
         var emailToRemove = email || getEmailFromDesc(desc, userName);
         if (emailToRemove) removeGuestAndNotify(eventIds[i], emailToRemove);
@@ -655,7 +660,7 @@ function findUserEvents(cal, userName, start, end, email) {
     // 3) Googleカレンダーのゲストに、ログイン中のメールアドレスが含まれる
     if (hasName(desc, userName) || normalize(title).indexOf(search) >= 0 || eventHasEmail(ev, email)) {
       var st = ev.getStartTime();
-      result.push({ event_id: ev.getId(), slot_id: String(st.getTime()), start: st.toISOString(), label: formatSlot(st), month_key: monthKey(st), class_title: title });
+      result.push({ event_id: ev.getId(), slot_id: String(st.getTime()), start: st.toISOString(), label: formatSlot(st), month_key: monthKey(st), class_title: baseTitle_(title) });
     }
   }
   return result;
@@ -857,7 +862,10 @@ function setSchedule_(passcode, schedule) {
   if (!lock.tryLock(15000)) return { ok: false, message: 'サーバーが混み合っています。少し待ってからもう一度お試しください。' };
   try { PropertiesService.getScriptProperties().setProperty('SCHEDULE_JSON', json); }
   finally { lock.releaseLock(); }
-  return { ok: true, schedule: clean };
+  // 講座カレンダー（休みの日）を保存したら、今月と来月の教室の箱をそろえる（v61。失敗しても保存は通す）
+  var boxes = null;
+  try { var mk0 = monthKey(todayStart()); boxes = [ensureBoxes_(passcode, mk0, false), ensureBoxes_(passcode, addMonthKey_(mk0, 1), false)]; } catch (e) { boxes = { ok: false, message: String(e) }; }
+  return { ok: true, schedule: clean, boxes: boxes };
 }
 
 // 新デザインが1回の通信で必要なものを全部受け取る：空き枠・自分の予約・講座カレンダー
@@ -893,7 +901,7 @@ function getNextData(name, days, email) {
     if (ms < start) pastThisMonth = findUserEvents(cal, name.trim(), ms, start, email || '').filter(function(e) { var t = e.class_title || ''; return isLessonTitle_(t) && !/個人|【個|個別|マンツーマン|体験/.test(t); }).length;
   }
   var plan = getPlan_(name); if (plan) { plan.past = {}; plan.past[monthKey(start)] = pastThisMonth; }
-  return { ok: true, version: 'v60', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_(), plan: plan };
+  return { ok: true, version: 'v61', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_(), plan: plan };
 }
 
 // =====================================================================
@@ -1027,7 +1035,86 @@ function markAbsent_(userName, eventIds, passcode) {
     if (!hit) return;
     out.push(ABSENT_PREFIX + userName);
     ev.setDescription(out.join('\n'));
-    done.push({ event_id: id, start: ev.getStartTime().toISOString(), title: ev.getTitle() });
+    syncBoxTitle_(ev);
+    done.push({ event_id: id, start: ev.getStartTime().toISOString(), title: baseTitle_(ev.getTitle()) });
   });
   return { ok: true, message: done.length + '件を欠席にしました', done: done };
 }
+
+// =====================================================================
+// v61 追加：教室の箱（2026-10-28 藤崎さん）
+//   水・金のグループ講座（6クラス）は、予約が0人でも Google カレンダーに予定（箱）を置き、
+//   題名の最後に人数を出す（例「スマホ 応用B(90分) 0人」）。0人の日は先生が別の仕事を入れられる。
+//   予定を2つ立てない：予約は今までどおり findEventAt（講座の見分け lessonKey_）で同じ時刻の箱を探して入れる。
+//   人数＝説明欄の名前の数（「欠席:」の行・メールの控えは数えない）。個人レッスン・体験会は今までどおり（箱なし・人数なし）
+//   題名の人数は表示だけ。予約一覧・管理者の一覧・顧客管理へ返す題名は baseTitle_ で人数を外す
+// =====================================================================
+var BOX_CLASSES = [   // timetable.js（時間割の正本）と同じ。時間割を変えたらここも直す
+  { dow: 3, time: '10:00', title: 'パソコンAI 入門A(45分)', min: 45 },
+  { dow: 3, time: '14:00', title: 'スマホ 応用A(90分)', min: 90 },
+  { dow: 3, time: '16:00', title: 'スマホ 入門A(45分)', min: 45 },
+  { dow: 5, time: '10:00', title: 'スマホ 応用B(90分)', min: 90 },
+  { dow: 5, time: '14:00', title: 'スマホ 入門B(45分)', min: 45 },
+  { dow: 5, time: '16:00', title: 'パソコンAI 入門B(45分)', min: 45 }
+];
+var BOX_FROM = '2026-11-01';            // この日から箱を置く・人数を付ける（10月以前の予定はさわらない）
+var BOX_COUNT_RE = /\s*[0-9０-９]+人$/;   // 題名の最後の「 3人」
+
+function baseTitle_(t) { return String(t || '').replace(BOX_COUNT_RE, ''); }
+function isBoxEvent_(ev) {
+  return !!ev && !!lessonKey_(baseTitle_(ev.getTitle())) && formatDate(ev.getStartTime()) >= BOX_FROM;
+}
+function boxCount_(ev) {
+  return (ev.getDescription() || '').split('\n').filter(function(l) { return l.trim() && !isJunkLine(l.trim()); }).length;
+}
+// 箱の題名の人数を、説明欄の名前の数に合わせる
+function syncBoxTitle_(ev) {
+  if (!isBoxEvent_(ev)) return;
+  var t = ev.getTitle() || '', want = baseTitle_(t) + ' ' + boxCount_(ev) + '人';
+  if (want !== t) ev.setTitle(want);
+}
+// 箱をそろえる：その月の水・金の6クラスに箱が無ければ「0人」で置き、ある箱は人数を付け直す
+//   month 'YYYY-MM'（空なら今月、20日からは来月も）。休みの日（講座カレンダーの off）と過ぎた日は飛ばす。dry=true なら数えるだけ
+function ensureBoxes_(passcode, month, dry) {
+  if (passcode !== CONFIG.ADMIN_PASSCODE) return { ok: false, message: 'パスコードが正しくありません' };
+  var today = todayStart(), months = [];
+  if (/^\d{4}-\d{2}$/.test(String(month))) months.push(String(month));
+  else {   // 来月の箱は20日（講座カレンダーを作る目安）を過ぎてから。休みの日を決める前に箱を置かないため
+    months.push(monthKey(today));
+    if (today.getDate() >= 20) months.push(addMonthKey_(monthKey(today), 1));
+  }
+  var off = {}; getSchedule_().off.forEach(function(d) { off[d] = true; });
+  var cal = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) return { ok: false, message: 'サーバーが混み合っています。少し待ってからもう一度お試しください。' };
+  var created = [], fixed = [], kept = 0, offBoxes = [];
+  try {
+    months.forEach(function(mk) {
+      var y = Number(mk.slice(0, 4)), m = Number(mk.slice(5, 7)) - 1;
+      for (var d = new Date(y, m, 1); d.getMonth() === m; d = addDays(d, 1)) {
+        var key = formatDate(d);
+        if (d < today || key < BOX_FROM) continue;
+        if (off[key]) {   // 休みの日に箱が残っていたら知らせるだけ（消すのは先生が手で）
+          BOX_CLASSES.forEach(function(c) { if (c.dow !== d.getDay()) return; var ev = findEventAt(cal, atTime(d, c.time), c.title); if (ev) offBoxes.push(key + ' ' + c.time + ' ' + ev.getTitle()); });
+          continue;
+        }
+        BOX_CLASSES.forEach(function(c) {
+          if (c.dow !== d.getDay()) return;
+          var st = atTime(d, c.time), ev = findEventAt(cal, st, c.title), label = key + ' ' + c.time + ' ' + c.title;
+          if (!ev) {
+            if (!dry) cal.createEvent(c.title + ' 0人', st, new Date(st.getTime() + c.min * 60000), { location: CONFIG.LOCATION, description: '' });
+            created.push(label);
+            return;
+          }
+          var before = ev.getTitle();
+          if (!dry) syncBoxTitle_(ev);
+          if (dry ? (before !== baseTitle_(before) + ' ' + boxCount_(ev) + '人') : (ev.getTitle() !== before)) fixed.push(label + '：' + before + ' → ' + baseTitle_(before) + ' ' + boxCount_(ev) + '人');
+          else kept++;
+        });
+      }
+    });
+  } finally { lock.releaseLock(); }
+  return { ok: true, dry: !!dry, months: months, created: created, fixed: fixed, kept: kept, off_boxes: offBoxes };
+}
+// 時間で動かすとき用（Apps Script のトリガーから呼ぶ。毎朝、今月と来月の箱をそろえる）
+function dailyBoxes() { Logger.log(JSON.stringify(ensureBoxes_(CONFIG.ADMIN_PASSCODE, '', false))); }
