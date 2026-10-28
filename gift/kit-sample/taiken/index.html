@@ -92,9 +92,9 @@ footer { margin-top: 26px; text-align: center; font-size: 13px; color: var(--sub
 
   <div class="entry only-touch">
     <h2>パソコンで開くと、発表者ビューまで体験できます</h2>
-    <p style="margin:0 0 4px;font-size:15px">授業は、パソコンでスライドを映して行う作りです。パソコンでこの住所を開くと、先生の手元にだけ台本と時計が出る「発表者ビュー」まで、本番と同じように試せます。</p>
+    <p style="margin:0 0 4px;font-size:15px">授業は、パソコンでスライドを映して行う作りです。パソコンでこの URL を開くと、先生の手元にだけ台本と時計が出る「発表者ビュー」まで、本番と同じように試せます。</p>
     <div class="url" id="pageUrl">https://teraco-labo.com/gift/kit-sample/taiken/</div>
-    <button class="copy" id="copyUrl">住所をコピーする</button>
+    <button class="copy" id="copyUrl">URL をコピーする</button>
     <div class="note">スマホでは、下でスライドと台本をご覧いただけます。</div>
   </div>
 
@@ -141,12 +141,12 @@ footer { margin-top: 26px; text-align: center; font-size: 13px; color: var(--sub
   var cu = document.getElementById('copyUrl');
   if (cu) cu.onclick = function () {
     var u = document.getElementById('pageUrl').textContent;
-    var done = function () { cu.textContent = 'コピーしました'; setTimeout(function () { cu.textContent = '住所をコピーする'; }, 1800); };
+    var done = function () { cu.textContent = 'コピーしました'; setTimeout(function () { cu.textContent = 'URL をコピーする'; }, 1800); };
     var fallback = function () {   // クリップボードが使えないブラウザ（LINE の中など）
       var t = document.createElement('textarea'); t.value = u; document.body.appendChild(t); t.select();
       var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
       document.body.removeChild(t);
-      if (ok) done(); else cu.textContent = '住所を長押ししてコピーしてください';
+      if (ok) done(); else cu.textContent = 'URL を長押ししてコピーしてください';
     };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(u).then(done, fallback); else fallback();
   };
