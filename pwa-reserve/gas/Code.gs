@@ -1,4 +1,4 @@
-// TERACO予約システム v61（教室の箱：水・金のグループ講座は0人でも予定を置き、題名の最後に人数。2026-10-28）← v52（お休みを「欠席:氏名」で残す batch_absent）← v51 (LINEお知らせ: LIFFの本人確認・予約/取消のプッシュ・月200通の見張り) ← v50 (新デザイン用に next_data / schedule_get / schedule_set を追加。既存の処理は変更なし。分数はコース名の「(45分)」を優先)
+// TERACO予約システム v61（教室の箱：水・金のグループ講座は0人でも予定を置き、題名の頭に人数。2026-10-28）← v52（お休みを「欠席:氏名」で残す batch_absent）← v51 (LINEお知らせ: LIFFの本人確認・予約/取消のプッシュ・月200通の見張り) ← v50 (新デザイン用に next_data / schedule_get / schedule_set を追加。既存の処理は変更なし。分数はコース名の「(45分)」を優先)
 
 var CONFIG = {
   TIMEZONE: 'Asia/Tokyo',
@@ -595,7 +595,7 @@ function getMinutes(details) {
 function findEventAt(cal, startTime, title) {
   var events = cal.getEvents(new Date(startTime.getTime() - 60000), new Date(startTime.getTime() + 60000));
   for (var i = 0; i < events.length; i++) {
-    if (events[i].getTitle() === title && events[i].getStartTime().getTime() === startTime.getTime()) return events[i];
+    if (baseTitle_(events[i].getTitle()) === title && events[i].getStartTime().getTime() === startTime.getTime()) return events[i];
   }
   // 名前が少し違っても同じ講座なら同じ予定に入れる（例「スマホ 応用てらこ(90分)」と「スマホ 応用B(90分)」。2026-10-08 藤崎さん）
   var key = lessonKey_(title); if (!key) return null;
@@ -608,7 +608,7 @@ function findEventAt(cal, startTime, title) {
 }
 // 講座の見分け：「スマホ／パソコン」＋「応用／入門」＋分数。個人レッスン・体験会は対象外
 function lessonKey_(title) {
-  var t = String(title || ''); if (!/^(スマホ|パソコン)/.test(t) || /個人|体験/.test(t)) return '';
+  var t = baseTitle_(title); if (!/^(スマホ|パソコン)/.test(t) || /個人|体験/.test(t)) return '';
   var cat = /^パソコン/.test(t) ? 'pc' : 'sp';
   var kind = /応用|アドバンス/.test(t) ? 'adv' : /入門|ベーシック|基礎/.test(t) ? 'intro' : ''; if (!kind) return '';
   var m = t.match(/(\d+)\s*分/); return cat + '-' + kind + '-' + (m ? m[1] : '');
@@ -832,7 +832,7 @@ var NEXT_TIMES = {
 
 // 受講の予約イベントか（タイトル先頭で判定。私用の予定を人数に数えないため）
 function isLessonTitle_(title) {
-  return /^(スマホ|パソコンAI|TERACO予約)/.test(title || '');
+  return /^(スマホ|パソコンAI|TERACO予約)/.test(baseTitle_(title));
 }
 
 // 講座カレンダー（正本）。スクリプトプロパティに JSON で保存する
@@ -1044,7 +1044,7 @@ function markAbsent_(userName, eventIds, passcode) {
 // =====================================================================
 // v61 追加：教室の箱（2026-10-28 藤崎さん）
 //   水・金のグループ講座（6クラス）は、予約が0人でも Google カレンダーに予定（箱）を置き、
-//   題名の最後に人数を出す（例「スマホ 応用B(90分) 0人」）。0人の日は先生が別の仕事を入れられる。
+//   題名の頭に人数を出す（例「0人 スマホ 応用B(90分)」。題名が長いと後ろが切れるので人数を先に）。0人の日は先生が別の仕事を入れられる。
 //   予定を2つ立てない：予約は今までどおり findEventAt（講座の見分け lessonKey_）で同じ時刻の箱を探して入れる。
 //   人数＝説明欄の名前の数（「欠席:」の行・メールの控えは数えない）。個人レッスン・体験会は今までどおり（箱なし・人数なし）
 //   題名の人数は表示だけ。予約一覧・管理者の一覧・顧客管理へ返す題名は baseTitle_ で人数を外す
@@ -1058,9 +1058,11 @@ var BOX_CLASSES = [   // timetable.js（時間割の正本）と同じ。時間�
   { dow: 5, time: '16:00', title: 'パソコンAI 入門B(45分)', min: 45 }
 ];
 var BOX_FROM = '2026-11-01';            // この日から箱を置く・人数を付ける（10月以前の予定はさわらない）
-var BOX_COUNT_RE = /\s*[0-9０-９]+人$/;   // 題名の最後の「 3人」
+var BOX_COUNT_HEAD_RE = /^\s*[0-9０-９]+人\s*/;   // 題名の頭の「3人 」（2026-10-28 藤崎さん「人数を頭に。そこが一番大事」）
+var BOX_COUNT_RE = /\s*[0-9０-９]+人$/;          // 最初の版の、題名の最後の「 3人」（外すときだけ使う）
 
-function baseTitle_(t) { return String(t || '').replace(BOX_COUNT_RE, ''); }
+function baseTitle_(t) { return String(t || '').replace(BOX_COUNT_HEAD_RE, '').replace(BOX_COUNT_RE, ''); }
+function boxTitle_(base, n) { return n + '人 ' + base; }
 function isBoxEvent_(ev) {
   return !!ev && !!lessonKey_(baseTitle_(ev.getTitle())) && formatDate(ev.getStartTime()) >= BOX_FROM;
 }
@@ -1070,7 +1072,7 @@ function boxCount_(ev) {
 // 箱の題名の人数を、説明欄の名前の数に合わせる
 function syncBoxTitle_(ev) {
   if (!isBoxEvent_(ev)) return;
-  var t = ev.getTitle() || '', want = baseTitle_(t) + ' ' + boxCount_(ev) + '人';
+  var t = ev.getTitle() || '', want = boxTitle_(baseTitle_(t), boxCount_(ev));
   if (want !== t) ev.setTitle(want);
 }
 // 箱をそろえる：その月の水・金の6クラスに箱が無ければ「0人」で置き、ある箱は人数を付け直す
@@ -1102,13 +1104,14 @@ function ensureBoxes_(passcode, month, dry) {
           if (c.dow !== d.getDay()) return;
           var st = atTime(d, c.time), ev = findEventAt(cal, st, c.title), label = key + ' ' + c.time + ' ' + c.title;
           if (!ev) {
-            if (!dry) cal.createEvent(c.title + ' 0人', st, new Date(st.getTime() + c.min * 60000), { location: CONFIG.LOCATION, description: '' });
+            if (!dry) cal.createEvent(boxTitle_(c.title, 0), st, new Date(st.getTime() + c.min * 60000), { location: CONFIG.LOCATION, description: '' });
             created.push(label);
             return;
           }
           var before = ev.getTitle();
           if (!dry) syncBoxTitle_(ev);
-          if (dry ? (before !== baseTitle_(before) + ' ' + boxCount_(ev) + '人') : (ev.getTitle() !== before)) fixed.push(label + '：' + before + ' → ' + baseTitle_(before) + ' ' + boxCount_(ev) + '人');
+          var want = boxTitle_(baseTitle_(before), boxCount_(ev));
+          if (dry ? (before !== want) : (ev.getTitle() !== before)) fixed.push(label + '：' + before + ' → ' + want);
           else kept++;
         });
       }
