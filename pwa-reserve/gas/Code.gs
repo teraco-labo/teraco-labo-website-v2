@@ -324,6 +324,7 @@ function doPost(e) {
   if (body.action === 'admin_merge_duplicates') return jsonOut(mergeDuplicateLessons_(body.passcode, body.start || '', body.end || '', !!body.dry));
   if (body.action === 'admin_students') return jsonOut(getAdminStudents_(body.passcode));
   if (body.action === 'admin_boxes') return jsonOut(ensureBoxes_(body.passcode, body.month || '', !!body.dry));
+  if (body.action === 'admin_kominkan') return jsonOut(syncKominkanCounts_(body.passcode, !!body.dry));
   if (body.action === 'admin_box_titles') return jsonOut(syncBoxTitlesIn_(body.passcode, body.start || '', body.end || '', !!body.dry));
   if (body.action === 'admin_import_events') return jsonOut(importEvents_(body.passcode, body.events || [], body.color || '', body.note || '', !!body.dry));
   LINE_CTX = { idToken: body.id_token || '', label: body.line_label || '', silent: !!body.line_silent };
@@ -1167,4 +1168,77 @@ function syncBoxTitlesIn_(passcode, startStr, endStr, dry) {
     out.push(formatSlot(ev.getStartTime()) + '：' + before + ' → ' + want);
   });
   return { ok: true, dry: !!dry, fixed: out, kept: kept };
+}
+
+// =====================================================================
+// 公民館講座の人数（2026-10-28 藤崎さん「公民館講座の人数は Google フォームの申込の人数を当てる。直接・市役所に電話の申込は
+//   フォームにつながっているスプレッドシートに足すので、そこを見れば正確。この数え方はこれからも使って」）
+//   申込のスプレッドシートの「希望する会場と日程」の日にち（例「三財地区館：9/8, 15, 29（火曜）」）ごとに人数を数え、
+//   その日の濃い緑（colorId 10）の予定の題名の頭に「N人 」を付ける。同じ名前は1人。テスト送信（KOMINKAN_EXCLUDE）は数えない
+//   新しい講座の申込フォームを作ったら、その回答のスプレッドシートを KOMINKAN_SHEETS に足す
+// =====================================================================
+var KOMINKAN_SHEETS = [
+  { id: '1Cw6jQxMY_L2JDAfckDGeo3DTRfSY3K_ZMwyBW3s6DM0', label: 'かんたんスマホ教室 参加申込フォーム（回答）' },
+  { id: '1GdVkZYh6o0Ra0tmD6UTNqjtzUKbPlnOxSqrACt_dnzU', label: 'おとなのAI講座 参加申込フォーム（回答）（12月 かんたんAI教室も）' }
+];
+var KOMINKAN_EXCLUDE = ['藤零秀一', '藤﨑秀一', '藤崎秀一'];
+var KOMINKAN_COLOR = '10';
+// 「三財地区館：9/8, 15, 29（火曜）」→ ['YYYY-09-08','YYYY-09-15','YYYY-09-29']（月が省かれた日は前の月を引き継ぐ）
+function kominkanDates_(choice, baseDate) {
+  var t = String(choice || '').replace(/（[^）]*）|\([^)]*\)/g, ' '), out = [], mon = 0;
+  var by = baseDate ? baseDate.getFullYear() : new Date().getFullYear(), bm = baseDate ? baseDate.getMonth() + 1 : 0;
+  (t.match(/\d{1,2}\/\d{1,2}|\d{1,2}(?=\s*[,、]|\s*$|\s)/g) || []).forEach(function(tok) {
+    var d;
+    if (tok.indexOf('/') >= 0) { var p = tok.split('/'); mon = Number(p[0]); d = Number(p[1]); }
+    else { if (!mon) return; d = Number(tok); }
+    if (!(mon >= 1 && mon <= 12 && d >= 1 && d <= 31)) return;
+    var y = (bm && mon < bm - 3) ? by + 1 : by;   // 申込が10月で講座が1月なら翌年
+    out.push(y + '-' + pad(mon) + '-' + pad(d));
+  });
+  return out;
+}
+function syncKominkanCounts_(passcode, dry) {
+  if (passcode !== CONFIG.ADMIN_PASSCODE) return { ok: false, message: 'パスコードが正しくありません' };
+  var perDay = {}, notes = [], ex = {};
+  KOMINKAN_EXCLUDE.forEach(function(n) { ex[normalize(n)] = true; });
+  KOMINKAN_SHEETS.forEach(function(sh) {
+    var vals;
+    try { vals = SpreadsheetApp.openById(sh.id).getSheets()[0].getDataRange().getValues(); }
+    catch (e) { notes.push(sh.label + ' を読めませんでした：' + e); return; }
+    var head = vals[0].map(String), ci = { ts: 0, name: -1, choice: -1 };
+    head.forEach(function(h, i) { if (/名前/.test(h) && ci.name < 0) ci.name = i; if (/日程|コース|会場/.test(h) && ci.choice < 0) ci.choice = i; });
+    if (ci.name < 0 || ci.choice < 0) { notes.push(sh.label + '：名前か日程の列が見つかりません'); return; }
+    var seen = {};
+    for (var r = 1; r < vals.length; r++) {
+      var name = normalize(vals[r][ci.name]), choice = String(vals[r][ci.choice] || '');
+      if (!name || !choice || ex[name]) continue;
+      var ts = vals[r][ci.ts] instanceof Date ? vals[r][ci.ts] : null;
+      kominkanDates_(choice, ts).forEach(function(day) {
+        var k = day + '|' + name; if (seen[k]) return; seen[k] = true;
+        perDay[day] = (perDay[day] || 0) + 1;
+      });
+    }
+  });
+  var cal = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID), fixed = [], kept = 0;
+  Object.keys(perDay).sort().forEach(function(day) {
+    var d0 = new Date(day + 'T00:00:00'), evs = cal.getEvents(d0, addDays(d0, 1)).filter(function(ev) {
+      return !ev.isAllDayEvent() && ev.getColor() === KOMINKAN_COLOR;
+    });
+    if (!evs.length) { notes.push(day + '：申込 ' + perDay[day] + '人 に当たる濃い緑の予定がありません'); return; }
+    if (evs.length > 1) { notes.push(day + '：濃い緑の予定が' + evs.length + '件あり、どれか決められません（' + evs.map(function(e) { return e.getTitle(); }).join('／') + '）'); return; }
+    var ev = evs[0], before = ev.getTitle(), want = boxTitle_(baseTitle_(before), perDay[day]);
+    if (before === want) { kept++; return; }
+    if (!dry) ev.setTitle(want);
+    fixed.push(day + '：' + before + ' → ' + want);
+  });
+  // これから先（半年分）の濃い緑の予定で、申込がまだ1件も無いものは「0人」
+  var today = todayStart();
+  cal.getEvents(today, addDays(today, 31 * BOX_MONTHS_AHEAD)).forEach(function(ev) {
+    if (ev.isAllDayEvent() || ev.getColor() !== KOMINKAN_COLOR || perDay[formatDate(ev.getStartTime())]) return;
+    var before = ev.getTitle(), want = boxTitle_(baseTitle_(before), 0);
+    if (before === want) { kept++; return; }
+    if (!dry) ev.setTitle(want);
+    fixed.push(formatDate(ev.getStartTime()) + '：' + before + ' → ' + want + '（申込まだ）');
+  });
+  return { ok: true, dry: !!dry, fixed: fixed, kept: kept, notes: notes };
 }
