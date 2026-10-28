@@ -1058,6 +1058,7 @@ var BOX_CLASSES = [   // timetable.js（時間割の正本）と同じ。時間�
   { dow: 5, time: '14:00', title: 'スマホ 入門B(45分)', min: 45 },
   { dow: 5, time: '16:00', title: 'パソコンAI 入門B(45分)', min: 45 }
 ];
+var BOX_MONTHS_AHEAD = 6;                // 箱を置く範囲（今月を入れて6か月）
 var BOX_FROM = '2026-11-01';            // この日から箱を置く・人数を付ける（10月以前の予定はさわらない）
 var BOX_COUNT_HEAD_RE = /^\s*[0-9０-９]+人\s*/;   // 題名の頭の「3人 」（2026-10-28 藤崎さん「人数を頭に。そこが一番大事」）
 var BOX_COUNT_RE = /\s*[0-9０-９]+人$/;          // 最初の版の、題名の最後の「 3人」（外すときだけ使う）
@@ -1077,14 +1078,13 @@ function syncBoxTitle_(ev) {
   if (want !== t) ev.setTitle(want);
 }
 // 箱をそろえる：その月の水・金の6クラスに箱が無ければ「0人」で置き、ある箱は人数を付け直す
-//   month 'YYYY-MM'（空なら今月、20日からは来月も）。休みの日（講座カレンダーの off）と過ぎた日は飛ばす。dry=true なら数えるだけ
+//   month 'YYYY-MM'（空なら今月から5か月先まで）。休みの日（講座カレンダーの off）と過ぎた日は飛ばす。dry=true なら数えるだけ
 function ensureBoxes_(passcode, month, dry) {
   if (passcode !== CONFIG.ADMIN_PASSCODE) return { ok: false, message: 'パスコードが正しくありません' };
   var today = todayStart(), months = [];
   if (/^\d{4}-\d{2}$/.test(String(month))) months.push(String(month));
-  else {   // 来月の箱は20日（講座カレンダーを作る目安）を過ぎてから。休みの日を決める前に箱を置かないため
-    months.push(monthKey(today));
-    if (today.getDate() >= 20) months.push(addMonthKey_(monthKey(today), 1));
+  else {   // 今月から5か月先まで（半年分）。2026-10-28 藤崎さん「半年先ぐらいまでは Google カレンダーに反映していい」。休みは講座カレンダーに1年分登録済み
+    for (var i = 0; i < BOX_MONTHS_AHEAD; i++) months.push(addMonthKey_(monthKey(today), i));
   }
   var off = {}; getSchedule_().off.forEach(function(d) { off[d] = true; });
   var cal = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);
