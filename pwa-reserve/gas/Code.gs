@@ -324,6 +324,7 @@ function doPost(e) {
   if (body.action === 'admin_merge_duplicates') return jsonOut(mergeDuplicateLessons_(body.passcode, body.start || '', body.end || '', !!body.dry));
   if (body.action === 'admin_students') return jsonOut(getAdminStudents_(body.passcode));
   if (body.action === 'admin_boxes') return jsonOut(ensureBoxes_(body.passcode, body.month || '', !!body.dry));
+  if (body.action === 'admin_box_titles') return jsonOut(syncBoxTitlesIn_(body.passcode, body.start || '', body.end || '', !!body.dry));
   if (body.action === 'admin_import_events') return jsonOut(importEvents_(body.passcode, body.events || [], body.color || '', body.note || '', !!body.dry));
   LINE_CTX = { idToken: body.id_token || '', label: body.line_label || '', silent: !!body.line_silent };
   if (body.action === 'line_link') return jsonOut(lineLink_(body.id_token || '', body.name || ''));
@@ -1059,7 +1060,7 @@ var BOX_CLASSES = [   // timetable.js（時間割の正本）と同じ。時間�
   { dow: 5, time: '16:00', title: 'パソコンAI 入門B(45分)', min: 45 }
 ];
 var BOX_MONTHS_AHEAD = 6;                // 箱を置く範囲（今月を入れて6か月）
-var BOX_FROM = '2026-11-01';            // この日から箱を置く・人数を付ける（10月以前の予定はさわらない）
+var BOX_FROM = '2026-10-01';            // この日から人数を付ける（2026-10-28 藤崎さん「10月分も人数を頭に」で11/1から10/1へ。9月以前はさわらない）
 var BOX_COUNT_HEAD_RE = /^\s*[0-9０-９]+人\s*/;   // 題名の頭の「3人 」（2026-10-28 藤崎さん「人数を頭に。そこが一番大事」）
 var BOX_COUNT_RE = /\s*[0-9０-９]+人$/;          // 最初の版の、題名の最後の「 3人」（外すときだけ使う）
 
@@ -1151,4 +1152,19 @@ function importEvents_(passcode, events, color, note, dry) {
     } catch (err) { failed.push((e.start || '') + ' ' + e.title + '：' + err); }
   });
   return { ok: true, dry: !!dry, made: made.length, skipped: skipped, failed: failed };
+}
+
+// 管理者用：期間内の教室の予定（過ぎた日も）の題名の人数だけを付け直す。箱は作らない（過ぎた日に0人の箱を後から作らないため）
+function syncBoxTitlesIn_(passcode, startStr, endStr, dry) {
+  if (passcode !== CONFIG.ADMIN_PASSCODE) return { ok: false, message: 'パスコードが正しくありません' };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startStr) || !/^\d{4}-\d{2}-\d{2}$/.test(endStr)) return { ok: false, message: 'start / end は YYYY-MM-DD' };
+  var cal = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID), out = [], kept = 0;
+  cal.getEvents(new Date(startStr + 'T00:00:00'), new Date(endStr + 'T23:59:59')).forEach(function(ev) {
+    if (!isBoxEvent_(ev)) return;
+    var before = ev.getTitle(), want = boxTitle_(baseTitle_(before), boxCount_(ev));
+    if (before === want) { kept++; return; }
+    if (!dry) ev.setTitle(want);
+    out.push(formatSlot(ev.getStartTime()) + '：' + before + ' → ' + want);
+  });
+  return { ok: true, dry: !!dry, fixed: out, kept: kept };
 }
