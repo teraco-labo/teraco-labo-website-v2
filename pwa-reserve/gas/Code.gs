@@ -324,6 +324,7 @@ function doPost(e) {
   if (body.action === 'admin_merge_duplicates') return jsonOut(mergeDuplicateLessons_(body.passcode, body.start || '', body.end || '', !!body.dry));
   if (body.action === 'admin_students') return jsonOut(getAdminStudents_(body.passcode));
   if (body.action === 'admin_boxes') return jsonOut(ensureBoxes_(body.passcode, body.month || '', !!body.dry));
+  if (body.action === 'admin_import_events') return jsonOut(importEvents_(body.passcode, body.events || [], body.color || '', body.note || '', !!body.dry));
   LINE_CTX = { idToken: body.id_token || '', label: body.line_label || '', silent: !!body.line_silent };
   if (body.action === 'line_link') return jsonOut(lineLink_(body.id_token || '', body.name || ''));
   if (body.action === 'line_test') return jsonOut(lineTest_(body.passcode));
@@ -1121,3 +1122,33 @@ function ensureBoxes_(passcode, month, dry) {
 }
 // 時間で動かすとき用（Apps Script のトリガーから呼ぶ。毎朝、今月と来月の箱をそろえる）
 function dailyBoxes() { Logger.log(JSON.stringify(ensureBoxes_(CONFIG.ADMIN_PASSCODE, '', false))); }
+
+
+// =====================================================================
+// 管理者用：予定をまとめて TERACO.LABO（primary）に写す（2026-10-28 公民館講座の別カレンダー「出張講座」を外す前に、過去の分も記録として残す）
+//   events: [{title, start, end, allDay, location, description}]（allDay のとき start/end は 'YYYY-MM-DD'、end は翌日）
+//   同じ日に同じ題名の予定があれば作らない（何回流しても二重にならない）。color は '10'（バジル＝濃い緑）など
+// =====================================================================
+function importEvents_(passcode, events, color, note, dry) {
+  if (passcode !== CONFIG.ADMIN_PASSCODE) return { ok: false, message: 'パスコードが正しくありません' };
+  var cal = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID), made = [], skipped = [], failed = [];
+  var day = function(s) { var p = String(s).slice(0, 10).split('-'); return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])); };
+  events.forEach(function(e) {
+    try {
+      var st = e.allDay ? day(e.start) : new Date(e.start), en = e.allDay ? day(e.end) : new Date(e.end);
+      var d0 = new Date(st.getFullYear(), st.getMonth(), st.getDate()), same = cal.getEvents(d0, addDays(d0, 1)).some(function(x) {
+        return x.getTitle() === e.title && (e.allDay ? x.isAllDayEvent() : x.getStartTime().getTime() === st.getTime());
+      });
+      if (same) { skipped.push(formatDate(st) + ' ' + e.title); return; }
+      if (!dry) {
+        var desc = [e.description || '', note || ''].filter(function(x) { return x; }).join('\n\n');
+        var opt = { description: desc, location: e.location || '' };
+        var ev = e.allDay ? cal.createAllDayEvent(e.title, st, en, opt) : cal.createEvent(e.title, st, en, opt);
+        if (color) ev.setColor(String(color));
+        Utilities.sleep(150);
+      }
+      made.push(formatDate(st) + ' ' + e.title);
+    } catch (err) { failed.push((e.start || '') + ' ' + e.title + '：' + err); }
+  });
+  return { ok: true, dry: !!dry, made: made.length, skipped: skipped, failed: failed };
+}
