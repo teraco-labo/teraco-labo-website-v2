@@ -499,9 +499,10 @@
             <div class="container">
                 <div class="tl-head reveal">
                     <span class="kit-eyebrow">まずは中身をご覧ください</span>
-                    <h2 class="tl-title">サンプル単元を無料でお送りします</h2>
-                    <p class="tl-lead">第1回「AIの基本を知る」のスライド・講師台本・ワークシートを、いますぐご覧いただけます。いちばん早いのは LINE です。「見本」と送ると、すぐ届きます。メールでのお届けをご希望の方は、下のフォームからどうぞ。</p>
-                    <p style="text-align:center;margin-top:18px"><a class="btn-line-solid" href="https://lin.ee/9c4pI82" target="_blank" rel="noopener">LINEで「見本」を受け取る</a></p>
+                    <h2 class="tl-title">サンプル単元を無料で体験できます</h2>
+                    <p class="tl-lead">第1回「AIの基本を知る」の動くスライドを、先生の台本つきで、いますぐ体験できます（前半10枚・スマホでもご覧いただけます）。パソコンで開くと、S キーで発表者ビューも試せます。メールでのお届けをご希望の方は、下のフォームからどうぞ。</p>
+                    <p style="text-align:center;margin-top:18px"><a class="btn-forest" href="gift/kit-sample/taiken/" target="_blank" rel="noopener">体験版をひらく</a></p>
+                    <p style="text-align:center;margin-top:10px;font-size:15px">ご質問・ご相談は <a href="https://lin.ee/9c4pI82" target="_blank" rel="noopener">LINE（てらこ先生）</a> でお気軽にどうぞ。</p>
                 </div>
                 <form class="kit-form-card reveal" id="kit-sample-form" novalidate>
                     <div class="kit-form-row">
@@ -655,7 +656,7 @@
                 var EMAIL_SERVICE_ID = window.EMAILJS_SERVICE_ID || 'TERACO_Gmail';
                 await emailjs.send(EMAIL_SERVICE_ID, 'template_5p9czck', emailData);
                 await emailjs.send(EMAIL_SERVICE_ID, 'template_xmm6v7c', emailData);
-                responseBox.innerHTML = '<div class="success-message">ありがとうございます。確認メールをお送りしました。サンプル単元のリンクを、追ってメールでお届けします。お急ぎの方は、LINE で「見本」と送ると、すぐご覧いただけます。</div>';
+                responseBox.innerHTML = '<div class="success-message">ありがとうございます。確認メールをお送りしました。サンプル単元のリンクを、追ってメールでお届けします。お急ぎの方は、このページの「体験版をひらく」から、すぐご覧いただけます。</div>';
                 if (typeof gtag === 'function') {
                     gtag('event', 'generate_lead', {
                         form_name: 'kit_sample_request',
