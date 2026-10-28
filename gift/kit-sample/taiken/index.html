@@ -40,6 +40,18 @@ header p { margin: 0; font-size: 15px; color: var(--sub); }
 .notes p.tip::before { content: "つまずき・注意　"; font-weight: 700; color: var(--ai-d); }
 .notes p.do::before { content: ""; }
 .pc { margin-top: 14px; font-size: 14px; color: var(--sub); }
+/* 入口を分ける（2026-10-29 藤崎さん「パソコンで操作する方と、スマホ、タブレットで操作する方で、入り口分けないといけなくない？」「パソコン推奨って書いた方がいい」） */
+.rec { display: inline-block; font-size: 13px; font-weight: 700; color: #fff; background: var(--ai); border-radius: 999px; padding: 2px 12px; margin-top: 8px; }
+.entry { margin-top: 14px; background: #fff; border: 2px solid var(--ai); border-radius: 16px; padding: 16px 18px; }
+.entry h2 { font-size: 18px; margin: 0 0 6px; line-height: 1.5; }
+.entry ol { margin: 6px 0 12px; padding-left: 1.3em; font-size: 15px; }
+.entry kbd { display: inline-block; min-width: 1.6em; text-align: center; font: 700 14px/1.6 ui-monospace, Menlo, monospace; border: 1px solid #c9ced8; border-bottom-width: 2px; border-radius: 6px; padding: 0 6px; background: #f7f8fb; }
+.entry a.big { display: inline-block; background: var(--ai); color: #fff; text-decoration: none; font-weight: 700; font-size: 17px; border-radius: 999px; padding: 12px 26px; }
+.entry .url { font: 14px ui-monospace, Menlo, monospace; background: var(--bg); border-radius: 8px; padding: 6px 10px; word-break: break-all; margin: 8px 0; }
+.entry button.copy { font: inherit; font-weight: 700; font-size: 15px; border: 0; border-radius: 999px; padding: 9px 18px; background: var(--ink); color: #fff; }
+.entry .note { font-size: 13px; color: var(--sub); margin-top: 8px; }
+.only-pc, .only-touch { display: none; }
+body.is-pc .only-pc, body.is-touch .only-touch { display: block; }
 .pc a { color: var(--ai-d); }
 .cta { margin-top: 22px; background: #fff; border: 2px solid var(--ai); border-radius: 16px; padding: 16px 18px; }
 .cta h2 { font-size: 18px; margin: 0 0 6px; }
@@ -64,7 +76,27 @@ footer { margin-top: 26px; text-align: center; font-size: 13px; color: var(--sub
     <div class="by">AI講座 完全実施キット　TERACO.LABO</div>
     <h1>第1回「AIの基本を知る」体験版</h1>
     <p>13歳以上の中高生に、AI の授業を1回まるごと行うための教材です。先生はスライドを映し、手元の台本を見ながら授業をします。ここでは第1回の前半（10枚）を、そのまま体験できます。</p>
+    <span class="rec">パソコン推奨</span>
   </header>
+
+  <div class="entry only-pc">
+    <h2>パソコンで、本番と同じ画面で体験する</h2>
+    <ol>
+      <li>下のボタンで、スライドを新しいタブで開きます</li>
+      <li><kbd>S</kbd> キーで、先生の手元にだけ出る「発表者ビュー」（台本・時計・次のスライド）が開きます</li>
+      <li><kbd>→</kbd> キーかクリックで進み、<kbd>F</kbd> キーで全画面になります</li>
+    </ol>
+    <a class="big" href="deck.html" target="_blank" rel="noopener">本番と同じ画面で体験する</a>
+    <div class="note">プロジェクターや大きなモニターにつないで、本番と同じ使い方も試せます。このページの下でも、スマホと同じ見せ方でご覧いただけます。</div>
+  </div>
+
+  <div class="entry only-touch">
+    <h2>パソコンで開くと、発表者ビューまで体験できます</h2>
+    <p style="margin:0 0 4px;font-size:15px">授業は、パソコンでスライドを映して行う作りです。パソコンでこの住所を開くと、先生の手元にだけ台本と時計が出る「発表者ビュー」まで、本番と同じように試せます。</p>
+    <div class="url" id="pageUrl">https://teraco-labo.com/gift/kit-sample/taiken/</div>
+    <button class="copy" id="copyUrl">住所をコピーする</button>
+    <div class="note">スマホでは、下でスライドと台本をご覧いただけます。</div>
+  </div>
 
   <div class="demo">
     <div class="h">パソコンで S キーを押すと、先生の手元にだけ出る画面</div>
@@ -88,7 +120,7 @@ footer { margin-top: 26px; text-align: center; font-size: 13px; color: var(--sub
     <div id="body"></div>
   </div>
 
-  <p class="pc">パソコンで <a href="deck.html" target="_blank" rel="noopener">スライドだけを開く</a> と、S キーで本物の発表者ビューが出ます（F キーで全画面）。</p>
+
 
   <div class="cta">
     <h2>続きは、キットに入っています</h2>
@@ -103,6 +135,21 @@ footer { margin-top: 26px; text-align: center; font-size: 13px; color: var(--sub
 </div>
 <script>
 (function () {
+  // 入口を分ける：マウスで使う広い画面＝パソコン、それ以外＝スマホ・タブレット
+  var isPC = window.matchMedia && matchMedia('(pointer: fine)').matches && innerWidth >= 900;
+  document.body.classList.add(isPC ? 'is-pc' : 'is-touch');
+  var cu = document.getElementById('copyUrl');
+  if (cu) cu.onclick = function () {
+    var u = document.getElementById('pageUrl').textContent;
+    var done = function () { cu.textContent = 'コピーしました'; setTimeout(function () { cu.textContent = '住所をコピーする'; }, 1800); };
+    var fallback = function () {   // クリップボードが使えないブラウザ（LINE の中など）
+      var t = document.createElement('textarea'); t.value = u; document.body.appendChild(t); t.select();
+      var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(t);
+      if (ok) done(); else cu.textContent = '住所を長押ししてコピーしてください';
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(u).then(done, fallback); else fallback();
+  };
   var fr = document.getElementById('dk');
   var last = -1;
   function doc() { try { return fr.contentDocument; } catch (e) { return null; } }
