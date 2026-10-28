@@ -120,7 +120,7 @@ footer { margin-top: 26px; text-align: center; font-size: 13px; color: var(--sub
   fr.addEventListener('load', function () {
     var d = doc(); if (!d) return;
     var st = d.createElement('style');
-    st.textContent = '#help{display:none!important}';
+    st.textContent = '#help,.tbtns,.tnotes{display:none!important}';   // 台本はこの画面の下に出すので、スライドの中のボタンは使わない
     d.head.appendChild(st);
   });
   function paint() {

@@ -1006,6 +1006,27 @@ body.print .four .c, body.print .four .one { background: #fff; }
 .mob b { display: inline-block; font-size: 21px; color: #fff; background: #3F7BE0; padding: 2px 14px; border-radius: 999px; margin-right: 14px; vertical-align: 2px; }
 .step:has(.mob) .win { height: 670px !important; }
 
+/* 指の端末の［全画面］［台本］（teraco-touchui・2026-10-28 藤崎さん「スマホやタブレットでもパソコンと同じ動作」） */
+.tbtns { display: none; position: fixed; right: 12px; top: 12px; z-index: 60; gap: 8px; }
+body.touch .tbtns { display: flex; }
+body.solo .tbtns, body.presenter .tbtns, body.print .tbtns { display: none !important; }
+.tbtns button { background: rgba(0,0,0,.55); color: #fff; border: 0; border-radius: 10px; padding: 9px 14px; font: 500 15px 'Noto Sans JP', sans-serif; }
+.tbtns button.on { background: #FF7A45; }
+.tnotes { display: none; position: fixed; left: 0; right: 0; bottom: 0; height: 44vh; z-index: 55; background: #fff; color: #1E2430; box-shadow: 0 -4px 18px rgba(0,0,0,.18); border-radius: 14px 14px 0 0; padding: 12px 16px 70px; overflow-y: auto; -webkit-overflow-scrolling: touch; font: 16px/1.7 'Noto Sans JP', sans-serif; }
+body.tnotes-on .tnotes { display: block; }
+body.solo .tnotes, body.presenter .tnotes, body.print .tnotes { display: none !important; }
+.tnotes .tn-h { display: flex; align-items: baseline; gap: 10px; }
+.tnotes .tn-h b { font-size: 16px; flex: 1; }
+.tnotes .tn-h span { font-size: 13px; color: #B34700; background: #FFF3E8; border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+.tnotes .tn-warn { font-size: 12px; color: #6B7280; margin: 2px 0 8px; }
+.tnotes p { margin: 0 0 8px; }
+.tnotes p.tip, .tnotes p.do { background: #FFF3E8; border-radius: 8px; padding: 6px 10px; font-size: 15px; }
+@media (orientation: landscape) {
+  .tnotes { left: auto; top: 0; width: 40vw; height: auto; border-radius: 14px 0 0 14px; padding-top: 60px; }
+}
+/* 台本を出したときは、スライドを残りの部分に収める（teraco-touchui-v2：縦は上、横は左） */
+body.tnotes-on .stage { bottom: 44vh; }
+@media (orientation: landscape) { body.tnotes-on .stage { bottom: 0; right: 40vw; } }
 </style>
 </head>
 <body data-lesson="45">
@@ -1231,6 +1252,8 @@ body.print .four .c, body.print .four .one { background: #fff; }
 <div class="prog" id="prog"></div>
 <button class="homebtn" id="homebtn" title="最初のスライドへ（Home キーでも戻れます）">最初へ</button>
 <div class="help" id="help">→ / スペース / クリックで次へ　← で戻る　F で全画面　S で手元に発表者ビュー</div>
+<div class="tbtns" id="tbtns"><button id="tbFull" hidden>全画面</button><button id="tbNotes">台本</button></div>
+<div class="tnotes" id="tnotes"><div class="tn-h"><b id="tnTitle"></b><span id="tnTime"></span></div><div class="tn-warn">先生の台本です。映しているときは、生徒にも見えます</div><div id="tnBody"></div></div>
 <script>
 document.querySelectorAll('section[data-hl]').forEach(function (s) {
   s.getAttribute('data-hl').split(' ').forEach(function (k) {
@@ -1374,7 +1397,9 @@ document.querySelectorAll('section[data-hl]').forEach(function (s) {
   var pwin = null;
   function sync() { if (pwin && !pwin.closed) pwin.postMessage({ teracoState: { idx: idx, shown: shownCount() } }, '*'); }
   function fit() {
-    var k = Math.min(innerWidth / 1920, innerHeight / 1080);
+    // 指の端末で台本を出しているときは、スライドの枠（残りの部分）に合わせる（teraco-touchui-v2）
+    var st = deck.parentNode, tnOn = document.body.classList.contains('tnotes-on');
+    var k = Math.min((tnOn ? st.clientWidth : innerWidth) / 1920, (tnOn ? st.clientHeight : innerHeight) / 1080);
     deck.style.transform = 'scale(' + k + ')';
   }
   function show(i) {
@@ -1385,6 +1410,7 @@ document.querySelectorAll('section[data-hl]').forEach(function (s) {
     drawSlide(slides[idx], false);
     document.getElementById('prog').style.width = ((idx + 1) / slides.length * 100) + '%';
     scrubPaint(idx);
+    tnPaint();
     sync();
   }
   function next() {
@@ -1535,6 +1561,46 @@ document.querySelectorAll('section[data-hl]').forEach(function (s) {
     if (wasDrag(e)) return;
     if (e.clientX < innerWidth / 2) prev(); else next();
   });
+  // ===== 指の端末の［全画面］［台本］（teraco-touchui・2026-10-28 藤崎さん「スマホやタブレットでもパソコンと同じ動作」） =====
+  // パソコン（マウス）では出さない。全画面は、対応しているブラウザだけ（iPhone は未対応）
+  var TOUCH = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  var tn = document.getElementById('tnotes');
+  function tnPaint() {
+    if (!tn || !document.body.classList.contains('tnotes-on')) return;
+    var s = slides[idx], n = s.querySelector('aside.notes'), body = document.getElementById('tnBody');
+    document.getElementById('tnTitle').textContent = (idx + 1) + ' / ' + slides.length + '　' + (s.getAttribute('data-title') || '');
+    var t = n && n.getAttribute('data-time');
+    document.getElementById('tnTime').textContent = t ? '目安 ' + t + '分' : '';
+    body.innerHTML = '';
+    if (n) [].forEach.call(n.querySelectorAll('p'), function (p) {
+      var q = document.createElement('p'); q.className = p.className; q.textContent = p.textContent; body.appendChild(q);
+    });
+    tn.scrollTop = 0;
+  }
+  if (TOUCH && !EDIT && tn) {
+    document.body.classList.add('touch');
+    var hp = document.getElementById('help');
+    if (hp) hp.textContent = '右側を押すと次へ・左側を押すと戻る　右上のボタンで全画面・台本';
+    var fb = document.getElementById('tbFull'), nb = document.getElementById('tbNotes');
+    var de = document.documentElement;
+    var canFull = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+    if (canFull) fb.hidden = false;
+    fb.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var on = document.fullscreenElement || document.webkitFullscreenElement;
+      if (on) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      else (de.requestFullscreen || de.webkitRequestFullscreen).call(de);
+    });
+    nb.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var on = document.body.classList.toggle('tnotes-on');
+      nb.classList.toggle('on', on);
+      fit();
+      tnPaint();
+    });
+    // 台本の上を指でなぞって読むときは、ページをめくらない
+    ['pointerup', 'click'].forEach(function (ev) { tn.addEventListener(ev, function (e) { e.stopPropagation(); }); });
+  }
   // 次の回へ（シリーズの講座。2026-10-12 藤崎さん「ボタン押すだけで移動できるとうれしい」）
   // 書き方：<a class="deck-next" href="次の回のオフライン版.html" data-lock="図書館の講師ページの .lock">第2回へ進む →</a>
   //        <a class="deck-prev" href="前の回のオフライン版.html" data-lock="….lock">← 第1回へ戻る</a>（表紙に置く。動きは deck-next と同じ）
