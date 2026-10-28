@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>AI講座キット 第1回 体験版｜TERACO.LABO</title>
+<!--
+  AI講座キットの無料の体験版（LINE @381 の合言葉「見本」から開く・合言葉なし）。build_taiken.py が index.html として写す。
+  上に動くスライド（deck.html を枠の中で動かす）、下に今の枚の「先生の台本」（スライドのノート＝発表者ビューに出る内容）。
+  横向きにするとスライドだけ大きく。パソコンでは deck.html を開いて S キーで本物の発表者ビュー。
+-->
+<style>
+:root { --ink: #1f2430; --sub: #5f6675; --line: #e3e6ee; --bg: #f6f7fb; --ai: #EF6C00; --ai-d: #B34700; --soft: #FFF3E8; --ok: #1f7a5a; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif; line-height: 1.75; font-size: 16px; -webkit-text-size-adjust: 100%; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 16px 16px 48px; }
+header .by { font-size: 13px; color: var(--sub); }
+header h1 { font-size: 22px; line-height: 1.45; margin: 4px 0 4px; }
+header p { margin: 0; font-size: 15px; color: var(--sub); }
+.demo { margin-top: 14px; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+.demo .h { font-weight: 700; font-size: 15px; margin-bottom: 8px; }
+.demo video { width: 100%; border-radius: 10px; display: block; background: #0E141B; }
+.demo .cap { font-size: 13px; color: var(--sub); margin-top: 6px; }
+.stagebox { margin-top: 16px; position: sticky; top: 0; z-index: 3; background: var(--bg); padding: 8px 0 6px; }   /* 台本を読んでいる間も、スライドは画面の上に残す */
+.frame { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+.frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.ctl { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; }
+.ctl button { font: inherit; font-weight: 700; font-size: 16px; border: 0; border-radius: 999px; padding: 10px 20px; background: var(--ink); color: #fff; min-width: 96px; }
+.ctl button.prev { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+.ctl .pos { font-size: 14px; color: var(--sub); text-align: center; }
+.rot { font-size: 13px; color: var(--sub); margin-top: 6px; text-align: center; }
+.notes { margin-top: 14px; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.notes .h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.notes .h b { font-size: 15px; }
+.notes .h span { font-size: 13px; color: var(--ai-d); background: var(--soft); border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+.notes .t { font-size: 13px; color: var(--sub); margin: 2px 0 8px; }
+.notes p { margin: 0 0 8px; }
+.notes p.tip, .notes p.do { background: var(--soft); border-radius: 8px; padding: 6px 10px; font-size: 14px; }
+.notes p.tip::before { content: "つまずき・注意　"; font-weight: 700; color: var(--ai-d); }
+.notes p.do::before { content: ""; }
+.pc { margin-top: 14px; font-size: 14px; color: var(--sub); }
+.pc a { color: var(--ai-d); }
+.cta { margin-top: 22px; background: #fff; border: 2px solid var(--ai); border-radius: 16px; padding: 16px 18px; }
+.cta h2 { font-size: 18px; margin: 0 0 6px; }
+.cta ul { margin: 0 0 12px; padding-left: 1.2em; }
+.cta a.btn { display: inline-block; background: var(--ai); color: #fff; text-decoration: none; font-weight: 700; border-radius: 999px; padding: 10px 22px; }
+footer { margin-top: 26px; text-align: center; font-size: 13px; color: var(--sub); }
+/* 横向きのスマホ：スライドだけを画面いっぱいに（生徒が見る大きさ） */
+@media (orientation: landscape) and (max-height: 560px) {
+  header, .demo, .notes, .pc, .cta, footer, .rot { display: none; }
+  .wrap { padding: 0; max-width: none; }
+  .stagebox { margin: 0; position: static; padding: 0; }
+  .frame { position: fixed; inset: 0; width: 100vw; height: 100vh; aspect-ratio: auto; border-radius: 0; }
+  .ctl { position: fixed; right: 8px; bottom: 8px; margin: 0; z-index: 2; gap: 6px; }
+  .ctl button { padding: 6px 12px; min-width: 0; font-size: 14px; opacity: .85; }
+  .ctl .pos { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="by">AI講座 完全実施キット　TERACO.LABO</div>
+    <h1>第1回「AIの基本を知る」体験版</h1>
+    <p>13歳以上の中高生に、AI の授業を1回まるごと行うための教材です。先生はスライドを映し、手元の台本を見ながら授業をします。ここでは第1回の前半（10枚）を、そのまま体験できます。</p>
+  </header>
+
+  <div class="demo">
+    <div class="h">パソコンで S キーを押すと、先生の手元にだけ出る画面</div>
+    <video src="presenter.mp4" autoplay muted loop playsinline preload="metadata"></video>
+    <div class="cap">今のスライド・次のスライド・話すこと・経過時間が見えます。生徒が見る画面には出ません。</div>
+  </div>
+
+  <div class="stagebox">
+    <div class="frame"><iframe id="dk" src="deck.html" title="第1回のスライド（体験版）" allow="fullscreen"></iframe></div>
+    <div class="ctl">
+      <button class="prev" id="prev">← 戻る</button>
+      <div class="pos" id="pos">1 / 11</div>
+      <button id="next">次へ →</button>
+    </div>
+    <div class="rot">スライドの右側を押しても進みます。スマホを横にすると、生徒が見る大きさで見られます。</div>
+  </div>
+
+  <div class="notes" id="notes">
+    <div class="h"><b>先生の台本</b><span id="time"></span></div>
+    <div class="t" id="ttl"></div>
+    <div id="body"></div>
+  </div>
+
+  <p class="pc">パソコンで <a href="deck.html" target="_blank" rel="noopener">スライドだけを開く</a> と、S キーで本物の発表者ビューが出ます（F キーで全画面）。</p>
+
+  <div class="cta">
+    <h2>続きは、キットに入っています</h2>
+    <ul>
+      <li>第1回の続き13枚と、第2回〜第6回の動くスライド</li>
+      <li>全部の枚に、この台本（話すこと・時間・つまずき）</li>
+      <li>講師台本・ワークシート・保護者向けのお知らせと同意書</li>
+    </ul>
+    <a class="btn" href="https://teraco-labo.com/kit.html">キットのくわしい案内</a>
+  </div>
+  <footer>TERACO.LABO　スマホ教室TERACO（てらこ）</footer>
+</div>
+<script>
+(function () {
+  var fr = document.getElementById('dk');
+  var last = -1;
+  function doc() { try { return fr.contentDocument; } catch (e) { return null; } }
+  function key(k) {
+    var d = doc(); if (!d) return;
+    d.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
+  }
+  document.getElementById('next').onclick = function () { key('ArrowRight'); };
+  document.getElementById('prev').onclick = function () { key('ArrowLeft'); };
+  addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); key('ArrowRight'); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); key('ArrowLeft'); }
+  });
+  // スライドの案内（→ / スペース…）はパソコン向けの言葉なので、この画面では出さない
+  fr.addEventListener('load', function () {
+    var d = doc(); if (!d) return;
+    var st = d.createElement('style');
+    st.textContent = '#help{display:none!important}';
+    d.head.appendChild(st);
+  });
+  function paint() {
+    var d = doc(); if (!d) return;
+    var ss = d.querySelectorAll('section.s');
+    var i = -1;
+    for (var j = 0; j < ss.length; j++) if (ss[j].classList.contains('on')) { i = j; break; }
+    if (i < 0 || i === last) return;
+    last = i;
+    document.getElementById('pos').textContent = (i + 1) + ' / ' + ss.length;
+    var s = ss[i], n = s.querySelector('aside.notes');
+    document.getElementById('ttl').textContent = s.getAttribute('data-title') || '';
+    var t = n && n.getAttribute('data-time');
+    document.getElementById('time').textContent = t ? '目安 ' + t + '分' : '';
+    var body = document.getElementById('body');
+    body.innerHTML = '';
+    if (n) [].forEach.call(n.querySelectorAll('p'), function (p) {
+      var q = document.createElement('p'); q.className = p.className; q.textContent = p.textContent; body.appendChild(q);
+    });
+  }
+  setInterval(paint, 250);
+})();
+</script>
+</body>
+</html>
