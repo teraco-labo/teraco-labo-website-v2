@@ -288,6 +288,8 @@
     </a>
   </div>
 
+  <!-- 3つの段は、来た入口（QRの ?utm_source=）で並びを変える。下の script（2026-11-05 藤崎さん） -->
+  <div class="blk" data-blk="work">
   <p class="group-label">お仕事のご相談</p>
 
   <a class="site" href="https://teraco-labo.com/instructor.html">
@@ -299,9 +301,10 @@
     <span class="s-title">公式ホームページ</span>
     <span class="s-desc">スマホ教室TERACO（宮崎県西都市）のご案内</span>
   </a>
+  </div>
 
 
-  <section class="duo" aria-label="教室の生徒さんへ">
+  <section class="duo" aria-label="教室の生徒さんへ" data-blk="class">
     <h2 class="duo-h">教室の生徒さんへ</h2>
     <p class="duo-name">スマホ教室TERACO（宮崎県西都市）</p>
     <p class="duo-lead">おうちでも、聞いて・見て、楽しく。</p>
@@ -327,7 +330,7 @@
     <button type="button" class="ai-copy" data-url="https://gemini.google.com/gem/446a8d7df5f2?usp=sharing&openExternalBrowser=1">URLをコピー</button>
   </section>
 
-  <section class="duo duo--ai" aria-label="発信をフォローしたい方へ">
+  <section class="duo duo--ai" aria-label="発信をフォローしたい方へ" data-blk="follow">
     <h2 class="duo-h">発信をフォローしたい方へ</h2>
     <p class="duo-name">てらこ先生の発信</p>
     <p class="duo-lead">スマホ・パソコン・AIのことを、<br>むずかしい言葉を使わずに届けます。</p>
@@ -371,6 +374,17 @@
   </section>
 
 
+
+  <script>
+  // 来た入口で段の並びを変える：名刺=お仕事が先、SNS=発信が先、教室のスライド=生徒さんが先。印なしは今の並び
+  (function(){
+    var src=(location.search.match(/[?&]utm_source=([^&]+)/)||[])[1];
+    var order={card:['work','follow','class'],sns:['follow','work','class'],class:['class','follow','work']}[src];
+    if(!order) return;
+    var here=document.currentScript;
+    order.forEach(function(k){var el=document.querySelector('[data-blk="'+k+'"]'); if(el) here.parentNode.insertBefore(el,here);});
+  })();
+  </script>
 
   <p class="foot"><a href="https://teraco-labo.com/">TERACO.LABO</a></p>
 
