@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ドル→円ホバー プライバシーポリシー｜TERACO.LABO</title>
+    <meta name="description" content="Chrome 拡張機能「ドル→円ホバー（Currency Hover Converter）」での情報の取り扱いについて説明します。">
+    <meta name="robots" content="noindex,follow">
+    <link rel="canonical" href="https://teraco-labo.com/privacy-currency-hover">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Shippori+Mincho:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme-warm.css">
+    <style>
+    .policy-header { background: var(--white); border-bottom: 1px solid var(--tl-border); padding: 14px 0; }
+    .policy-header a { display: inline-flex; align-items: center; gap: 12px; color: var(--tl-text); text-decoration: none; font-weight: 700; }
+    .policy-header img { width: auto; height: 40px; }
+    .policy-main { padding: 64px 0 80px; }
+    .policy-main h1 { font-family: var(--font-serif); font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 12px; }
+    .policy-updated { color: var(--tl-muted); font-size: .88rem; margin-bottom: 40px; }
+    .policy-body { max-width: 820px; }
+    .policy-body section { margin-top: 36px; }
+    .policy-body h2 { font-family: var(--font-serif); font-size: 1.25rem; color: var(--forest-dark); margin-bottom: 10px; }
+    .policy-body p, .policy-body li { color: var(--body-text); line-height: 1.9; }
+    .policy-body ul { padding-left: 1.3rem; margin-top: 8px; }
+    .tokusho-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    .tokusho-table th, .tokusho-table td { border-top: 1px solid var(--tl-border); padding: 14px 12px; text-align: left; vertical-align: top; line-height: 1.85; color: var(--body-text); }
+    .tokusho-table tr:last-child th, .tokusho-table tr:last-child td { border-bottom: 1px solid var(--tl-border); }
+    .tokusho-table th { width: 30%; font-weight: 700; color: var(--tl-text); background: rgba(0,0,0,.025); }
+    .tokusho-table ul { margin: 6px 0 0; }
+    @media (max-width: 640px) {
+        .tokusho-table th, .tokusho-table td { display: block; width: 100%; }
+        .tokusho-table th { border-bottom: none; padding-bottom: 4px; }
+        .tokusho-table td { border-top: none; padding-top: 4px; }
+    }
+    .policy-footer { background: var(--deep); color: #c4cec7; padding: 34px 0; font-size: .85rem; }
+    .policy-footer a { color: #8fc3a4; }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">メインコンテンツへスキップ</a>
+    <header class="policy-header">
+        <div class="container">
+            <a href="index.html" aria-label="TERACO.LABO トップページへ">
+                <img src="images/teraco-labo-logo-main.png" alt="TERACO.LABO ロゴ">
+                <span>TERACO.LABO</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="policy-main" id="main-content">
+        <div class="container policy-body">
+            <h1>ドル→円ホバー プライバシーポリシー</h1>
+            <p class="policy-updated">制定日: 2026年11月9日</p>
+            <p>TERACO.LABO（以下「当事業」）が提供する Google Chrome の拡張機能「ドル→円ホバー（英語名：Currency Hover Converter）」（以下「本拡張機能」）での、情報の取り扱いについて説明します。</p>
+
+            <section>
+                <h2>1. ページの文字の取り扱い</h2>
+                <p>本拡張機能は、表示中のウェブページの文字から金額を探して換算するために、ページの文字を読み取ります。この読み取りはお使いのパソコンの中だけで行い、ページの文字や閲覧したページの URL・履歴を、当事業や第三者へ送ることはありません。</p>
+            </section>
+
+            <section>
+                <h2>2. お使いのパソコンに保存する情報</h2>
+                <ul>
+                    <li>設定（換算先の通貨、表示の言葉、手数料率、常時表示モードのオン・オフ、動かさないサイトの一覧）：Chrome の同期機能により、同じ Google アカウントの Chrome の間で共有されることがあります</li>
+                    <li>取得した為替レートと、有料版かどうかの状態</li>
+                </ul>
+                <p>これらは本拡張機能の動作のためだけに使い、当事業へ送ることはありません。</p>
+            </section>
+
+            <section>
+                <h2>3. 外部サービスとのやり取り</h2>
+                <ul>
+                    <li><strong>為替レートの取得</strong>：ExchangeRate-API（open.er-api.com）から、およそ6時間ごとに為替レートを取得します。この通信に個人を特定する情報は含めませんが、通信の仕組み上、IP アドレス等が先方に届きます。</li>
+                    <li><strong>有料版の購入と確認</strong>：決済サービス ExtensionPay（extensionpay.com）と、決済代行の Stripe を利用します。購入のときに入力するメールアドレスとカードの情報は、これらのサービスが受け取り、各社のプライバシーポリシーに基づいて取り扱います。当事業はカードの番号を受け取らず、保存もしません。当事業が受け取るのは、購入の記録（メールアドレス、購入したプラン、日時、金額）です。</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>4. 利用目的</h2>
+                <p>購入の記録は、有料版の提供、お支払いの確認、お問い合わせや返金への対応、法令に基づく帳簿の保存のためにだけ使います。広告や、ほかの商品の案内には使いません。</p>
+            </section>
+
+            <section>
+                <h2>5. 第三者提供・販売</h2>
+                <p>法令に基づく場合を除き、取得した情報を第三者へ販売・提供しません。アクセス解析や広告の仕組みは、本拡張機能には入っていません。</p>
+            </section>
+
+            <section>
+                <h2>6. 開示・訂正・削除</h2>
+                <p>ご本人から、当事業が保有する購入の記録について開示・訂正・削除のお申し出があったときは、ご本人であることを確かめたうえで、法令に従って対応します。法令で保存が求められる記録は、その期間が過ぎるまで削除できない場合があります。</p>
+            </section>
+
+            <section>
+                <h2>7. 方針の変更</h2>
+                <p>本拡張機能の機能や、利用する外部サービスの変更に合わせて、本方針を改定することがあります。重要な変更は、このページでお知らせします。</p>
+            </section>
+
+            <section>
+                <h2>8. お問い合わせ窓口</h2>
+                <p>TERACO.LABO<br>代表: 藤﨑 秀一<br>メール: <a href="mailto:fujisaki@teraco-labo.com">fujisaki@teraco-labo.com</a><br>販売の条件は <a href="tokusho.html">特定商取引法に基づく表記</a> をご覧ください。</p>
+            </section>
+        </div>
+    </main>
+
+    <footer class="policy-footer">
+        <div class="container">
+            <a href="index.html">TERACO.LABOトップへ戻る</a>｜<a href="privacy.html">プライバシーポリシー</a>
+        </div>
+    </footer>
+</body>
+</html>
