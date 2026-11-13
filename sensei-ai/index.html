@@ -62,14 +62,14 @@ function linkify(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace
 // 並びの下に添え書きが付いても（「番号か一言で教えてくださいね」など・2行まで）ボタンにし、添え書きは本文の最後に回す
 function splitChoices(text){
   const lines = text.replace(/\s+$/,'').split('\n').filter(l => !/番号だけ送っても|声で答えてもOK/.test(l));
-  const isPick = l => /^\s*\d+[\.．、)]\s*\S/.test(l);
+  const isPick = l => /^\s*(\d+[\.．、)]|[-・])\s*\S/.test(l);  // 「- 〜」「・〜」の並びもボタンにする
   let end = lines.length;
   const tail = [];
   while (end > 0 && !isPick(lines[end-1]) && tail.length < 3) { if (lines[end-1].trim()) tail.unshift(lines[end-1]); end--; }
   if (tail.length > 2) return { body: text.trim(), picks: [] };
   let start = end;
   while (start > 0 && isPick(lines[start-1])) start--;
-  const picks = lines.slice(start, end).map(l => l.replace(/^\s*\d+[\.．、)]\s*/,'').replace(/\*\*/g,'').trim());
+  const picks = lines.slice(start, end).map(l => l.replace(/^\s*(\d+[\.．、)]|[-・])\s*/,'').replace(/\*\*/g,'').trim());
   if (picks.length < 2) return { body: text.trim(), picks: [] };
   const body = lines.slice(0, start).concat(tail.length ? ['', ...tail] : []).join('\n').replace(/\n{3,}/g,'\n\n').trim();
   return { body, picks };
