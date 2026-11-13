@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>てらこ先生AI</title>
+<!-- てらこ先生AI（公式LINEの中で開く質問画面・2026-11-12 試作）
+     質問は gas/Code.js（Apps Script）に送り、Claude Haiku が正本＋復習テキストで答える。
+     Google のログインは要らない。端末ごとの番号（cid）だけを付けて送る（名前は取らない）。
+     答えの最後の「1. 〜」の並びは、押せるボタンにする（藤崎さん「お客さんがタイピングしなくても会話が進むように」）。 -->
+<style>
+  :root{--green:#3F6B4F;--cream:#FAF7F1;--card:#FFFFFF;--ink:#2B2823;--muted:#5A554C;--rule:#E4DDCC;--me:#E9F0EA;}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--green:#8FC49F;--cream:#1C1A17;--card:#26231F;--ink:#F2EDE4;--muted:#B6AE9D;--rule:#3A352E;--me:#22302A;}}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--cream);color:var(--ink);font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;}
+  body{display:flex;flex-direction:column;}
+  header{padding:12px 16px;background:var(--green);color:#fff;font-weight:800;font-size:18px;letter-spacing:.04em;}
+  header small{display:block;font-weight:500;font-size:12px;opacity:.9;margin-top:2px;}
+  #log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+  .msg{max-width:88%;padding:12px 14px;border-radius:16px;line-height:1.75;font-size:17px;white-space:pre-wrap;word-break:break-word;}
+  .ai{background:var(--card);border:1.5px solid var(--rule);align-self:flex-start;border-top-left-radius:4px;}
+  .me{background:var(--me);align-self:flex-end;border-top-right-radius:4px;}
+  .ai a{color:var(--green);font-weight:700;}
+  .choices{display:flex;flex-direction:column;gap:8px;align-self:stretch;}
+  .choices button{font:inherit;font-size:17px;font-weight:700;text-align:left;padding:14px 16px;border-radius:14px;border:2px solid var(--green);background:var(--card);color:var(--green);cursor:pointer;}
+  .choices button:active{background:var(--me);}
+  .wait{color:var(--muted);font-size:15px;align-self:flex-start;}
+  form{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--rule);}
+  textarea{flex:1;font:inherit;font-size:17px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--rule);background:var(--cream);color:var(--ink);resize:none;height:48px;}
+  form button{font:inherit;font-size:16px;font-weight:800;padding:0 18px;border-radius:12px;border:none;background:var(--green);color:#fff;}
+  form button:disabled{opacity:.5;}
+  .note{font-size:12px;color:var(--muted);text-align:center;padding:0 16px 6px;}
+</style>
+</head>
+<body>
+<header>てらこ先生AI<small>スマホ・パソコン・AIの「困った」に答えます</small></header>
+<div id="log" aria-live="polite"></div>
+<p class="note">名前や電話番号、大事な番号は書かないでくださいね</p>
+<form id="f">
+  <textarea id="q" placeholder="ここに書いて「送る」" aria-label="質問"></textarea>
+  <button id="send" type="submit">送る</button>
+</form>
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbz-3izpShv-oulY2lZC2_2xY16Af9zp5xAxHlNEfRRqGUhLdrS280DzujXNxJQvoVy1/exec';
+const log = document.getElementById('log'), q = document.getElementById('q'), sendBtn = document.getElementById('send');
+let history = [];
+let cid = '';
+try { cid = localStorage.getItem('teraco-ai-cid') || ''; if (!cid) { cid = Math.random().toString(36).slice(2, 10); localStorage.setItem('teraco-ai-cid', cid); } } catch (e) { cid = 'nostore'; }
+
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function linkify(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(https?:\/\/[^\s）)」]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>'); }
+
+// 答えの最後に「1. 〜」が3つ以上並んでいたら、その並びをボタンにする
+function splitChoices(text){
+  // 候補の下に添え書き（「番号だけ送っても…」など）が付いても、ボタンにできるように外す
+  const lines = text.replace(/\s+$/,'').split('\n').filter(l => !/番号だけ送っても|声で答えてもOK/.test(l));
+  const picks = [];
+  while (lines.length) {
+    const m = lines[lines.length-1].match(/^\s*(\d+)[\.．、)]\s*(.+)$/);
+    if (!m) { if (!lines[lines.length-1].trim() && picks.length) { lines.pop(); continue; } break; }
+    picks.unshift(m[2].replace(/\*\*/g,'').trim()); lines.pop();
+  }
+  return picks.length >= 2 ? { body: lines.join('\n').trim(), picks } : { body: text.trim(), picks: [] };
+}
+
+function add(role, text){
+  const d = document.createElement('div');
+  d.className = 'msg ' + (role === 'user' ? 'me' : 'ai');
+  if (role === 'user') d.textContent = text; else d.innerHTML = linkify(text);
+  log.appendChild(d); log.scrollTop = log.scrollHeight; return d;
+}
+
+function addChoices(picks){
+  const box = document.createElement('div'); box.className = 'choices';
+  picks.forEach((p, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = (i+1) + '. ' + p;
+    b.onclick = () => { box.remove(); ask(p); };
+    box.appendChild(b);
+  });
+  log.appendChild(box); log.scrollTop = log.scrollHeight;
+}
+
+async function ask(text){
+  text = text.trim(); if (!text) return;
+  document.querySelectorAll('.choices').forEach(x => x.remove());
+  add('user', text); history.push({ role: 'user', content: text });
+  q.value = ''; sendBtn.disabled = true;
+  const w = document.createElement('div'); w.className = 'wait'; w.textContent = '考えています…'; log.appendChild(w); log.scrollTop = log.scrollHeight;
+  let reply = 'ごめんなさい、いまうまくつながりませんでした。少し待ってから、もう一度送ってくださいね。';
+  try {
+    const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ cid, messages: history }) });
+    const j = await r.json(); if (j && j.reply) reply = j.reply;
+    if (!(j && j.ok)) history.pop();      // 止めた・失敗したやり取りは、次に送る会話に入れない
+    else history.push({ role: 'assistant', content: reply });
+  } catch (e) { history.pop(); }
+  w.remove();
+  const { body, picks } = splitChoices(reply);
+  add('assistant', body || reply);
+  if (picks.length) addChoices(picks);
+  sendBtn.disabled = false;
+}
+
+document.getElementById('f').addEventListener('submit', e => { e.preventDefault(); ask(q.value); });
+add('assistant', 'スマホやパソコン、AIのことで困っていることはありますか？');
+addChoices(['LINEの使い方', '写真の送り方・保存', 'あやしいメッセージが来た', 'ほかのこと']);
+</script>
+</body>
+</html>
