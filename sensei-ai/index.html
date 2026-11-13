@@ -44,6 +44,13 @@
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbz-3izpShv-oulY2lZC2_2xY16Af9zp5xAxHlNEfRRqGUhLdrS280DzujXNxJQvoVy1/exec';
 const log = document.getElementById('log'), q = document.getElementById('q'), sendBtn = document.getElementById('send');
+const GREETING = 'スマホやパソコン、AIのことで困っていることはありますか？';
+const FIRST_PICKS = ['LINEの使い方', '写真の送り方・保存', 'あやしいメッセージが来た', 'ほかのこと'];
+// AIに送る会話の頭：生徒さんが画面を開き、AIがあいさつと候補を出したところから始まる（2026-11-13 「ほかのこと」だけが届いて話が迷子になったため）
+const OPENING = [
+  { role: 'user', content: '（生徒さんが、公式LINEのメニューから質問画面を開きました）' },
+  { role: 'assistant', content: GREETING + '\n' + FIRST_PICKS.map((p, i) => (i+1) + '. ' + p).join('\n') },
+];
 let history = [];
 let cid = '';
 try { cid = localStorage.getItem('teraco-ai-cid') || ''; if (!cid) { cid = Math.random().toString(36).slice(2, 10); localStorage.setItem('teraco-ai-cid', cid); } } catch (e) { cid = 'nostore'; }
@@ -51,17 +58,21 @@ try { cid = localStorage.getItem('teraco-ai-cid') || ''; if (!cid) { cid = Math.
 function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function linkify(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(https?:\/\/[^\s）)」]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>'); }
 
-// 答えの最後に「1. 〜」が3つ以上並んでいたら、その並びをボタンにする
+// 答えの最後のほうに「1. 〜」が並んでいたら、その並びをボタンにする。
+// 並びの下に添え書きが付いても（「番号か一言で教えてくださいね」など・2行まで）ボタンにし、添え書きは本文の最後に回す
 function splitChoices(text){
-  // 候補の下に添え書き（「番号だけ送っても…」など）が付いても、ボタンにできるように外す
   const lines = text.replace(/\s+$/,'').split('\n').filter(l => !/番号だけ送っても|声で答えてもOK/.test(l));
-  const picks = [];
-  while (lines.length) {
-    const m = lines[lines.length-1].match(/^\s*(\d+)[\.．、)]\s*(.+)$/);
-    if (!m) { if (!lines[lines.length-1].trim() && picks.length) { lines.pop(); continue; } break; }
-    picks.unshift(m[2].replace(/\*\*/g,'').trim()); lines.pop();
-  }
-  return picks.length >= 2 ? { body: lines.join('\n').trim(), picks } : { body: text.trim(), picks: [] };
+  const isPick = l => /^\s*\d+[\.．、)]\s*\S/.test(l);
+  let end = lines.length;
+  const tail = [];
+  while (end > 0 && !isPick(lines[end-1]) && tail.length < 3) { if (lines[end-1].trim()) tail.unshift(lines[end-1]); end--; }
+  if (tail.length > 2) return { body: text.trim(), picks: [] };
+  let start = end;
+  while (start > 0 && isPick(lines[start-1])) start--;
+  const picks = lines.slice(start, end).map(l => l.replace(/^\s*\d+[\.．、)]\s*/,'').replace(/\*\*/g,'').trim());
+  if (picks.length < 2) return { body: text.trim(), picks: [] };
+  const body = lines.slice(0, start).concat(tail.length ? ['', ...tail] : []).join('\n').replace(/\n{3,}/g,'\n\n').trim();
+  return { body, picks };
 }
 
 function add(role, text){
@@ -89,7 +100,7 @@ async function ask(text){
   const w = document.createElement('div'); w.className = 'wait'; w.textContent = '考えています…'; log.appendChild(w); log.scrollTop = log.scrollHeight;
   let reply = 'ごめんなさい、いまうまくつながりませんでした。少し待ってから、もう一度送ってくださいね。';
   try {
-    const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ cid, messages: history }) });
+    const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ cid, messages: OPENING.concat(history) }) });
     const j = await r.json(); if (j && j.reply) reply = j.reply;
     if (!(j && j.ok)) history.pop();      // 止めた・失敗したやり取りは、次に送る会話に入れない
     else history.push({ role: 'assistant', content: reply });
@@ -102,8 +113,8 @@ async function ask(text){
 }
 
 document.getElementById('f').addEventListener('submit', e => { e.preventDefault(); ask(q.value); });
-add('assistant', 'スマホやパソコン、AIのことで困っていることはありますか？');
-addChoices(['LINEの使い方', '写真の送り方・保存', 'あやしいメッセージが来た', 'ほかのこと']);
+add('assistant', GREETING);
+addChoices(FIRST_PICKS);
 </script>
 </body>
 </html>
