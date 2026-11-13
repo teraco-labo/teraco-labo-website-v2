@@ -30,17 +30,40 @@
   textarea{flex:1;font:inherit;font-size:17px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--rule);background:var(--cream);color:var(--ink);resize:none;height:48px;}
   form button{font:inherit;font-size:16px;font-weight:800;padding:0 18px;border-radius:12px;border:none;background:var(--green);color:#fff;}
   form button:disabled{opacity:.5;}
+  .clip{flex:none;width:48px;height:48px;border-radius:12px;border:1.5px solid var(--rule);background:var(--cream);color:var(--green);display:flex;align-items:center;justify-content:center;padding:0;}
+  .clip svg{width:26px;height:26px;}
+  #sheet{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-end;z-index:10;}
+  #sheet.open{display:flex;}
+  #sheet .panel{width:100%;background:var(--card);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;}
+  #sheet .panel p{margin:0 0 4px;font-size:15px;color:var(--muted);}
+  #sheet .panel button{font:inherit;font-size:18px;font-weight:700;text-align:left;padding:16px;border-radius:14px;border:2px solid var(--green);background:var(--card);color:var(--green);}
+  #sheet .panel button.cancel{border-color:var(--rule);color:var(--muted);text-align:center;}
+  .msg img{display:block;max-width:220px;max-height:260px;border-radius:10px;margin-bottom:6px;}
+  .msg .file{display:block;font-weight:700;margin-bottom:6px;}
   .note{font-size:12px;color:var(--muted);text-align:center;padding:0 16px 6px;}
 </style>
 </head>
 <body>
 <header>てらこ先生AI<small>スマホ・パソコン・AIの「困った」に答えます</small></header>
 <div id="log" aria-live="polite"></div>
-<p class="note">名前や電話番号、大事な番号は書かないでくださいね</p>
+<p class="note">名前や電話番号、大事な番号は書かない・写さないでくださいね</p>
 <form id="f">
+  <button id="clip" class="clip" type="button" aria-label="写真やファイルを送る"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg></button>
   <textarea id="q" placeholder="ここに書いて「送る」" aria-label="質問"></textarea>
   <button id="send" type="submit">送る</button>
 </form>
+<div id="sheet" role="dialog" aria-label="写真やファイルを送る">
+  <div class="panel">
+    <p>困っている画面や物を、写真で見せてくださいね</p>
+    <button type="button" data-in="inCam">カメラで撮って送る</button>
+    <button type="button" data-in="inPic">写真アプリから選ぶ</button>
+    <button type="button" data-in="inFile">ほかのファイル（PDFなど）</button>
+    <button type="button" class="cancel" id="sheetClose">やめる</button>
+  </div>
+</div>
+<input id="inCam" type="file" accept="image/*" capture="environment" hidden>
+<input id="inPic" type="file" accept="image/*" hidden>
+<input id="inFile" type="file" accept="application/pdf,image/*" hidden>
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbz-3izpShv-oulY2lZC2_2xY16Af9zp5xAxHlNEfRRqGUhLdrS280DzujXNxJQvoVy1/exec';
 const log = document.getElementById('log'), q = document.getElementById('q'), sendBtn = document.getElementById('send');
@@ -70,7 +93,8 @@ function splitChoices(text){
   let start = end;
   while (start > 0 && isPick(lines[start-1])) start--;
   const picks = lines.slice(start, end).map(l => l.replace(/^\s*(\d+[\.．、)]|[-・])\s*/,'').replace(/\*\*/g,'').trim());
-  if (picks.length < 2) return { body: text.trim(), picks: [] };
+  // ボタンにするのは短い候補だけ（30文字まで・6つまで）。長い箇条書きは本文のまま見せる
+  if (picks.length < 2 || picks.length > 6 || picks.some(p => p.length > 30)) return { body: text.trim(), picks: [] };
   const body = lines.slice(0, start).concat(tail.length ? ['', ...tail] : []).join('\n').replace(/\n{3,}/g,'\n\n').trim();
   return { body, picks };
 }
@@ -92,15 +116,33 @@ function addChoices(picks){
   log.appendChild(box); log.scrollTop = log.scrollHeight;
 }
 
-async function ask(text){
-  text = text.trim(); if (!text) return;
+// 送るときの会話：写真・ファイルは「いちばん新しい1つ」だけ中身を送り、前のものは文字の印に置きかえる（通信と料金を軽くするため）
+function forSend(){
+  let lastAtt = -1;
+  history.forEach((m, i) => { if (Array.isArray(m.content)) lastAtt = i; });
+  return OPENING.concat(history.map((m, i) => {
+    if (!Array.isArray(m.content) || i === lastAtt) return m;
+    const t = m.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+    return { role: m.role, content: '（前に写真かファイルを送りました）' + t };
+  }));
+}
+
+async function ask(text, att){
+  text = (text || '').trim();
+  if (!text && !att) return;
+  if (att && !text) text = att.kind === 'image' ? 'この写真を見てください' : 'このファイルを見てください';
   document.querySelectorAll('.choices').forEach(x => x.remove());
-  add('user', text); history.push({ role: 'user', content: text });
+  const d = add('user', text);
+  if (att) {
+    if (att.kind === 'image') { const im = document.createElement('img'); im.src = att.preview; im.alt = '送った写真'; d.prepend(im); }
+    else { const f = document.createElement('span'); f.className = 'file'; f.textContent = '［ファイル］' + att.name; d.prepend(f); }
+  }
+  history.push({ role: 'user', content: att ? [att.block, { type: 'text', text }] : text });
   q.value = ''; sendBtn.disabled = true;
-  const w = document.createElement('div'); w.className = 'wait'; w.textContent = '考えています…'; log.appendChild(w); log.scrollTop = log.scrollHeight;
+  const w = document.createElement('div'); w.className = 'wait'; w.textContent = att ? '写真を見ています…' : '考えています…'; log.appendChild(w); log.scrollTop = log.scrollHeight;
   let reply = 'ごめんなさい、いまうまくつながりませんでした。少し待ってから、もう一度送ってくださいね。';
   try {
-    const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ cid, messages: OPENING.concat(history) }) });
+    const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ cid, messages: forSend() }) });
     const j = await r.json(); if (j && j.reply) reply = j.reply;
     if (!(j && j.ok)) history.pop();      // 止めた・失敗したやり取りは、次に送る会話に入れない
     else history.push({ role: 'assistant', content: reply });
@@ -111,6 +153,49 @@ async function ask(text){
   if (picks.length) addChoices(picks);
   sendBtn.disabled = false;
 }
+
+// ---- 写真・ファイル（2026-11-13 藤崎さん「クリップのマーク。カメラで撮って送る、写真アプリから送る、その他のファイルも」） ----
+const sheet = document.getElementById('sheet');
+document.getElementById('clip').onclick = () => sheet.classList.add('open');
+document.getElementById('sheetClose').onclick = () => sheet.classList.remove('open');
+sheet.addEventListener('click', e => { if (e.target === sheet) sheet.classList.remove('open'); });
+sheet.querySelectorAll('[data-in]').forEach(b => b.onclick = () => { sheet.classList.remove('open'); document.getElementById(b.dataset.in).click(); });
+
+// 写真は長い辺1600まで縮めて JPEG にする（スマホの写真は大きく、そのままだと送れない・料金も上がるため）
+function shrinkImage(file){
+  return new Promise((ok, ng) => {
+    const url = URL.createObjectURL(file); const im = new Image();
+    im.onload = () => {
+      const s = Math.min(1, 1600 / Math.max(im.naturalWidth, im.naturalHeight));
+      const c = document.createElement('canvas'); c.width = Math.round(im.naturalWidth * s); c.height = Math.round(im.naturalHeight * s);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      ok(c.toDataURL('image/jpeg', 0.85));
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); ng(new Error('読めない写真')); };
+    im.src = url;
+  });
+}
+function readBase64(file){
+  return new Promise((ok, ng) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.onerror = ng; r.readAsDataURL(file); });
+}
+async function onPick(e){
+  const file = e.target.files && e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  try {
+    if (/^image\//.test(file.type) || /\.(heic|heif|jpe?g|png|webp|gif)$/i.test(file.name)) {
+      const dataUrl = await shrinkImage(file);
+      return ask(q.value, { kind: 'image', preview: dataUrl, block: { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: dataUrl.split(',')[1] } } });
+    }
+    if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
+      if (file.size > 4 * 1024 * 1024) return add('assistant', 'ごめんなさい、このファイルは大きすぎて見られないんです。困っているページを、写真に撮って送ってもらえますか？');
+      return ask(q.value, { kind: 'pdf', name: file.name, block: { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: await readBase64(file) } } });
+    }
+    add('assistant', 'ごめんなさい、この種類のファイルは見られないんです。写真かPDFで送ってもらえますか？ 画面の写真（スクリーンショット）でも大丈夫ですよ。');
+  } catch (err) {
+    add('assistant', 'ごめんなさい、うまく読みこめませんでした。もう一度選ぶか、写真に撮って送ってもらえますか？');
+  }
+}
+['inCam', 'inPic', 'inFile'].forEach(id => document.getElementById(id).addEventListener('change', onPick));
 
 document.getElementById('f').addEventListener('submit', e => { e.preventDefault(); ask(q.value); });
 add('assistant', GREETING);
