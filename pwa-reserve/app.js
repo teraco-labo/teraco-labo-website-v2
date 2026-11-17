@@ -615,7 +615,7 @@ function viewConfirm() {
 function lineResultHtml(l) {
   if (!l || S.proxy) return '';
   if (l.sent) return `<div class="info">LINEにお知らせを送りました。</div>`;
-  if (l.reason === 'not_friend') return `<div class="note">LINEのお知らせは、「${esc(LINE_CFG.accountName || 'スマホ教室TERACO')}」を友だち追加すると届きます。<br><a href="${esc(LINE_CFG.addFriendUrl || '#')}" style="color:#8E281D;font-weight:800;">友だち追加する</a></div>`;
+  if (l.reason === 'not_friend') return `<div class="note">LINEのお知らせは、「${esc(LINE_CFG.accountName || 'スマホ教室てらこ')}」を友だち追加すると届きます。<br><a href="${esc(LINE_CFG.addFriendUrl || '#')}" style="color:#8E281D;font-weight:800;">友だち追加する</a></div>`;
   if (l.reason === 'limit') return `<div class="note">今月のLINEのお知らせは上限に達したため送れませんでした。予約はできています。</div>`;
   return '';
 }
@@ -839,7 +839,7 @@ async function runPending() {
       saveUsual(pd.slots);
       const lines = pd.slots.map(s => `${fmtDay(parseDayKey(s.day_key))} ${slotTimeText(s)}`);
       S.done = { title: '予約できました', lines, note: `クラス：${classText(me())}`, line: r.line || null,
-        share: `【スマホ教室TERACO 予約の控え】\n${me().name} さん\n${classText(me())}\n${lines.join('\n')}` };
+        share: `【スマホ教室てらこ 予約の控え】\n${me().name} さん\n${classText(me())}\n${lines.join('\n')}` };
     } else if (pd.type === 'cancel') {
       busy(true, '取り消しています…'); const r = await doCancel(pd.items);
       if (!r || !r.ok) throw new Error((r && r.message) || '取り消しできませんでした。');

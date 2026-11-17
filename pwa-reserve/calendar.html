@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>スマホ教室TERACOカレンダー</title>
+<title>スマホ教室てらこカレンダー</title>
 <!-- ホーム画面・Dock に置く「教室カレンダー」（?app=1 で開く・2026-11-11 藤崎さん） -->
 <link rel="apple-touch-icon" href="calendar-icon.png">
 <meta name="apple-mobile-web-app-title" content="教室カレンダー">
@@ -93,8 +93,8 @@ const IMG_MONTHS = window.TERACO_CAL_IMG_MONTHS || [];
 function showImage() {
   const [y, m] = month.split('-').map(Number), sheet = document.getElementById('sheet');
   sheet.classList.add('pic');
-  sheet.innerHTML = `<img src="calendar-img/calendar-${month}.jpg?v=6" alt="${y}年${m}月 スマホ教室TERACOカレンダー">`;
-  document.title = `${y}年${m}月 スマホ教室TERACOカレンダー`;
+  sheet.innerHTML = `<img src="calendar-img/calendar-${month}.jpg?v=6" alt="${y}年${m}月 スマホ教室てらこカレンダー">`;
+  document.title = `${y}年${m}月 スマホ教室てらこカレンダー`;
   document.getElementById('msg').textContent = APP ? appLabel() : `${m}月の講座カレンダー`;
   setUrl();
 }
@@ -142,7 +142,7 @@ function build() {
       <div class="week-body">${ROWS.map((t, i) => `<div class="tm" style="grid-row:${i + 1};">${t}</div>`).join('')}${w.days.map(d => dayColumn(d, inM(d))).join('')}</div>`;
   }).join('');
   document.getElementById('sheet').innerHTML = `
-    <div class="head"><div class="ym"><div class="y">${y}</div><div class="m">${m}月</div></div><div class="title">スマホ教室TERACOカレンダー</div></div>
+    <div class="head"><div class="ym"><div class="y">${y}</div><div class="m">${m}月</div></div><div class="title">スマホ教室てらこカレンダー</div></div>
     <div class="grid-head"><div></div><div>火曜日</div><div>水曜日</div><div>木曜日</div><div>金曜日</div></div>
     <div class="weeks">${body}</div>
     <div class="foot"><div class="txt">
@@ -151,7 +151,7 @@ function build() {
       ※ 個人レッスン、オンライン（※チケット含む）はご予約時に時間の調整をいたします。（AM10:00~12:00・PM14:00~17:00）<br>
       ※ ご予約はお電話 <span class="tel">090-6738-1469</span> またはメッセージでお気軽にどうぞ♪　<span class="line">LINE友達追加で無料質問・お問合せ・予約ができます→</span></div>
       <img class="qr" src="/images/line-qr.png" alt="LINE"><img class="logo" src="/images/teraco-labo-logo-main.png" alt="TERACO LABO"></div>`;
-  document.title = `${y}年${m}月 スマホ教室TERACOカレンダー`;
+  document.title = `${y}年${m}月 スマホ教室てらこカレンダー`;
   document.getElementById('msg').textContent = APP ? appLabel() : schedule.published.includes(month) ? `${m}月：生徒さんに公開中の日程です` : `${m}月：まだ公開していない日程です（管理者画面で確定できます）`;
   setUrl();
 }
