@@ -36,4 +36,8 @@
     <loc>https://teraco-labo.com/sensei/</loc>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://teraco-labo.com/map.html</loc>
+    <priority>0.6</priority>
+  </url>
 </urlset>
