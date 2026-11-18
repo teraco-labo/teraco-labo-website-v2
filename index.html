@@ -723,6 +723,10 @@
         padding: 20px 8px 16px; border-radius: 14px; border: 1.5px solid; background: var(--white);
     }
     .pr-card.is-pick { border-width: 2.5px; }
+    /* 2026-11-19 クラスの曜日・時間（正本は pwa-reserve/timetable.js）と、準備中のコース */
+    .pr-sched { display: block; margin-top: 6px; font-size: 12px; color: var(--body-text); line-height: 1.6; }
+    .pr-card.is-soon { opacity: .6; }
+    .pr-badge.pr-badge-soon { background: #8a8f8b; }
     .pr-beg { background: #fbf0dc; border-color: #e5b26a; }
     .pr-beg.is-pick { border-color: #d9913a; }
     .pr-adv { background: #e6f2e4; border-color: #8fbf8c; }
@@ -917,16 +921,16 @@
             <div class="container">
                 <div class="tl-head reveal">
                     <h2 class="tl-title">料金</h2>
-                    <div class="tl-desc">2026年9月改定・すべて税込です</div>
+                    <div class="tl-desc">2026年9月改定・すべて税込です<br>入会金は、いまは0円です（通常5,000円）</div>
                 </div>
 
                 <div class="pr-group reveal">
                     <div class="pr-head"><h3 class="pr-title">スマホ・タブレット教室</h3><span class="pr-lead">2〜8名の少人数　何回でも質問できます</span></div>
                     <div class="pr-grid">
-                        <div class="pr-card pr-beg"><span class="pr-name">スマホ入門2</span><span class="pr-price"><span class="pr-month">月</span>5,000<span class="pr-yen">円</span></span><span class="pr-unit">45分 × 月2回</span></div>
-                        <div class="pr-card pr-beg is-pick"><span class="pr-badge">おすすめ</span><span class="pr-name">スマホ入門4</span><span class="pr-price"><span class="pr-month">月</span>8,000<span class="pr-yen">円</span></span><span class="pr-unit">45分 × 月4回</span></div>
-                        <div class="pr-card pr-adv"><span class="pr-name">スマホ応用2</span><span class="pr-price"><span class="pr-month">月</span>8,000<span class="pr-yen">円</span></span><span class="pr-unit">90分 × 月2回</span></div>
-                        <div class="pr-card pr-adv"><span class="pr-name">スマホ応用4</span><span class="pr-price"><span class="pr-month">月</span>12,000<span class="pr-yen">円</span></span><span class="pr-unit">90分 × 月4回</span></div>
+                        <div class="pr-card pr-beg"><span class="pr-name">スマホ入門2</span><span class="pr-price"><span class="pr-month">月</span>5,000<span class="pr-yen">円</span></span><span class="pr-unit">45分 × 月2回</span><span class="pr-sched">A 水曜16:00／B 金曜14:00</span></div>
+                        <div class="pr-card pr-beg is-pick"><span class="pr-badge">おすすめ</span><span class="pr-name">スマホ入門4</span><span class="pr-price"><span class="pr-month">月</span>8,000<span class="pr-yen">円</span></span><span class="pr-unit">45分 × 月4回</span><span class="pr-sched">A 水曜16:00／B 金曜14:00</span></div>
+                        <div class="pr-card pr-adv"><span class="pr-name">スマホ応用2</span><span class="pr-price"><span class="pr-month">月</span>8,000<span class="pr-yen">円</span></span><span class="pr-unit">90分 × 月2回</span><span class="pr-sched">A 水曜14:00／B 金曜10:00</span></div>
+                        <div class="pr-card pr-adv"><span class="pr-name">スマホ応用4</span><span class="pr-price"><span class="pr-month">月</span>12,000<span class="pr-yen">円</span></span><span class="pr-unit">90分 × 月4回</span><span class="pr-sched">A 水曜14:00／B 金曜10:00</span></div>
                     </div>
                     <a href="smartphone.html" class="pr-more">講座の内容を見る</a>
                 </div>
@@ -934,10 +938,10 @@
                 <div class="pr-group reveal">
                     <div class="pr-head"><h3 class="pr-title">パソコンAI教室</h3><span class="pr-lead">ChatGPTやAIツールを、生活や仕事に活かす</span></div>
                     <div class="pr-grid">
-                        <div class="pr-card pr-pcb"><span class="pr-name">パソコン入門2</span><span class="pr-price"><span class="pr-month">月</span>5,000<span class="pr-yen">円</span></span><span class="pr-unit">45分 × 月2回</span></div>
-                        <div class="pr-card pr-pcb is-pick"><span class="pr-badge">おすすめ</span><span class="pr-name">パソコン入門4</span><span class="pr-price"><span class="pr-month">月</span>9,000<span class="pr-yen">円</span></span><span class="pr-unit">45分 × 月4回</span></div>
-                        <div class="pr-card pr-pca"><span class="pr-name">パソコン応用2</span><span class="pr-price"><span class="pr-month">月</span>9,000<span class="pr-yen">円</span></span><span class="pr-unit">90分 × 月2回</span></div>
-                        <div class="pr-card pr-pca"><span class="pr-name">パソコン応用4</span><span class="pr-price"><span class="pr-month">月</span>14,000<span class="pr-yen">円</span></span><span class="pr-unit">90分 × 月4回</span></div>
+                        <div class="pr-card pr-pcb"><span class="pr-name">パソコン入門2</span><span class="pr-price"><span class="pr-month">月</span>5,000<span class="pr-yen">円</span></span><span class="pr-unit">45分 × 月2回</span><span class="pr-sched">A 水曜10:00／B 金曜16:00</span></div>
+                        <div class="pr-card pr-pcb is-pick"><span class="pr-badge">おすすめ</span><span class="pr-name">パソコン入門4</span><span class="pr-price"><span class="pr-month">月</span>9,000<span class="pr-yen">円</span></span><span class="pr-unit">45分 × 月4回</span><span class="pr-sched">A 水曜10:00／B 金曜16:00</span></div>
+                        <div class="pr-card pr-pca is-soon"><span class="pr-badge pr-badge-soon">準備中</span><span class="pr-name">パソコン応用2</span><span class="pr-price"><span class="pr-month">月</span>9,000<span class="pr-yen">円</span></span><span class="pr-unit">90分 × 月2回</span><span class="pr-sched">時間を準備中です</span></div>
+                        <div class="pr-card pr-pca is-soon"><span class="pr-badge pr-badge-soon">準備中</span><span class="pr-name">パソコン応用4</span><span class="pr-price"><span class="pr-month">月</span>14,000<span class="pr-yen">円</span></span><span class="pr-unit">90分 × 月4回</span><span class="pr-sched">時間を準備中です</span></div>
                     </div>
                     <a href="ai.html" class="pr-more">講座の内容を見る</a>
                 </div>

@@ -55,7 +55,11 @@
     /* 講座内容カード（feature-card2）をボタンにしても、元の左寄せのリストのまま見せる */
     .feature-card2.tc-card-btn { display: flex; flex-direction: column; align-items: stretch; text-align: left; color: inherit; }
     .feature-card2.tc-card-btn .tc-more { margin-top: auto; padding-top: 10px; align-self: flex-start; }
-    </style>
+    /* 2026-11-19 準備中のコース（.reveal の opacity とぶつからないよう色で薄くする） */
+    .price-card.is-soon { position: relative; background: #f6f6f4; }
+    .price-card.is-soon h4, .price-card.is-soon .price-amount, .price-card.is-soon .price-detail { color: #9a9f9b; }
+    .price-card .price-badge.price-badge-soon { background: #8a8f8b; }
+</style>
 </head>
 <body>
     <a href="#main-content" class="skip-link">メインコンテンツへスキップ</a>
@@ -170,6 +174,7 @@
                         <h4>パソコン入門2</h4>
                         <div class="price-amount">月5,000円</div>
                         <div class="price-detail">45分 × 月2回</div>
+                        <div class="price-detail">クラス A 水曜10:00／B 金曜16:00</div>
                         <a class="btn-forest" href="contact.html?service=ai&plan=basic2">申し込む・相談</a>
                     </div>
                     <div class="price-card is-popular reveal">
@@ -177,23 +182,27 @@
                         <h4>パソコン入門4</h4>
                         <div class="price-amount">月9,000円</div>
                         <div class="price-detail">45分 × 月4回</div>
+                        <div class="price-detail">クラス A 水曜10:00／B 金曜16:00</div>
                         <a class="btn-forest" href="contact.html?service=ai&plan=basic4">申し込む・相談</a>
                     </div>
-                    <div class="price-card reveal">
+                    <div class="price-card is-soon reveal">
+                        <span class="price-badge price-badge-soon">準備中</span>
                         <h4>パソコン応用2</h4>
                         <div class="price-amount">月9,000円</div>
                         <div class="price-detail">90分 × 月2回</div>
-                        <a class="btn-forest" href="contact.html?service=ai&plan=advance2">申し込む・相談</a>
+                        <div class="price-detail">時間を準備中です</div>
                     </div>
-                    <div class="price-card reveal">
+                    <div class="price-card is-soon reveal">
+                        <span class="price-badge price-badge-soon">準備中</span>
                         <h4>パソコン応用4</h4>
                         <div class="price-amount">月14,000円</div>
                         <div class="price-detail">90分 × 月4回</div>
-                        <a class="btn-forest" href="contact.html?service=ai&plan=advance4">申し込む・相談</a>
+                        <div class="price-detail">時間を準備中です</div>
                     </div>
                 </div>
                 <div class="price-note">
                     ・料金はすべて税込です。<br>
+                    ・入会金は、いまは0円です（通常5,000円）。<br>
                     ・完全マンツーマンの<a href="lesson.html" class="detail-link">個人レッスン</a>は単発8,000円（50分）から。月謝制・チケット制もございます。
                 </div>
             </div>
