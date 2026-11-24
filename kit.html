@@ -233,6 +233,12 @@
     .kit-price-value { font-family: var(--font-serif); font-size: 1.35rem; font-weight: 700; color: var(--forest-dark); margin-bottom: 14px; }
     .kit-price-card ul { list-style: none; text-align: left; font-size: .87rem; color: var(--body-text); display: grid; gap: 6px; padding: 0; }
     .kit-price-card li::before { content: "・"; color: var(--forest); }
+    .kit-price-value small { display: block; font-family: var(--font-sans, inherit); font-size: .78rem; font-weight: 500; color: var(--tl-muted); margin-top: 2px; }
+    .kit-buy-btn { display: block; width: 100%; margin-top: 18px; padding: 13px 16px; border-radius: 999px; border: 0; font-size: .95rem; font-weight: 700; background: #d9ddd9; color: #5c645e; cursor: not-allowed; }
+    .kit-why { max-width: 820px; margin: 28px auto 0; background: var(--white, #fff); border: 1px solid var(--tl-border); border-radius: 18px; padding: 22px 24px; }
+    .kit-why h3 { font-family: var(--font-serif); font-size: 1.05rem; margin-bottom: 10px; color: var(--forest-dark); }
+    .kit-why ul { list-style: none; padding: 0; display: grid; gap: 8px; font-size: .9rem; color: var(--body-text); line-height: 1.8; }
+    .kit-why li::before { content: "✓ "; color: var(--forest); font-weight: 700; }
 
     /* サンプル請求フォーム */
     .kit-form-card {
@@ -315,7 +321,7 @@
                 <h1>AIに詳しくない先生でも、<br>45分のAI授業を進められるように。</h1>
                 <p class="kit-sub">動画のように動くスライド教材・講師台本・ワークシート・時間配分・つまずき対応まで。年間300講座の現場で磨いた「そのまま使える授業一式」です。</p>
                 <p class="kit-product-name">高校生のための「未来を描く」AI講座 完全実施キット</p>
-                <p class="kit-launch-note">BASE で近日発売の予定です（準備中）。まずは無料の体験版でお試しください。</p>
+                <p class="kit-launch-note">個人講師 19,800円／教室・学校ライセンス 39,800円（税込・買い切り）。お支払いの準備中です。まずは無料の体験版でお試しください。</p>
                 <div class="kit-hero-ctas">
                     <a class="btn-forest" href="gift/kit-sample/taiken/">体験版を見る（無料）</a>
                     <a class="btn-outline-forest" href="#price">プランを見る</a>
@@ -449,30 +455,43 @@
                 <div class="tl-head reveal">
                     <span class="kit-eyebrow">ライセンス</span>
                     <h2 class="tl-title">利用範囲に合わせた2つのプラン</h2>
-                    <p class="tl-lead">BASE で近日発売します（準備中）。価格は発売のときにこのページに表示します。お支払いのあと、すぐにダウンロードしてお使いいただけます。</p>
+                    <p class="tl-lead">いま、このページから買えるように、お支払いの仕組み（クレジットカード・決済サービス Stripe）を準備しています。お支払いのあと、すぐにダウンロードしてお使いいただけます。</p>
                 </div>
                 <div class="kit-price-grid">
                     <div class="kit-price-card reveal">
                         <h3>個人講師</h3>
                         <p class="kit-price-scope">購入者ご本人 1名</p>
-                        <p class="kit-price-value">買い切り（近日発売・価格は発売時に表示）</p>
+                        <p class="kit-price-value">19,800円<small>税込・買い切り</small></p>
                         <ul>
                             <li>キット一式（全6単元）</li>
                             <li>講師台本（時間調整の目安つき）</li>
+                            <li>ご購入から1年以内の改訂版</li>
                         </ul>
+                        <button type="button" class="kit-buy-btn" disabled aria-disabled="true">準備中（お支払いの準備をしています）</button>
                     </div>
                     <div class="kit-price-card reveal">
                         <h3>教室・学校ライセンス</h3>
                         <p class="kit-price-scope">1拠点（1校舎・1校）・講師は何人でも</p>
-                        <p class="kit-price-value">買い切り（近日発売・価格は発売時に表示）</p>
+                        <p class="kit-price-value">39,800円<small>税込・買い切り・1拠点</small></p>
                         <ul>
                             <li>個人プランのすべて</li>
                             <li>同じ拠点の講師なら何人でも利用可</li>
                             <li>講師向け準備チェックリスト・準備15分ガイド</li>
                         </ul>
+                        <button type="button" class="kit-buy-btn" disabled aria-disabled="true">準備中（お支払いの準備をしています）</button>
                     </div>
                 </div>
-                <p class="tl-lead" style="margin-top:20px;">複数の校舎・学校でお使いの場合は、拠点の数だけご購入ください。公費の請求書払い（後払い）には、現在対応していません。</p>
+                <p class="tl-lead" style="margin-top:20px;">複数の校舎・学校でお使いの場合は、拠点の数だけご購入ください。公費の請求書払い（後払い）には、現在対応していません。お取引の条件は<a href="tokusho.html">特定商取引法に基づく表記</a>をご覧ください。</p>
+                <div class="kit-why reveal">
+                    <h3>この値段の理由：開いて、そのまま教えられる完成品です</h3>
+                    <ul>
+                        <li>AI に特化した全6回の授業が、スライド・台本・ワークシートまで完成した形で届きます。先生が作る手間はありません</li>
+                        <li>中学生・高校生の授業向けに作っています（生成AIの年齢の条件と、13歳未満の生徒さんの参加のしかたも案内します）</li>
+                        <li>学校・塾のアカウントの準備（Gemini など）を、準備チェックリストで前もって確かめられます</li>
+                        <li>操作の手順は、各サービスの公式ヘルプで確かめた内容だけを載せています（確認日つき）</li>
+                        <li>AI のサービスは変わるので、年1回改訂します。ご購入から1年以内の改訂版は無料です</li>
+                    </ul>
+                </div>
             </div>
         </section>
 
@@ -564,7 +583,7 @@
         <div class="container">
             <p class="kit-f-brand">TERACO.LABO</p>
             <p>宮崎県西都市大字三宅9437-9｜<a href="mailto:fujisaki@teraco-labo.com">fujisaki@teraco-labo.com</a></p>
-            <p style="margin-top:10px"><a href="index.html">教室サイト</a>｜<a href="privacy.html">プライバシーポリシー</a></p>
+            <p style="margin-top:10px"><a href="index.html">教室サイト</a>｜<a href="privacy.html">プライバシーポリシー</a>｜<a href="tokusho.html">特定商取引法に基づく表記</a></p>
         </div>
     </footer>
 
