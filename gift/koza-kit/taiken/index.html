@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>体験版｜はじめての生成AI（講座まるごとキットの見本）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --ink:#1f2a44;        
+  --sub:#5b6478;        
+  --accent:#2563c9;     
+  --tap:#FF7A45;        
+  --soft:color-mix(in srgb,var(--accent) 9%,#fff);       
+  --line:#d9e1ef;
+  --ok:#2e9d5b;
+  --bg1:#f7f9fd; --bg2:color-mix(in srgb,var(--accent) 11%,#fff); --bg3:#fdf3ea;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0f1320;color:var(--ink);font-family:"Noto Sans JP","Hiragino Sans",sans-serif;-webkit-font-smoothing:antialiased}
+#deck{position:fixed;inset:0;overflow:hidden}
+.sl{position:absolute;left:50%;top:50%;width:1920px;height:1080px;margin:-540px 0 0 -960px;display:none;overflow:hidden;
+  background:radial-gradient(1200px 700px at 8% 0%,var(--bg2),transparent 60%),radial-gradient(900px 600px at 100% 100%,var(--bg3),transparent 60%),var(--bg1);
+  padding:150px 120px 110px;font-size:40px;line-height:1.6;font-weight:500;color:var(--ink);text-align:left}
+.sl.on{display:block}
+aside.notes{display:none}
+
+.sl .kz-sec{position:absolute;left:120px;top:46px;line-height:1.2;font-size:26px;font-weight:700;color:var(--accent);letter-spacing:.06em}
+.sl h2{position:absolute;left:120px;top:96px;right:120px;margin:0;font-size:58px;font-weight:700;line-height:1.35}
+.sl h2 + *{margin-top:40px}
+
+.kz-foot{position:absolute;right:56px;bottom:30px;font-size:22px;color:var(--sub);display:flex;gap:28px;align-items:baseline}
+.kz-foot .no{font-family:Outfit,sans-serif;font-weight:700;font-size:26px;color:var(--ink)}
+
+.cover{display:flex;flex-direction:column;justify-content:center;height:100%;padding-left:70px;border-left:16px solid var(--accent)}
+.cover .kick{font-size:34px;font-weight:700;color:var(--accent);letter-spacing:.08em}
+.cover h1{font-size:96px;line-height:1.3;margin:24px 0 28px;font-weight:700}
+.cover .lead{font-size:40px;color:var(--sub)}
+.door{display:flex;flex-direction:column;justify-content:center;height:100%;padding-left:70px;border-left:16px solid var(--accent);position:relative}
+.door .bg{position:absolute;right:-20px;bottom:-120px;font-family:Outfit,sans-serif;font-weight:700;font-size:560px;line-height:1;color:var(--accent);opacity:.07}
+.door .num{font-size:44px;font-weight:700;color:var(--accent)}
+.door .ttl{font-size:92px;font-weight:700;line-height:1.3;margin-top:10px}
+.door .lead{font-size:38px;color:var(--sub);margin-top:24px}
+.msg{position:absolute;left:120px;right:120px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center}
+.msg .big{font-size:84px;font-weight:700;line-height:1.4}
+.msg .big em{font-style:normal;color:var(--accent)}
+.msg .small{font-size:40px;color:var(--sub);margin-top:30px}
+.body{position:absolute;left:120px;right:120px;top:250px;bottom:120px;display:flex;flex-direction:column;justify-content:center}
+.body.top{justify-content:flex-start}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:stretch}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;height:100%}
+.split.tall{grid-template-columns:1.5fr 1fr}   
+.mock.phone{width:390px;height:680px;margin:0 auto;border-radius:52px;border-width:10px;border-color:#2a3145}
+.mock.phone .bar{height:64px;justify-content:center}
+.mock.phone.l{width:440px;height:740px}   
+.alt{font-size:30px;color:var(--sub);border-left:6px solid var(--line);padding-left:16px;margin-top:22px}   
+.card{background:#fff;border:2px solid var(--line);border-radius:28px;padding:44px 48px;font-size:46px;box-shadow:0 10px 30px rgba(31,42,68,.06)}
+.card h3{margin:0 0 14px;font-size:50px}
+.card p{margin:0}
+
+@keyframes kzGlow{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 55%,transparent);border-color:var(--accent)}35%{box-shadow:0 0 0 10px color-mix(in srgb,var(--accent) 22%,transparent);border-color:var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
+@keyframes kzGlowText{0%,35%{color:var(--accent)}100%{color:inherit}}
+body:not(.print):not(.edit) .card.frag.last,body:not(.print):not(.edit) .kz-hl.frag.last{animation:kzGlow 1.6s ease-out 1}
+body:not(.print):not(.edit) .pts li.frag.last{animation:kzGlowText 1.6s ease-out 1}
+.card.bad{border-color:#d9534f} .card.bad h3{color:#c0392b}
+ul.pts{margin:0;padding:0;list-style:none}
+ul.pts li{position:relative;padding-left:64px;margin:34px 0;font-size:54px;line-height:1.45}
+ul.pts li small{display:block;font-size:36px;color:var(--sub)}
+ul.pts li::before{content:"";position:absolute;left:8px;top:.5em;width:26px;height:26px;border-radius:50%;background:var(--accent)}
+
+.steps{display:flex;flex-direction:column;gap:34px}
+.st{display:flex;gap:28px;align-items:flex-start;font-size:48px;line-height:1.45;opacity:.32;transition:opacity .25s}
+.st .n{flex:0 0 76px;height:76px;border-radius:50%;background:#c5cddc;color:#fff;font-family:Outfit,sans-serif;font-weight:700;font-size:38px;display:flex;align-items:center;justify-content:center}
+.st.shown{opacity:.55}
+.st.last{opacity:1}
+.st.last .n{background:var(--tap)}
+.st.done{opacity:.55}   
+.st.done .n{background:var(--ok)}
+.st small{display:block;font-size:32px;color:var(--sub)}
+
+.mock{position:relative;background:#fff;border:3px solid #c9d2e3;border-radius:26px;overflow:hidden;box-shadow:0 14px 40px rgba(31,42,68,.10)}
+.mock .bar{height:56px;background:#f1f4f9;border-bottom:2px solid #e2e7f0;display:flex;align-items:center;gap:12px;padding:0 22px;font-size:24px;color:var(--sub)}
+.mock .bar i{width:16px;height:16px;border-radius:50%;background:#d6dbe5;display:inline-block}
+.mock .in{padding:28px 30px;font-size:30px}
+.chat .b{max-width:82%;padding:16px 22px;border-radius:22px;margin:12px 0;font-size:28px;line-height:1.55}
+.chat .me{margin-left:auto;background:var(--soft)}
+.chat .ai{background:#f4f4f2}
+.inputbox{margin:18px 30px 26px;border:2px solid #cfd6e3;border-radius:999px;padding:16px 26px;font-size:28px;color:var(--sub)}
+.inputbox.send{position:relative;padding-right:100px}   
+.inputbox.send::after{content:"↑";position:absolute;right:14px;top:50%;margin-top:-30px;width:60px;height:60px;border-radius:50%;background:var(--ink);color:#fff;font-size:34px;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+.sheet{position:relative;background:#fffdf7;border:3px solid #d9cfb8;border-radius:10px;padding:34px 40px;box-shadow:0 14px 40px rgba(31,42,68,.10);font-size:30px}
+.sheet .ttl{font-size:34px;font-weight:700;margin-bottom:18px;padding-bottom:10px;border-bottom:3px solid #d9cfb8}
+.sheet .row{display:flex;gap:18px;align-items:flex-end;padding:16px 12px;border-radius:10px;border-bottom:2px dashed #d9cfb8}
+.sheet .row .lab{flex:0 0 auto;font-weight:700}
+.sheet .row .val{flex:1;min-height:44px;color:var(--accent);font-weight:500}
+.sheet .row.frag{opacity:1;transform:none}
+.sheet .row.frag .val{visibility:hidden}
+.sheet .row.frag.shown .val{visibility:visible}
+.sheet .row.frag.last{background:#fff1e6;box-shadow:0 0 0 4px var(--tap)}
+body.print .sheet .row.frag .val,body.edit .sheet .row.frag .val{visibility:visible}
+.tap{position:absolute;width:86px;height:86px;margin:-43px 0 0 -43px;border-radius:50%;border:8px solid var(--tap);box-shadow:0 0 0 8px rgba(255,122,69,.25);pointer-events:none}
+
+.okbox{border:4px solid var(--ok);border-radius:36px;background:#f1fbf5;padding:56px 64px}
+.okbox .lab{display:inline-block;background:var(--ok);color:#fff;border-radius:999px;padding:4px 26px;font-size:30px;font-weight:700}
+.okbox .what{font-size:58px;font-weight:700;margin-top:16px}
+.okbox .back{font-size:38px;color:var(--sub);margin-top:16px}
+
+.word{background:#fff;border:2px solid var(--line);border-radius:32px;padding:48px 56px}
+.word .term{font-size:88px;font-weight:700;line-height:1.2}
+.word .yomi{font-size:34px;color:var(--sub);margin-top:6px}
+.word .mean{font-size:44px;margin-top:26px}
+.word .ex{font-size:34px;color:var(--sub);margin-top:18px}
+
+.tag{display:inline-block;border-radius:999px;padding:6px 26px;font-size:28px;font-weight:700;color:#fff;background:var(--accent);vertical-align:middle;margin-right:14px}
+.tag.demo{background:#1f2a44} .tag.try{background:var(--tap)}
+.demo-note{font-size:32px;color:var(--sub);margin-top:10px}
+
+.why{font-size:32px;line-height:1.5;border-left:8px solid var(--accent);padding-left:20px;margin-top:10px;color:var(--ink)}
+.why b{color:var(--accent);margin-right:22px}
+.sl.two .body{top:312px;bottom:100px}   
+
+.cols.talk .card{font-size:38px;line-height:1.75;padding:36px 42px}
+.cols.talk .card h3{font-size:40px;margin-bottom:10px}
+.mark{font-weight:700;text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:6px;text-underline-offset:8px}
+.ask{font-size:44px;font-weight:700;text-align:center;margin-top:34px}
+.src{font-size:26px;color:var(--sub);margin-top:6px}
+.ahead.inline{position:static;width:auto;margin-top:44px}
+.ahead{position:absolute;right:120px;bottom:110px;width:560px;font-size:28px;background:#fff8ef;border:2px dashed #f0b27a;border-radius:20px;padding:20px 26px}
+.ahead b{display:block;font-size:26px;color:#c96a1b}
+
+.frag{opacity:0;transform:translateY(16px);transition:opacity .3s,transform .3s}
+.frag.shown{opacity:1;transform:none}
+.st.frag{opacity:.32;transform:none}
+.st.frag.shown{opacity:.55}.st.frag.last{opacity:1}
+.tap.s{width:60px;height:60px;margin:-30px 0 0 -30px;border-width:6px;box-shadow:0 0 0 6px rgba(255,122,69,.25)}   
+.okbox + .ahead{position:static;width:auto;margin-top:36px}
+.tap.frag{transform:scale(.6)} .tap.frag.shown{opacity:0} .tap.frag.last{opacity:1;transform:none}
+
+body.print .tap.frag{opacity:0!important}
+
+#kzBar{position:fixed;left:0;right:0;bottom:0;height:14px;background:rgba(255,255,255,.08);cursor:pointer;z-index:5}
+#kzBar .fill{height:100%;background:var(--tap);width:0}
+#kzBar .tip{position:absolute;bottom:22px;transform:translateX(-50%);background:#fff;color:var(--ink);font-size:14px;padding:4px 10px;border-radius:8px;white-space:nowrap;display:none}
+#kzBar.drag .tip{display:block}
+#kzHome{position:fixed;left:16px;bottom:26px;z-index:6;font-size:14px;padding:8px 14px;border-radius:10px;border:0;background:rgba(255,255,255,.85);cursor:pointer;opacity:0;transition:opacity .3s}
+body.mouse #kzHome{opacity:1}
+#kzHelp{position:fixed;right:16px;bottom:26px;z-index:6;color:rgba(255,255,255,.6);font-size:13px;opacity:0;transition:opacity .3s}
+body.mouse #kzHelp{opacity:1}
+
+body.print{background:#fff;height:auto}
+body.print #deck{position:static;overflow:visible}
+body.print .sl{position:relative;display:block;left:0;top:0;margin:0;transform:none!important;page-break-after:always;break-after:page}
+body.print .frag,body.edit .frag{opacity:1!important;transform:none!important}
+body.print .st.frag,body.edit .st.frag{opacity:1!important}
+body.print .st .n,body.edit .st .n{background:var(--accent)}
+body.print #kzBar,body.print #kzHome,body.print #kzHelp,.kz-shot #kzBar,.kz-shot #kzHome,.kz-shot #kzHelp{display:none}
+@page{size:1920px 1080px;margin:0}
+
+body.edit{background:#dfe4ec;height:auto}
+body.edit #deck{position:static;overflow:visible;padding:30px 0}
+body.edit .sl{position:relative;display:block;left:0;top:0;margin:0 auto 30px;transform-origin:top center}
+body.edit aside.notes{display:block;width:1920px;margin:-20px auto 40px;background:#fffbe6;border:2px solid #f0d77a;border-radius:12px;padding:16px 24px;font-size:22px;transform-origin:top center}
+body.edit [contenteditable]:focus{outline:3px solid var(--tap);outline-offset:4px}
+#kzEditBar{position:fixed;top:12px;right:12px;z-index:9;display:flex;gap:8px;align-items:center;background:#fff;border-radius:12px;padding:8px 12px;box-shadow:0 4px 18px rgba(0,0,0,.2);font-size:14px}
+#kzEditBar button{font-size:15px;padding:8px 16px;border-radius:8px;border:0;background:var(--tap);color:#fff;cursor:pointer}
+
+#kzTour{position:fixed;left:50%;bottom:44px;transform:translateX(-50%);z-index:70;width:min(720px,calc(100vw - 32px));background:#14182a;color:#fff;border-radius:16px;padding:16px 22px 16px;box-shadow:0 12px 40px rgba(0,0,0,.4);border:2px solid #FF7A45;font-family:"Hiragino Sans","Noto Sans JP",sans-serif}
+#kzTour{cursor:grab;touch-action:none;user-select:none}
+#kzTour .no{font-size:12px;color:#ffb694;font-weight:700;letter-spacing:.06em;display:flex;justify-content:space-between}
+#kzTour .no span{color:#8f9abb;font-weight:400;letter-spacing:0}
+#kzTour h4{margin:2px 0 4px;font-size:20px}
+#kzTour p{margin:0 0 10px;font-size:16px;line-height:1.75;color:#e8ecf5}
+#kzTour b{background:#2b3353;border-radius:6px;padding:1px 8px;color:#fff}
+#kzTour button{font:inherit;font-size:13px;color:#c9d0e4;background:transparent;border:1px solid #4a5478;border-radius:8px;padding:4px 12px;cursor:pointer}
+#kzTour.pop{animation:kzPop .35s}
+@keyframes kzPop{from{transform:translateX(-50%) translateY(14px);opacity:0}to{transform:translateX(-50%);opacity:1}}
+body.print #kzTour,body.edit #kzTour,body.presenter #kzTour,.kz-shot #kzTour{display:none}
+
+#kzGuide{display:none;position:fixed;inset:0;z-index:90;background:rgba(15,20,40,.72);align-items:center;justify-content:center;padding:24px}
+#kzGuide.on{display:flex}
+#kzGuide .in{background:#fff;color:#1f2a44;border-radius:18px;max-width:760px;padding:28px 34px;font-size:19px;line-height:1.8;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+#kzGuide h3{margin:0 0 10px;font-size:24px}#kzGuide ol{margin:0 0 10px;padding-left:1.3em}#kzGuide li{margin:6px 0}
+#kzGuide b{background:#eef3fd;border-radius:6px;padding:1px 8px}
+#kzGuide .warn{background:#fff3e6;border-left:5px solid #e07a2f;padding:10px 14px;border-radius:0 8px 8px 0;margin:0 0 12px}
+#kzGuide .sm{font-size:15px;color:#5b6478;margin:0 0 14px}
+#kzGuide button{font:inherit;font-weight:700;color:#fff;background:#2f6fde;border:0;border-radius:10px;padding:9px 26px;cursor:pointer}
+#kzHow,#kzPres{position:fixed;top:14px;z-index:60;font:600 14px/1 sans-serif;color:#fff;background:rgba(20,24,42,.72);border:0;border-radius:8px;padding:9px 13px;cursor:pointer;opacity:0;transition:opacity .2s}
+#kzHow{right:14px}#kzPres{right:86px}
+body.mouse #kzHow,body.mouse #kzPres{opacity:1}
+body.print #kzGuide,body.print #kzHow,body.print #kzPres,body.edit #kzHow,body.edit #kzPres,body.presenter #kzHow,body.presenter #kzPres{display:none}
+
+body.presenter{background:#14182a;color:#e8ecf5;overflow:hidden}
+body.presenter #deck{display:none}
+#kzPv{position:fixed;inset:0;display:grid;grid-template-columns:1.25fr 1fr;grid-template-rows:auto 1fr auto;gap:14px;padding:14px;font-size:16px}
+#kzPv .box{background:#1d2238;border-radius:12px;padding:10px;position:relative;overflow:hidden}
+#kzPv .lab{font-size:13px;color:#9aa3bd;margin-bottom:6px}
+#kzPv .cur{grid-row:1/3}
+#kzPv .view{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:6px;background:#fff}
+#kzPv .view .sl{display:block;transform-origin:top left;left:0;top:0;margin:0}
+#kzPv .notes{overflow:auto;line-height:1.7}
+#kzPv .notes p{margin:.3em 0}
+#kzPv .notes p.do{color:#ffcf8a}
+#kzPv .clock{display:flex;gap:18px;align-items:center;font-family:Outfit,sans-serif;font-size:30px}
+#kzPv .clock .warn{color:#ff8f6b}
+#kzPv .ctl{grid-column:1/3;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#kzPv button{font-size:15px;padding:8px 14px;border-radius:8px;border:1px solid #3a4266;background:#262c48;color:#e8ecf5;cursor:pointer}
+#kzPv button.go{background:var(--tap);border-color:var(--tap);color:#fff}
+#kzPv .secs button{font-size:13px;padding:6px 10px}
+
+
+.ai-flow{display:flex;flex-direction:column;gap:20px}
+.ai-flow .r{display:grid;grid-template-columns:170px 1fr;gap:30px;align-items:center;background:#fff;border:2px solid var(--line);border-radius:22px;padding:18px 34px;font-size:44px;line-height:1.4}
+.ai-flow .r b{font-size:36px;color:var(--accent)}
+.ai-flow .r.goal{border-color:var(--ok);background:#f1fbf5}
+.ai-flow .r.goal b{color:var(--ok)}
+.ai-type{margin-top:36px;background:#fff;border:3px solid var(--accent);border-radius:22px;padding:20px 30px;font-size:38px;line-height:1.5;font-weight:700}
+.ai-type b{display:block;font-size:26px;color:var(--accent)}
+.ai-parts{display:flex;flex-direction:column;gap:16px}
+.ai-part{display:grid;grid-template-columns:110px 1fr;gap:20px;align-items:center;background:#fff;border:2px solid var(--line);border-radius:20px;padding:16px 22px;font-size:31px;line-height:1.5}
+.ai-part .k{background:var(--accent);color:#fff;border-radius:999px;text-align:center;font-size:28px;font-weight:700;padding:4px 0}
+.ai-part.blank{padding:22px 26px}
+.ai-mini{height:124px;margin-top:22px}
+.ai-mini .inputbox{margin:20px 20px}
+.ai-note{margin-top:26px;font-size:42px;font-weight:700;border-left:10px solid var(--accent);padding-left:26px}
+.ai-sub{font-size:36px;color:var(--sub);margin-top:34px}
+.ai-keys{display:inline-block;background:#fff;border:2px solid var(--line);border-radius:12px;padding:0 14px;font-size:30px;color:var(--ink)}
+
+</style>
+</head>
+<body data-brand="見本　〇〇研修" data-lesson="60" data-tour="1">
+<div id="deck">
+<section class="sl" data-title="表紙">
+  <div class="cover">
+    <div class="kick">60分ハンズオン研修</div>
+    <h1>はじめての生成AI</h1>
+    <div class="lead">仕事のメールのたたき台を、AIといっしょに作ります</div>
+  </div>
+  <aside class="notes" data-time="1">
+    <p>みなさん、こんにちは。今日は60分で、仕事のメールのたたき台をAIといっしょに1通作ります。</p>
+    <p>聞くだけの時間はほとんどありません。最初から最後まで、自分のパソコンで手を動かします。</p>
+    <p>AIは初めて、という方に合わせて進めますので、安心してください。</p>
+    <p class="do">見回り：全員のパソコンが開いていて、職場で許可されたAIのチャットに入れる状態かを見ます。オンラインのときは、チャット欄に「聞こえます」と書いてもらいます。</p>
+  </aside>
+</section>
+<section class="sl" data-title="その1　今日のゴールと、AIという道具" data-kugiri="その1　今日のゴールと、AIという道具">
+  <div class="door"><div class="num">その1</div><div class="ttl">今日のゴールと、<br>AIという道具</div><div class="lead">まず、今日持ち帰る物を確かめます</div></div>
+  <aside class="notes" data-time="0.5">
+    <p>はじめに、今日のゴールと、AIがどんな道具なのかを短くお話しします。</p>
+    <p>ここは5分ほどで終わります。そのあとはすぐに操作に入ります。</p>
+    <p class="do">問いかけ：「AIのチャットを使ったことがある方は、どのくらいいますか」と手を挙げてもらいます。オンラインのときは、チャット欄に「ある」「ない」を書いてもらいます。</p>
+  </aside>
+</section>
+<section class="sl" data-title="今日のゴール">
+  <h2>今日のゴールは、メールのたたき台を1通です</h2>
+  <div class="body"><div class="cols">
+    <div class="card frag" data-f="1"><h3>前</h3><p>メールの書き出しで、<br>手が止まります。<br>言い回しに迷います。</p></div>
+    <div class="card good frag" data-f="2"><h3>後</h3><p>自分の仕事で使う<br>メールのたたき台が、<br>1通、手元にあります。</p></div>
+  </div></div>
+  <aside class="notes" data-time="1.5">
+    <p>メールを書くとき、最初の一文で手が止まることはありませんか。お願いやおわびのメールは、特に言い回しに迷います。</p>
+    <p>今日の終わりには、自分の仕事で使うメールのたたき台が1通、手元に残っています。</p>
+    <p>たたき台というのは、そのまま送る完成品ではなく、自分で直して仕上げるための下書きのことです。</p>
+    <p class="do">クリック1回で「前」、2回で「後」が出ます。「後」を出したら、「今日はこれを持ち帰ります」と言い切らずに、「持ち帰るところまで、いっしょに進めます」と伝えます。</p>
+  </aside>
+</section>
+<section class="sl" data-title="今日の流れ">
+  <h2>今日の流れ</h2>
+  <div class="body"><div class="ai-flow">
+    <div class="r"><b>その1</b><div>今日のゴールと、AIという道具</div></div>
+    <div class="r"><b>その2</b><div>まず1通、AIにお願いする</div></div>
+    <div class="r"><b>その3</b><div>伝え方を足して、使えるたたき台にする</div></div>
+    <div class="r"><b>その4</b><div>自分の仕事のメールで作る</div></div>
+    <div class="r"><b>その5</b><div>たたき台を保存して、持ち帰る</div></div>
+  </div></div>
+  <aside class="notes" data-time="1">
+    <p>今日は5つに分けて進めます。その2とその3は、全員で同じお題のメールを作ります。お題は「打ち合わせの日程変更をお願いするメール」です。</p>
+    <p>その4で、自分の仕事のメールに取りかかります。題材が決まらない方は、同じお題のままで大丈夫です。</p>
+    <p>最後のその5で、作ったたたき台を保存して持ち帰ります。</p>
+    <p class="do">問いかけ：「最近、書くのに時間がかかったメールはありますか」と聞き、その4の題材を頭の片すみに置いてもらいます。答えは求めません。</p>
+  </aside>
+</section>
+<section class="sl" data-title="ことば：生成AI">
+  <h2>今日のことば（1つめ）</h2>
+  <div class="body"><div class="word">
+    <div class="term">生成AI</div>
+    <div class="yomi">読み：せいせいエーアイ</div>
+    <div class="mean">お願いの文を送ると、文章などを作って返してくれるAIです。</div>
+    <div class="ex">たとえば、メールの下書きを作る、長い文章を短くまとめる、言い方を変える、などです。</div>
+  </div></div>
+  <aside class="notes" data-time="1.5">
+    <p>今日使う道具の名前は、生成AIといいます。文章でお願いを送ると、文章で答えを返してくれます。</p>
+    <p>検索とは少し違います。検索は、すでにあるページを探してきます。生成AIは、その場で文章を作ります。</p>
+    <p>だから、メールの下書きのように「まず形にする」仕事が得意です。</p>
+    <p class="do">問いかけはしません。難しい仕組みの話には入らず、「文章を作ってくれる道具」という一点だけを伝えます。</p>
+  </aside>
+</section>
+<section class="sl" data-title="AIは道具">
+  <div class="msg"><div class="big">AIは、下書きを手伝う<em>道具</em>です</div><div class="small">仕上げて送るのは、わたしたちです。</div></div>
+  <aside class="notes" data-time="1">
+    <p>AIは、あくまで道具です。コピー機や表計算ソフトと同じで、仕事を手伝ってくれる物です。</p>
+    <p>AIが作るのは下書きまでです。中身を確かめて、直して、送るのは、わたしたちの仕事です。</p>
+    <p>ですから、AIの答えが少し変でも、あわてなくて大丈夫です。直せばよいだけです。</p>
+    <p class="do">ここで一言：「操作で困ったら、手を止めて手を挙げてください。AIの答えが変でも、もう一度お願いすれば大丈夫です。パソコンが壊れることはありません」。オンラインのときは「チャット欄に『困った』と書いてください」と伝えます。</p>
+  </aside>
+</section>
+<section class="sl" data-title="約束">
+  <h2>約束は1つです。出せない情報は、入れません</h2>
+  <div class="body"><div class="cols">
+    <div class="card frag" data-f="1"><h3>入れないもの</h3><p>人の名前・住所・電話番号。<br>職場の外に出せない情報。</p></div>
+    <div class="card good frag" data-f="2"><h3>こうして使います</h3><p>名前は「〇〇様」にします。<br>迷ったら、職場に確かめます。</p></div>
+  </div>
+  <div class="ai-sub frag" data-f="2">何を入れてよいかは、職場のルールで決まります。今日は、仮の話で練習します。</div></div>
+  <aside class="notes" data-time="2">
+    <p>道具を使う前に、約束を1つだけお話しします。職場の外に出せない情報は、AIに入れません。</p>
+    <p>お客さまや職員の名前・住所・電話番号、それから、まだ外に出していない仕事の中身です。メールやFAXで、あて先を確かめてから送るのと同じ考え方です。</p>
+    <p>怖がる必要はありません。名前を「〇〇様」に置きかえれば、メールの下書きは十分に作れます。</p>
+    <p>何をどこまで入れてよいかは、職場ごとのルールで決まっています。今日は仮の話で練習しますので、安心して打ってください。</p>
+    <p class="do">クリック1回で「入れないもの」、2回で「こうして使います」と下の一行が出ます。「学習に使われますか」と聞かれたら、「道具と契約によって違います。職場のルールに従ってください」と答え、言い切りません。</p>
+  </aside>
+</section>
+<section class="sl" data-title="その2　まず1通、AIにお願いする" data-kugiri="その2　まず1通、AIにお願いする">
+  <div class="door"><div class="num">その2</div><div class="ttl">まず1通、<br>AIにお願いする</div><div class="lead">短い一言で、頼んでみます</div></div>
+  <aside class="notes" data-time="0.5">
+    <p>ここから手を動かします。まずは短い一言で、AIにメールを頼んでみます。</p>
+    <p>お題は全員同じで、「打ち合わせの日程変更をお願いするメール」です。</p>
+    <p class="do">見回り：職場で許可されたAIのチャットの画面が、全員の画面に出ているかを見ます。出ていない人がいたら、ここで開くのを手伝います。</p>
+  </aside>
+</section>
+<section class="sl" data-title="ことば：プロンプト">
+  <h2>今日のことば（2つめ）</h2>
+  <div class="body"><div class="word">
+    <div class="term">プロンプト</div>
+    <div class="yomi">英語：prompt</div>
+    <div class="mean">AIに送る、お願いの文のことです。</div>
+    <div class="ex">たとえば「打ち合わせの日程変更をお願いするメールを書いてください。」がプロンプトです。</div>
+  </div></div>
+  <aside class="notes" data-time="1.5">
+    <p>AIに送るお願いの文のことを、プロンプトといいます。今日のことばは、さきほどの生成AIと、このプロンプトの2つだけです。</p>
+    <p>特別な書き方はありません。人に頼むときと同じように、ふつうの文章で書きます。</p>
+    <p>今日は、わかりやすいように「お願いの文」と呼んで進めます。</p>
+    <p class="do">問いかけはしません。次の1枚で、すぐにこの文を打ってもらいます。</p>
+  </aside>
+</section>
+<section class="sl" data-title="できた？（1通め）">
+  <h2>できましたか</h2>
+  <div class="body"><div class="okbox">
+    <span class="lab">こうなっていれば OK</span>
+    <div class="what">画面に、メールの形の文章が出ています</div>
+    <div class="back">出ないときは、入力欄にもう一度打って、送るボタンを押してください。</div>
+  </div></div>
+  <aside class="notes" data-time="2">
+    <p>画面に、件名やあいさつのある、メールの形の文章が出ていれば大丈夫です。</p>
+    <p>中身は、隣の人と違っていてかまいません。AIは毎回文章を作るので、同じお願いでも答えが少しずつ違います。</p>
+    <p>まだ出ていない方は、手を挙げてください。いっしょに見ます。</p>
+    <p class="do">見回り：全員の画面に文章が出ているかを1人ずつ見ます。ここで全員がそろうまで待ちます。オンラインのときは、チャット欄に「できた」と書いてもらいます。早く終わった人には「出てきたメールを、最後まで読んでみてください」と伝えます。</p>
+  </aside>
+</section>
+<section class="sl" data-title="答えを読む">
+  <h2><span class="tag">いっしょに</span>AIの答えから、3つ探しましょう</h2>
+  <div class="body">
+    <ul class="pts">
+      <li class="frag" data-f="1">あて名は、だれになっていますか</li>
+      <li class="frag" data-f="2">いつの打ち合わせを、変えることになっていますか</li>
+      <li class="frag" data-f="3">代わりの日は、書いてありますか</li>
+    </ul>
+    <div class="ai-note frag" data-f="4">事情を伝えていないので、AIは知らないまま書いています。</div>
+  </div>
+  <aside class="notes" data-time="2.5">
+    <p>出てきたメールを、いっしょに読んでみましょう。自分の画面で、3つ探してください。</p>
+    <p>あて名はどうなっていますか。打ち合わせの日にちは入っていますか。代わりの日は書いてありますか。</p>
+    <p>空欄になっていたり、「〇〇様」のままだったり、AIが仮の日にちを入れていたりしませんか。</p>
+    <p>これはAIの失敗ではありません。わたしたちが事情を伝えていないので、AIは知らないまま書いています。次は、事情を足して頼みます。</p>
+    <p class="do">クリック4回です（問いが1つずつ出て、4回目にまとめの一行が出ます）。問いかけ：それぞれの問いで「どうなっていましたか」と2〜3人に聞きます。オンラインのときは、チャット欄に書いてもらいます。答えは人によって違うので、どの答えも「そうなりますよね」と受けます。</p>
+  </aside>
+</section>
+<section class="sl" data-title="体験版はここまで">
+  <div class="kz-sec" style="display:none"></div>
+  <div class="msg"><div class="big">体験版は、<em>ここまで</em>です。</div><div class="small">この続き（あと11枚）と、お金・話し方の見本2本、<br>そして自分の講座を作るスキルは「講座まるごとキット」に入っています。</div></div>
+  <aside class="notes" data-time="0.5">
+    <p>体験版はここまでです。キットで作った講座は、どの枚にもこのような台本と時間の目安が付きます。</p>
+    <p class="do">パソコンで開いて S キーを押すと、先生の手元にだけ台本と時計が出る「発表者ビュー」になります。</p>
+  </aside>
+</section>
+</div>
+
+<script>
+
+(function () {
+  'use strict';
+  var Q = new URLSearchParams(location.search);
+  var MODE = location.hash === '#presenter' ? 'presenter' : Q.get('print') ? 'print' : Q.get('edit') ? 'edit' : 'show';
+  var slides = [].slice.call(document.querySelectorAll('#deck > .sl'));
+  var N = slides.length, idx = 0, shown = 0;
+  var brand = document.body.getAttribute('data-brand') || '';
+  var lesson = parseFloat(document.body.getAttribute('data-lesson') || '0');
+
+  var secName = '', secStart = [];
+  slides.forEach(function (s, i) {
+    if (s.hasAttribute('data-kugiri')) { secName = s.getAttribute('data-kugiri'); secStart.push(i); }
+    s.dataset.sec = secName;
+    var isCover = !!s.querySelector('.cover,.door');
+    var dn = s.querySelector('.door .num');
+    if (dn && !s.querySelector('.door .bg')) { var bg = document.createElement('div'); bg.className = 'bg'; bg.textContent = (dn.textContent.match(/\d+/) || [''])[0]; dn.parentNode.insertBefore(bg, dn); }
+    if (secName && !isCover && !s.querySelector('.kz-sec')) {
+      var lab = document.createElement('div'); lab.className = 'kz-sec'; lab.textContent = secName; s.insertBefore(lab, s.firstChild);
+    }
+    var foot = document.createElement('div'); foot.className = 'kz-foot';
+    foot.innerHTML = '<span></span><span class="no"></span>';
+    foot.firstChild.textContent = brand; foot.lastChild.textContent = (i + 1) + ' / ' + N;
+    s.appendChild(foot);
+    if (!s.querySelector('.frag') && !s.querySelector('.cover, .door') && !s.hasAttribute('data-nofrag')) {
+      var seq = [].slice.call(s.querySelectorAll('.pts > li, .cols > .card, .steps > .st, .msg > *, .body > .ahead, .body > .okbox ~ *'));
+      seq = seq.filter(function (e, k) { return seq.indexOf(e) === k && !e.closest('aside'); });
+      var msgFirst = s.querySelector('.msg > *');
+      seq = seq.filter(function (e) { return e !== msgFirst; });
+      var lone = s.querySelectorAll('.pts > li, .cols > .card, .steps > .st').length === 1;
+      if (!seq.length) {
+        var c = s.querySelector('.body');
+        while (c && c.children.length === 1 && !c.classList.contains('okbox')) c = c.children[0];
+        if (c && c.children.length >= 2 && !c.closest('.okbox, .mock, .sheet, .word')) seq = [].slice.call(c.children);
+      }
+      if (seq.length && !(lone && seq.length === 1)) seq.forEach(function (e) { e.classList.add('frag'); });
+    }
+    [].forEach.call(s.querySelectorAll('.frag'), function (f) {
+      if (f.matches('.st, .tap, .row, li, .card, .ahead, .small, .b') || f.closest('.msg, .mock, .sheet')) return;
+      var sib = [].filter.call(f.parentNode.children, function (c) { return c.classList.contains('frag'); });
+      if (sib.length >= 2 && sib.length === f.parentNode.children.length) f.classList.add('kz-hl');
+    });
+    var fr = [].slice.call(s.querySelectorAll('.frag')), auto = 0;
+    fr.forEach(function (f) { if (!f.hasAttribute('data-f')) f.setAttribute('data-f', ++auto); else auto = Math.max(auto, +f.getAttribute('data-f')); });
+    s._steps = fr.reduce(function (m, f) { return Math.max(m, +f.getAttribute('data-f')); }, 0);
+    var no = s.querySelector('aside.notes');
+    s._time = no ? parseFloat(no.getAttribute('data-time') || '0') : 0;
+  });
+  var plan = [], acc = 0;
+  slides.forEach(function (s, i) { plan[i] = acc; acc += s._time; });
+  var total = acc;
+
+  function paint(s, k) {
+    [].forEach.call(s.querySelectorAll('.frag'), function (f) {
+      var n = +f.getAttribute('data-f');
+      f.classList.toggle('shown', n <= k);
+      f.classList.toggle('last', n === k);
+    });
+  }
+  function fit(el, w, h) {
+    var sc = Math.min(w / 1920, h / 1080);
+    el.style.transform = 'scale(' + sc + ')';
+  }
+
+  if (MODE === 'print') { document.body.classList.add('print'); slides.forEach(function (s) { paint(s, 99); }); return; }
+
+  if (MODE === 'edit') {
+    document.body.classList.add('edit');
+    slides.forEach(function (s) { paint(s, 99); });
+    var sel = '#deck .sl h1,#deck .sl h2,#deck .sl h3,#deck .sl p,#deck .sl li,#deck .sl .st,#deck .sl .big,#deck .sl .small,#deck .sl .lead,#deck .sl .kick,#deck .sl .ttl,#deck .sl .what,#deck .sl .back,#deck .sl .term,#deck .sl .mean,#deck .sl .ex,#deck .sl .b,#deck aside.notes p';
+    [].forEach.call(document.querySelectorAll(sel), function (e) { if (!e.closest('.kz-foot')) e.setAttribute('contenteditable', 'true'); });
+    function fitEdit() { var w = Math.min(window.innerWidth - 40, 1920) / 1920; slides.forEach(function (s) { s.style.transform = 'scale(' + w + ')'; s.style.marginBottom = (30 - 1080 * (1 - w)) + 'px'; var n = s.querySelector('aside.notes'); }); [].forEach.call(document.querySelectorAll('aside.notes'), function (n) { n.style.transform = 'scale(' + w + ')'; n.style.marginBottom = (40 - n.offsetHeight * (1 - w)) + 'px'; }); }
+    slides.forEach(function (s) { var n = s.querySelector('aside.notes'); if (n) s.parentNode.insertBefore(n, s.nextSibling); });
+    fitEdit(); window.addEventListener('resize', fitEdit);
+    var bar = document.createElement('div'); bar.id = 'kzEditBar';
+    bar.innerHTML = '<span>文字をクリックすると直せます</span><button type="button">保存（直した版を書き出す）</button>';
+    document.body.appendChild(bar);
+    bar.querySelector('button').onclick = function () {
+      var doc = document.documentElement.cloneNode(true);
+      [].forEach.call(doc.querySelectorAll('[contenteditable]'), function (e) { e.removeAttribute('contenteditable'); });
+      [].forEach.call(doc.querySelectorAll('.kz-foot,.kz-sec,#kzEditBar,#kzBar,#kzHome,#kzHelp'), function (e) { e.remove(); });
+      [].forEach.call(doc.querySelectorAll('.sl'), function (s) { s.removeAttribute('style'); s.classList.remove('on'); s.removeAttribute('data-sec'); });
+      [].forEach.call(doc.querySelectorAll('aside.notes'), function (n) { n.removeAttribute('style'); });
+      [].forEach.call(doc.querySelectorAll('#deck > aside.notes'), function (n) { var p = n.previousElementSibling; if (p) p.appendChild(n); });
+      [].forEach.call(doc.querySelectorAll('.frag'), function (f) { f.classList.remove('shown', 'last'); });
+      doc.querySelector('body').className = '';
+      var html = '<!doctype html>\n' + doc.outerHTML;
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+      a.download = (decodeURIComponent(location.pathname.split('/').pop()) || 'deck.html').replace(/\.html?$/, '') + '_直し.html';
+      a.click();
+    };
+    return;
+  }
+
+  if (MODE === 'presenter') {
+    document.body.classList.add('presenter');
+    document.title = '発表者ビュー｜' + document.title;
+    var pv = document.createElement('div'); pv.id = 'kzPv';
+    pv.innerHTML =
+      '<div class="box cur"><div class="lab">いまのスライド</div><div class="view" id="pvCur"></div></div>' +
+      '<div class="box"><div class="lab">次</div><div class="view" id="pvNext"></div></div>' +
+      '<div class="box notes" id="pvNotes"></div>' +
+      '<div class="ctl"><button id="pvPrev">← 戻る</button><button class="go" id="pvGo">進む →</button>' +
+      '<span class="clock"><span id="pvEl">0:00</span><span id="pvPlan" style="font-size:18px;color:#9aa3bd"></span></span>' +
+      '<button id="pvReset">時計を0に</button><button id="pvSm">文字 −</button><button id="pvLg">文字 ＋</button>' +
+      '<span class="secs" id="pvSecs"></span></div>';
+    document.body.appendChild(pv);
+    var curV = document.getElementById('pvCur'), nextV = document.getElementById('pvNext'), notesV = document.getElementById('pvNotes');
+    var t0 = Date.now(), nsz = 18;
+    try { nsz = +localStorage.getItem('kz-notes-size') || 18; } catch (e) {}
+    notesV.style.fontSize = nsz + 'px';
+    function put(view, i, k) {
+      view.innerHTML = '';
+      if (i >= N) { view.style.background = '#1d2238'; return; }
+      view.style.background = '#fff';
+      var c = slides[i].cloneNode(true); c.classList.add('on'); c.style.margin = '0'; c.style.left = '0'; c.style.top = '0';
+      paint(c, k); view.appendChild(c);
+      var sc = view.clientWidth / 1920; c.style.transform = 'scale(' + sc + ')'; c.style.transformOrigin = 'top left';
+    }
+    function render(i, k) {
+      idx = i; shown = k;
+      put(curV, i, k);
+      if (k < slides[i]._steps) put(nextV, i, k + 1); else put(nextV, i + 1, 0);
+      var n = slides[i].querySelector('aside.notes');
+      notesV.innerHTML = '<div class="lab">台本（' + (i + 1) + ' / ' + N + '　' + (slides[i].dataset.sec || '') + '）' +
+        (slides[i]._steps ? '　クリック ' + k + ' / ' + slides[i]._steps : '') + '</div>' + (n ? n.innerHTML : '<p>（台本なし）</p>');
+      tick();
+    }
+    function fmt(m) { m = Math.max(0, Math.round(m * 60)); return Math.floor(m / 60) + ':' + ('0' + m % 60).slice(-2); }
+    function tick() {
+      var el = (Date.now() - t0) / 60000;
+      document.getElementById('pvEl').textContent = '経過 ' + fmt(el);
+      var p = document.getElementById('pvPlan');
+      var due = plan[idx] || 0, diff = el - due;
+      var left = lesson ? lesson - el : total - el;
+      p.innerHTML = '予定ではこの1枚は ' + fmt(due) + ' から（' + (diff > 1 ? '<span class="warn">' + Math.round(diff) + '分おくれ</span>' : diff < -1 ? Math.round(-diff) + '分はやい' : 'ちょうど') + '）／ 残り ' +
+        (left <= 5 ? '<span class="warn">' + fmt(left) + '</span>' : fmt(left));
+    }
+    setInterval(tick, 1000);
+    function local(a) {
+      var s = slides[idx];
+      if (a.cmd === 'next') { if (shown < s._steps) render(idx, shown + 1); else if (idx < N - 1) render(idx + 1, 0); }
+      else if (a.cmd === 'prev') { if (shown > 0) render(idx, shown - 1); else if (idx > 0) render(idx - 1, slides[idx - 1]._steps); }
+      else if (a.cmd === 'go') render(a.n, 0);
+    }
+    function send(a) { if (window.opener && !window.opener.closed) window.opener.postMessage({ kzDeck: a }, '*'); else local(a); }
+    document.getElementById('pvPrev').onclick = function () { send({ cmd: 'prev' }); };
+    document.getElementById('pvGo').onclick = function () { send({ cmd: 'next' }); };
+    document.getElementById('pvReset').onclick = function () { t0 = Date.now(); tick(); };
+    function setNs(d) { nsz = Math.max(12, Math.min(40, nsz + d)); notesV.style.fontSize = nsz + 'px'; try { localStorage.setItem('kz-notes-size', nsz); } catch (e) {} }
+    document.getElementById('pvSm').onclick = function () { setNs(-2); };
+    document.getElementById('pvLg').onclick = function () { setNs(2); };
+    var secs = document.getElementById('pvSecs');
+    secStart.forEach(function (i) { var b = document.createElement('button'); b.textContent = slides[i].dataset.sec.split(/\s|　/)[0] + 'へ'; b.title = slides[i].dataset.sec; b.onclick = function () { send({ cmd: 'go', n: i }); }; secs.appendChild(b); });
+    document.addEventListener('keydown', function (e) {
+      if (/^(ArrowRight|ArrowDown|PageDown| |Enter)$/.test(e.key)) { e.preventDefault(); send({ cmd: 'next' }); }
+      if (/^(ArrowLeft|ArrowUp|PageUp|Backspace)$/.test(e.key)) { e.preventDefault(); send({ cmd: 'prev' }); }
+      if (e.key === 'Home') send({ cmd: 'go', n: 0 });
+    });
+    window.addEventListener('message', function (e) { var d = e.data && e.data.kzState; if (d) render(d.idx, d.shown); });
+    window.addEventListener('resize', function () { render(idx, shown); });
+    send({ cmd: 'hello' });
+    render(0, 0);
+    return;
+  }
+
+  if (Q.get('shot')) document.documentElement.classList.add('kz-shot');
+  var pwin = null;
+  function layout() { slides.forEach(function (s) { fit(s, window.innerWidth, window.innerHeight); }); }
+  function sync() { if (pwin && !pwin.closed) pwin.postMessage({ kzState: { idx: idx, shown: shown } }, '*'); }
+  function show(i, k) {
+    i = Math.max(0, Math.min(N - 1, i));
+    slides.forEach(function (s, j) { s.classList.toggle('on', j === i); });
+    idx = i; shown = Math.max(0, Math.min(slides[i]._steps, k || 0));
+    paint(slides[i], shown);
+    history.replaceState(null, '', '#' + (i + 1));
+    bar();
+    sync();
+  }
+  function next() { tour('next'); if (shown < slides[idx]._steps) { shown++; paint(slides[idx], shown); sync(); } else if (idx < N - 1) show(idx + 1, 0); }
+  function prev() { tour('prev'); if (shown > 0) { shown--; paint(slides[idx], shown); sync(); } else if (idx > 0) show(idx - 1, slides[idx - 1]._steps); }
+
+  var B = document.createElement('div'); B.id = 'kzBar'; B.innerHTML = '<div class="fill"></div><div class="tip"></div>'; document.body.appendChild(B);
+  function bar() { B.firstChild.style.width = (N > 1 ? idx / (N - 1) * 100 : 100) + '%'; }
+  function atX(x) { return Math.round(Math.max(0, Math.min(1, x / window.innerWidth)) * (N - 1)); }
+  var dragging = false;
+  B.addEventListener('pointerdown', function (e) { dragging = true; B.classList.add('drag'); B.setPointerCapture(e.pointerId); move(e); e.stopPropagation(); });
+  B.addEventListener('pointermove', function (e) { if (dragging) move(e); });
+  B.addEventListener('pointerup', function (e) { dragging = false; B.classList.remove('drag'); e.stopPropagation(); });
+  function move(e) { var i = atX(e.clientX), t = B.lastChild; t.style.left = e.clientX + 'px'; t.textContent = (i + 1) + ' / ' + N + '　' + (slides[i].getAttribute('data-title') || ''); if (i !== idx) show(i, 0); }
+
+  var home = document.createElement('button'); home.id = 'kzHome'; home.textContent = '最初へ'; home.onclick = function (e) { e.stopPropagation(); show(0, 0); }; document.body.appendChild(home);
+  var help = document.createElement('div'); help.id = 'kzHelp'; help.textContent = '→ 進む　← 戻る　S 発表者ビュー　F 全画面　H 使い方'; document.body.appendChild(help);
+  var mt = 0; document.addEventListener('mousemove', function () { document.body.classList.add('mouse'); clearTimeout(mt); mt = setTimeout(function () { document.body.classList.remove('mouse'); }, 2000); });
+
+  var guide = document.createElement('div'); guide.id = 'kzGuide';
+  guide.innerHTML = '<div class="in"><h3>本番の使い方（Chrome がおすすめ）</h3><p class="warn" hidden>発表者ビューの窓を開けませんでした。Chrome でこのファイルを開いて、もう一度 S を押してください（アプリの中のブラウザや、ポップアップを止める設定では開けません）。</p><ol><li><b>S</b> を押す … 発表者ビュー（台本・次の1枚・時計）が別の窓で開きます。手元のパソコンに置きます</li><li>このスライドの窓を、<b>プロジェクター（外の画面）へドラッグ</b>します</li><li>スライドの窓で <b>F</b> を押す … 全画面になります（Esc で戻る）</li><li><b>→</b> で進む、<b>←</b> で戻る。発表者ビューの「進む」でもめくれます</li></ol><p class="sm">S や F が効かないときは、キーボードを「英数」に切りかえてください。H でこの案内を出したり消したりできます。</p><button type="button">閉じる</button></div>';
+  document.body.appendChild(guide);
+  function showGuide(on, warn) { guide.classList.toggle('on', on); guide.querySelector('.warn').hidden = !warn; }
+  guide.addEventListener('click', function (e) { e.stopPropagation(); if (e.target === guide || e.target.tagName === 'BUTTON') showGuide(false); });
+  var hb = document.createElement('button'); hb.id = 'kzHow'; hb.textContent = '使い方'; hb.onclick = function (e) { e.stopPropagation(); showGuide(true, false); }; document.body.appendChild(hb);
+  var pb = document.createElement('button'); pb.id = 'kzPres'; pb.textContent = '発表者ビュー'; pb.onclick = function (e) { e.stopPropagation(); openPresenter(); }; document.body.appendChild(pb);
+
+  var TOUR = (document.body.getAttribute('data-tour') || Q.get('tour')) && Q.get('tour') !== '0', tstep = 0, tbox = null;
+  var TSTEPS = [
+    ['まず、めくってみましょう', '<b>→</b> キーを押すか、<b>画面の右半分</b>をクリックしてください。'],
+    ['項目は、1つずつ出ます', 'もう一度 <b>→</b> で次へ進みます。こんどは <b>←</b> キー（または<b>画面の左半分</b>）で、1つ戻ってみてください。'],
+    ['次は、発表者ビューです', '<b>S</b> キーを押してください。台本・次の1枚・時計が、別の窓で開きます（効かないときは、キーボードを「英数」に）。'],
+    ['本番では、窓を2つに分けます', '発表者ビューは<b>手元のパソコン</b>に置きます。こちらのスライドの窓は、タブをつまんで<b>プロジェクター（外の画面）へドラッグ</b>します。動かしたら <b>F</b> キーを押してください（全画面になります）。'],
+    ['これで、本番と同じ形です', '<b>Esc</b> で全画面から戻ります。<b>H</b> キーで、いつでも使い方を見られます。このまま最後まで、めくってみてください。']
+  ];
+  function tourDraw() {
+    if (!TOUR || MODE !== 'show') return;
+    if (!tbox) {
+      tbox = document.createElement('div'); tbox.id = 'kzTour';
+      tbox.addEventListener('click', function (e) { e.stopPropagation(); if (e.target.tagName === 'BUTTON') { TOUR = false; tbox.style.display = 'none'; } });
+      document.body.appendChild(tbox);
+      var dx = 0, dy = 0, drag = false;
+      tbox.addEventListener('pointerdown', function (e) {
+        if (e.target.tagName === 'BUTTON') return;
+        var r = tbox.getBoundingClientRect(); drag = true; dx = e.clientX - r.left; dy = e.clientY - r.top;
+        tbox.style.left = r.left + 'px'; tbox.style.top = r.top + 'px'; tbox.style.bottom = 'auto'; tbox.style.transform = 'none'; tbox.classList.remove('pop'); tbox.classList.add('moved');
+        tbox.setPointerCapture(e.pointerId); e.stopPropagation();
+      });
+      tbox.addEventListener('pointermove', function (e) {
+        if (!drag) return;
+        tbox.style.left = Math.max(0, Math.min(window.innerWidth - 80, e.clientX - dx)) + 'px';
+        tbox.style.top = Math.max(0, Math.min(window.innerHeight - 50, e.clientY - dy)) + 'px';
+      });
+      tbox.addEventListener('pointerup', function () { drag = false; });
+    }
+    var s = TSTEPS[tstep];
+    tbox.innerHTML = '<div class="no">使い方の案内 ' + (tstep + 1) + ' / ' + TSTEPS.length + '<span>ここをつまむと、動かせます</span></div><h4>' + s[0] + '</h4><p>' + s[1] + '</p><button type="button">' + (tstep === TSTEPS.length - 1 ? '案内を閉じる' : '案内を消す') + '</button>';
+    if (!tbox.classList.contains('moved')) { tbox.classList.remove('pop'); void tbox.offsetWidth; tbox.classList.add('pop'); }
+  }
+  function tour(ev) {
+    if (!TOUR || !tbox) return;
+    var want = ['next', 'prev', 'pres', 'full'][tstep];
+    if (ev === want) { tstep++; tourDraw(); }
+  }
+
+  function openPresenter() {
+    tour('pres');
+    pwin = null;
+    try { pwin = window.open(location.href.split('#')[0] + '#presenter', 'kz-presenter', 'width=1280,height=800'); } catch (err) {}
+    if (!pwin) { showGuide(true, true); setTimeout(function () { if (location.hash === '#presenter') history.replaceState(null, '', '#' + (idx + 1)); }, 400); return; }
+    setTimeout(sync, 600);
+  }
+  window.addEventListener('message', function (e) {
+    var a = e.data && e.data.kzDeck; if (!a) return;
+    if (!pwin || pwin.closed) pwin = e.source;
+    if (a.cmd === 'next') next(); else if (a.cmd === 'prev') prev(); else if (a.cmd === 'go') show(a.n, 0); else sync();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key;
+    if (/^(ArrowRight|ArrowDown|PageDown| |Enter)$/.test(k)) { e.preventDefault(); next(); }
+    else if (/^(ArrowLeft|ArrowUp|PageUp|Backspace)$/.test(k)) { e.preventDefault(); prev(); }
+    else if (k === 'Home') show(0, 0);
+    else if (k === 'End') show(N - 1, 0);
+    else if (k === 'Escape' && guide.classList.contains('on')) showGuide(false);
+    else if (k === 'h' || k === 'H' || k === '?' || e.code === 'KeyH') showGuide(!guide.classList.contains('on'), false);
+    else if (k === 's' || k === 'S' || e.code === 'KeyS') openPresenter();
+    else if (k === 'f' || k === 'F' || e.code === 'KeyF') { tour('full'); if (!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+  });
+  var px = 0, py = 0;
+  document.addEventListener('pointerdown', function (e) { px = e.clientX; py = e.clientY; });
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('a,button,input,textarea,select,#kzBar')) return;
+    if (Math.abs(e.clientX - px) > 6 || Math.abs(e.clientY - py) > 6) return;
+    if (String(window.getSelection()).length) return;
+    if (e.clientX < window.innerWidth / 2) prev(); else next();
+  });
+  window.addEventListener('resize', layout);
+  layout();
+  tourDraw();
+  var start = parseInt((location.hash || '#1').slice(1), 10);
+  show(isNaN(start) ? 0 : start - 1, 0);
+})();
+</script>
+</body>
+</html>
