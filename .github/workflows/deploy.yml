@@ -3,6 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -44,6 +45,10 @@ jobs:
           path: '.'
           retention-days: 1
           
+      # 2026-11-24：書き出した直後は GitHub の一覧にまだ載らず「No artifacts named github-pages」で失敗したため、少し待ってから公開する
+      - name: Wait for artifact to be listed
+        run: sleep 20
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
