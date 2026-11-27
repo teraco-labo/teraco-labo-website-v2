@@ -1,4 +1,4 @@
-// TERACO予約システム v61（教室の箱：水・金のグループ講座は0人でも予定を置き、題名の頭に人数。2026-10-28）← v52（お休みを「欠席:氏名」で残す batch_absent）← v51 (LINEお知らせ: LIFFの本人確認・予約/取消のプッシュ・月200通の見張り) ← v50 (新デザイン用に next_data / schedule_get / schedule_set を追加。既存の処理は変更なし。分数はコース名の「(45分)」を優先)
+// TERACO予約システム v62（定期予約：予約の確認画面で本人がチェック→講座カレンダーを確定・公開したときに翌月分を自動で入れる。2026-11-27）← v61（教室の箱：水・金のグループ講座は0人でも予定を置き、題名の頭に人数。2026-10-28）← v52（お休みを「欠席:氏名」で残す batch_absent）← v51 (LINEお知らせ: LIFFの本人確認・予約/取消のプッシュ・月200通の見張り) ← v50 (新デザイン用に next_data / schedule_get / schedule_set を追加。既存の処理は変更なし。分数はコース名の「(45分)」を優先)
 
 var CONFIG = {
   TIMEZONE: 'Asia/Tokyo',
@@ -133,7 +133,7 @@ function getAdminStudents_(passcode) {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var action = p.action || 'overview';
-  if (action === 'version') return jsonOut({ok: true, version: 'v61', timestamp: new Date().toISOString()});
+  if (action === 'version') return jsonOut({ok: true, version: 'v62', timestamp: new Date().toISOString()});
   if (action === 'overview') return jsonOut(getOverview(p.name || '', Number(p.days) || CONFIG.OVERVIEW_DAYS));
   if (action === 'schedule_get') return jsonOut({ ok: true, schedule: getSchedule_() });
   if (action === 'admin_summary') return jsonOut(getAdminSummary(p.passcode));
@@ -330,6 +330,9 @@ function doPost(e) {
   LINE_CTX = { idToken: body.id_token || '', label: body.line_label || '', silent: !!body.line_silent };
   if (body.action === 'line_link') return jsonOut(lineLink_(body.id_token || '', body.name || ''));
   if (body.action === 'line_test') return jsonOut(lineTest_(body.passcode));
+  if (body.action === 'standing_set') return jsonOut(standingSet_(body));
+  if (body.action === 'standing_stop') return jsonOut(standingStop_(body.name || ''));
+  if (body.action === 'standing_run') return jsonOut(standingRun_(body.passcode, body.month || '', !!body.dry));
   if (body.action === 'batch_reserve') return jsonOut(reserve(body.name, body.slots, body.class_details, body.email, body.add_to_calendar, body.passcode));
   if (body.action === 'batch_cancel') return jsonOut(cancel(body.name, body.event_ids, body.email, body.passcode));
   if (body.action === 'batch_absent') return jsonOut(markAbsent_(body.name, body.event_ids, body.passcode));
@@ -863,12 +866,20 @@ function setSchedule_(passcode, schedule) {
   if (json.length > 8500) return { ok: false, message: '講座カレンダーのデータが大きすぎます。古い月の休みを整理してください。' };
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) return { ok: false, message: 'サーバーが混み合っています。少し待ってからもう一度お試しください。' };
+  var before = getSchedule_().published;
   try { PropertiesService.getScriptProperties().setProperty('SCHEDULE_JSON', json); }
   finally { lock.releaseLock(); }
+  // v62 定期予約：新しく確定・公開した月に、チェックした方の予約を入れる（1つの月につき1回だけ。失敗しても保存は通す）
+  var standing = [];
+  clean.published.filter(function(mk) { return before.indexOf(mk) < 0 && mk >= monthKey(todayStart()); }).forEach(function(mk) {
+    var flag = 'STANDING_DONE_' + mk; if (prop_(flag)) return;
+    try { var r = standingRun_(passcode, mk, false); standing.push(r); if (r && r.ok) PropertiesService.getScriptProperties().setProperty(flag, new Date().toISOString()); }
+    catch (e) { standing.push({ ok: false, month: mk, message: String(e) }); }
+  });
   // 講座カレンダー（休みの日）を保存したら、今月と来月の教室の箱をそろえる（v61。失敗しても保存は通す）
   var boxes = null;
   try { var mk0 = monthKey(todayStart()); boxes = [ensureBoxes_(passcode, mk0, false), ensureBoxes_(passcode, addMonthKey_(mk0, 1), false)]; } catch (e) { boxes = { ok: false, message: String(e) }; }
-  return { ok: true, schedule: clean, boxes: boxes };
+  return { ok: true, schedule: clean, boxes: boxes, standing: standing };
 }
 
 // 新デザインが1回の通信で必要なものを全部受け取る：空き枠・自分の予約・講座カレンダー
@@ -904,7 +915,7 @@ function getNextData(name, days, email) {
     if (ms < start) pastThisMonth = findUserEvents(cal, name.trim(), ms, start, email || '').filter(function(e) { var t = e.class_title || ''; return isLessonTitle_(t) && !/個人|【個|個別|マンツーマン|体験/.test(t); }).length;
   }
   var plan = getPlan_(name); if (plan) { plan.past = {}; plan.past[monthKey(start)] = pastThisMonth; }
-  return { ok: true, version: 'v61', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_(), plan: plan };
+  return { ok: true, version: 'v62', name: (name || '').trim(), slots: slots, existing: existing, schedule: getSchedule_(), plan: plan, standing: name ? standingGet_(name) : null };
 }
 
 // =====================================================================
@@ -1241,4 +1252,104 @@ function syncKominkanCounts_(passcode, dry) {
     fixed.push(formatDate(ev.getStartTime()) + '：' + before + ' → ' + want + '（申込まだ）');
   });
   return { ok: true, dry: !!dry, fixed: fixed, kept: kept, notes: notes };
+}
+
+
+// =====================================================================
+// v62 定期予約（2026-11-27 藤崎さん「一回、次回からもこれでやるっていうパターンを決めたら、毎月カレンダーが確定したら自動で予約が入るように」）
+//   予約の確認画面で本人が「来月からも、この予定で予約を入れておく」にチェック → このシート「定期予約」に1人1行。
+//   型：every＝毎週（月4回）／w13＝1回目と3回目／w24＝2回目と4回目。その曜日の5回目は入れない。
+//   講座カレンダーの「〇月の日程を確定して公開する」を押したときに、その月の分を入れる（休みの日・もう入っている日はとばす。月の回数をこえない）。
+// =====================================================================
+var STANDING_WEEKS = { every: [1, 2, 3, 4], w13: [1, 3], w24: [2, 4] };
+var STANDING_HEAD = ['名前(正規化)', '名前', '曜日', '時刻', '型', '講座', 'メール', '状態', '登録日時', '最後に入れた月', 'メモ'];
+function standingSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(); if (!ss) throw new Error('スプレッドシートが見つかりません');
+  var sh = ss.getSheetByName('定期予約'); if (!sh) { sh = ss.insertSheet('定期予約'); sh.appendRow(STANDING_HEAD); sh.setFrozenRows(1); }
+  return sh;
+}
+function standingRows_() {
+  var sh = standingSheet_(), vals = sh.getDataRange().getValues(), out = [];
+  for (var i = 1; i < vals.length; i++) {
+    var v = vals[i]; if (!v[0]) continue;
+    var details = null; try { details = JSON.parse(String(v[5] || '')); } catch (e) {}
+    out.push({ row: i + 1, key: String(v[0]), name: String(v[1]), dow: Number(v[2]), time: String(v[3]), pattern: String(v[4]), details: details,
+               email: String(v[6] || ''), status: String(v[7] || ''), last: String(v[9] || '') });
+  }
+  return out;
+}
+function standingGet_(name) {
+  var key = normalize(name || ''); if (!key) return null;
+  try { var r = standingRows_().filter(function(x) { return x.key === key && x.status === '有効'; })[0];
+    return r ? { dow: r.dow, time: r.time, pattern: r.pattern, course: r.details && r.details.course || '' } : null; } catch (e) { return null; }
+}
+function standingSet_(b) {
+  var name = String(b.name || '').trim(), key = normalize(name);
+  var dow = Number(b.dow), time = String(b.time || ''), pat = String(b.pattern || ''), d = b.class_details || null;
+  if (!key) return { ok: false, message: 'お名前がありません' };
+  if (!(dow >= 0 && dow <= 6) || !/^\d{2}:\d{2}$/.test(time) || !STANDING_WEEKS[pat] || !d || !d.category || !d.course) return { ok: false, message: '内容が正しくありません' };
+  var lock = LockService.getScriptLock(); if (!lock.tryLock(15000)) return { ok: false, message: 'サーバーが混み合っています。' };
+  try {
+    var sh = standingSheet_(), rows = standingRows_(), hit = rows.filter(function(x) { return x.key === key; })[0];
+    var line = [key, name, dow, time, pat, JSON.stringify({ category: String(d.category), course: String(d.course) }), String(b.email || ''), '有効', new Date(), hit ? hit.last : '', ''];
+    if (hit) sh.getRange(hit.row, 1, 1, line.length).setValues([line]); else sh.appendRow(line);
+    SpreadsheetApp.flush();
+  } finally { lock.releaseLock(); }
+  return { ok: true, standing: standingGet_(name) };
+}
+function standingStop_(name) {
+  var key = normalize(name || ''); if (!key) return { ok: false, message: 'お名前がありません' };
+  var lock = LockService.getScriptLock(); if (!lock.tryLock(15000)) return { ok: false, message: 'サーバーが混み合っています。' };
+  try {
+    var sh = standingSheet_(), hit = standingRows_().filter(function(x) { return x.key === key; })[0];
+    if (hit) { sh.getRange(hit.row, 8, 1, 2).setValues([['やめた', new Date()]]); SpreadsheetApp.flush(); }
+  } finally { lock.releaseLock(); }
+  return { ok: true };
+}
+function standingDates_(mk, dow, pattern) {   // その月の「n回目の〇曜日」の日付
+  var y = Number(mk.slice(0, 4)), m = Number(mk.slice(5, 7)) - 1, weeks = STANDING_WEEKS[pattern] || [], out = [], n = 0;
+  for (var d = new Date(y, m, 1); d.getMonth() === m; d = addDays(d, 1)) { if (d.getDay() !== dow) continue; n++; if (weeks.indexOf(n) >= 0) out.push(new Date(d.getTime())); }
+  return out;
+}
+function standingRun_(passcode, month, dry) {
+  if (passcode !== CONFIG.ADMIN_PASSCODE) return { ok: false, message: 'パスコードが正しくありません' };
+  var mk = /^\d{4}-\d{2}$/.test(String(month)) ? String(month) : addMonthKey_(monthKey(todayStart()), 1);
+  var off = {}; getSchedule_().off.forEach(function(x) { off[x] = true; });
+  var cal = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID), now = new Date();
+  var y = Number(mk.slice(0, 4)), m = Number(mk.slice(5, 7)) - 1, ms = new Date(y, m, 1), me = new Date(y, m + 1, 1);
+  var report = [];
+  standingRows_().filter(function(r) { return r.status === '有効'; }).forEach(function(r) {
+    var item = { name: r.name, added: [], skipped: [] };
+    try {
+      var plan = getPlan_(r.name) || {};
+      if (/休会|退会/.test(String(plan.status || ''))) { item.skipped.push('お休み中（' + plan.status + '）'); report.push(item); return; }
+      var limit = Number(plan.monthly) || 4;
+      var title = makeTitle(r.details);
+      var have = findUserEvents(cal, r.name, ms, me, r.email).filter(function(e) { var t = e.class_title || ''; return isLessonTitle_(t) && !/個人|【個|個別|マンツーマン|体験/.test(t); }).length;
+      var ids = [];
+      standingDates_(mk, r.dow, r.pattern).forEach(function(d) {
+        var key = formatDate(d), st = atTime(d, r.time), lbl = formatSlot(st);
+        if (off[key]) { item.skipped.push(lbl + ' 休み'); return; }
+        if (st <= now) { item.skipped.push(lbl + ' 過ぎた日'); return; }
+        var ev = findEventAt(cal, st, title);
+        if (ev && hasName(ev.getDescription() || '', r.name)) { item.skipped.push(lbl + ' もう予約あり'); return; }
+        if (have + ids.length >= limit) { item.skipped.push(lbl + ' 月の回数まで入っている'); return; }
+        ids.push(String(st.getTime())); item.added.push(lbl);
+      });
+      if (ids.length && !dry) {
+        LINE_CTX = { idToken: '', label: '', silent: true };   // LINE は送らない（@381 の通数を使わない）
+        var res = reserve(r.name, ids, r.details, r.email, false, CONFIG.ADMIN_PASSCODE);
+        if (!res || !res.ok) { item.error = (res && res.message) || '予約できませんでした'; item.added = []; }
+        else standingSheet_().getRange(r.row, 10).setValue(mk);
+      }
+    } catch (e) { item.error = String(e); }
+    report.push(item);
+  });
+  if (!dry) {
+    try {
+      var lines = report.map(function(x) { return x.name + '：' + (x.error ? 'エラー ' + x.error : (x.added.length ? x.added.join('、') : '入れた日なし')) + (x.skipped.length ? '（とばした日：' + x.skipped.join('、') + '）' : ''); });
+      GmailApp.sendEmail(CONFIG.TEACHER_EMAIL, '【TERACO予約】' + monthLabel(mk) + 'の定期予約を入れました（' + report.length + '人）', (lines.join('\n') || '定期予約の方はいません。') + '\n\n一覧はスプレッドシートの「定期予約」シートにあります。');
+    } catch (e) {}
+  }
+  return { ok: true, dry: !!dry, month: mk, people: report };
 }

@@ -185,14 +185,14 @@ async function loadData({ quiet = false } = {}) {
   const cacheKey = 'tr_cache_' + name;
   if (!S.loaded) {
     const c = store.get(cacheKey, null);
-    if (c && c.slots) { S.slots = c.slots; S.existing = c.existing || []; S.plan = c.plan || null; applySchedule(c.schedule); indexSlots(); applyDemo(); S.loaded = true; }
+    if (c && c.slots) { S.slots = c.slots; S.existing = c.existing || []; S.plan = c.plan || null; S.standingRec = c.standing || null; applySchedule(c.schedule); indexSlots(); applyDemo(); S.loaded = true; }
   }
   S.syncing = true; if (!quiet) render();
   try {
     const d = await post({ action: 'next_data', name: name, days: 75, email: myEmail() });
     if (!d || !d.ok) throw new Error('load');
     if (me() && me().name !== name) return;            // 途中で人が切り替わった
-    S.slots = d.slots || []; S.existing = d.existing || []; S.plan = d.plan || null; applySchedule(d.schedule); indexSlots(); applyDemo(); S.loaded = true;
+    S.slots = d.slots || []; S.existing = d.existing || []; S.plan = d.plan || null; S.standingRec = DEMO ? (S.demo.standing || null) : (d.standing || null); applySchedule(d.schedule); indexSlots(); applyDemo(); S.loaded = true;
     store.set(cacheKey, { t: Date.now(), slots: S.slots, existing: d.existing || [], schedule: d.schedule || null, plan: S.plan });
     S.error = null;
   } catch (e) {
@@ -602,6 +602,7 @@ function viewConfirm() {
     return `<h1>この内容で予約しますか？</h1><div class="card">${who}<p class="muted">クラス</p><p class="big">${esc(classText(p))}</p>
       <p class="muted" style="margin-top:12px;">日時（${pd.slots.length}回）</p>
       <ul class="list-big">${pd.slots.map(s => `<li>${fmtDay(parseDayKey(s.day_key))} ${esc(slotTimeText(s))}${s.klass && !s.own ? `<br><span class="muted">${s.klass}クラスにふりかえ</span>` : ''}</li>`).join('')}</ul></div>
+      ${standingHtml(pd.slots)}
       <button class="btn" data-act="do">はい、予約する</button><button class="btn quiet" data-act="cancel-pending">やめる</button>`;
   }
   if (pd.type === 'cancel') {
@@ -650,6 +651,9 @@ function viewMore() {
   else { h += periodButtons('my-history', S.myHistoryMonths);
     h += S.myHistory === 'loading' ? `<p class="muted">読み込み中…</p>` : Array.isArray(S.myHistory) ? historyListHtml(S.myHistory) : `<button class="btn ghost" data-act="my-history" data-m="${S.myHistoryMonths}">受講履歴を見る</button>`; }
   h += `</div>`;
+  if (S.standingRec && STANDING_PATS[S.standingRec.pattern]) h += `<div class="card"><h2>毎月の予約</h2><p style="font-weight:800;">${esc(standingText(S.standingRec, S.standingRec.pattern))}</p>
+      <p class="muted">講座カレンダーができたら、教室が予約を入れておきます。</p>
+      <button class="btn quiet" data-act="standing-stop">毎月の予約をやめる</button></div>`;
   if (g) h += `<div class="card"><h2>Googleアカウント</h2><p style="font-weight:800;">${esc(g.name || '')}</p><p class="muted">${esc(g.email || '')}</p>
       <button class="pick ${S.addToCal ? 'on' : ''}" style="margin-top:12px;font-size:19px;" data-act="toggle-cal"><span class="box"></span><span>予約をGoogleカレンダーにも入れる</span></button>
       <button class="btn quiet" data-act="g-logout">Googleからログアウトする</button></div>`;
@@ -803,7 +807,38 @@ function persistPerson() {
   if (S.proxy) { const all = store.get('tr_admin_people', {}); all[S.proxy.name] = { category: S.proxy.category, course: S.proxy.course, klass: S.proxy.klass || null, usual: S.proxy.usual || null }; store.set('tr_admin_people', all); }
   else store.set('tr_profile', S.profile);
 }
-function resetPicks() { S.override = null; S.pickInit = false; S.picked.clear(); S.cancelSel.clear(); S.pending = null; S.changing = null; S.mode = 'add'; S.pickDay = null; }
+// --- 定期予約（来月からも同じ予定で教室が入れておく）：お客さんが自分でチェックしたときだけ ---
+const STANDING_LIVE = true;    // 2026-11-27 藤崎さん「この画面でOK、進めて」
+const STANDING_PATS = { every: '毎週（月4回）', w13: '1回目と3回目', w24: '2回目と4回目' };
+function standingInfo(slots) {
+  if (S.override) return null;   // 個人レッスン・追加の予約には出さない
+  slots = slots.filter(s => !s.event && !(s.klass && !s.own));   // ふりかえ・体験会の回は数えない
+  if (!slots.length) return null;
+  const keys = new Set(slots.map(s => parseDayKey(s.day_key).getDay() + '|' + s.start_time));
+  if (keys.size !== 1) return null;   // 曜日・時間がそろっているときだけ
+  const [dow, time] = [...keys][0].split('|');
+  const weeks = slots.map(s => Math.ceil(parseDayKey(s.day_key).getDate() / 7));
+  const guess = weeks.length >= 3 ? 'every' : weeks.every(w => w % 2) ? 'w13' : weeks.every(w => !(w % 2)) ? 'w24' : 'every';
+  return { dow: Number(dow), time, guess };
+}
+function standingText(info, pat) { return `${pat === 'every' ? '毎週' : '毎月' + STANDING_PATS[pat] + 'の'}${DAYS[info.dow]}曜 ${info.time}`; }
+function standingHtml(slots) {
+  const info = standingInfo(slots); if (!info) return '';
+  const st = S.standing || {};
+  return `<div class="card" style="margin-top:12px;">
+      <button class="pick ${st.on ? 'on' : ''}" style="font-size:19px;" data-act="toggle-standing"><span class="box"></span><span>来月からも、この予定で予約を入れておく</span></button>
+      ${st.on ? `<div style="margin-top:10px;">${Object.keys(STANDING_PATS).map(k => `<button class="pick ${st.pat === k ? 'on' : ''}" style="font-size:19px;margin-top:8px;" data-act="standing-pat" data-v="${k}"><span class="box"></span><span>${DAYS[info.dow]}曜 ${esc(info.time)}　${STANDING_PATS[k]}</span></button>`).join('')}</div>` : ''}
+    </div>`;
+}
+async function saveStanding(slots) {
+  const st = S.standing; if (!st || !st.on || !st.pat) return null;
+  const info = standingInfo(slots); if (!info) return null;
+  const rec = { name: me().name, dow: info.dow, time: info.time, pattern: st.pat, class_details: classDetails(me(), me().klass) };
+  if (DEMO || !STANDING_LIVE) { S.demo.standing = { dow: info.dow, time: info.time, pattern: st.pat }; return standingText(info, st.pat); }
+  const r = await post({ action: 'standing_set', ...rec, email: myEmail() || '' });
+  return r && r.ok ? standingText(info, st.pat) : null;
+}
+function resetPicks() { S.override = null; S.pickInit = false; S.picked.clear(); S.cancelSel.clear(); S.pending = null; S.changing = null; S.mode = 'add'; S.pickDay = null; S.standing = { on: false, pat: null }; }
 
 async function doReserve(slots) {
   const p = me();
@@ -837,8 +872,9 @@ async function runPending() {
       busy(true, '予約しています…'); const r = await doReserve(pd.slots);
       if (!r || !r.ok) throw new Error((r && r.message) || '予約できませんでした。');
       saveUsual(pd.slots);
+      let stNote = null; try { stNote = await saveStanding(pd.slots); } catch (e) {}
       const lines = pd.slots.map(s => `${fmtDay(parseDayKey(s.day_key))} ${slotTimeText(s)}`);
-      S.done = { title: '予約できました', lines, note: `クラス：${classText(me())}`, line: r.line || null,
+      S.done = { title: '予約できました', lines, note: `クラス：${classText(me())}` + (stNote ? `\n来月からも、${stNote}で教室が予約を入れておきます。` : ''), line: r.line || null,
         share: `【スマホ教室てらこ 予約の控え】\n${me().name} さん\n${classText(me())}\n${lines.join('\n')}` };
     } else if (pd.type === 'cancel') {
       busy(true, '取り消しています…'); const r = await doCancel(pd.items);
@@ -990,6 +1026,10 @@ function act(a, el) {
     S.profile = null; S.loaded = false; S.existing = []; S.slots = []; resetPicks(); S.draft = {}; go('ob-name'); return prefetchSlots(); }
   if (a === 'more') return go('more');
   if (a === 'my-history') return loadMyHistory(Number(d.m) || 3);
+  if (a === 'toggle-standing') { const info = S.pending && standingInfo(S.pending.slots); S.standing = { on: !(S.standing && S.standing.on), pat: (S.standing && S.standing.pat) || (info && info.guess) || null }; return renderKeepScroll(); }
+  if (a === 'standing-stop') { if (!confirm('毎月の予約をやめますか？\n（いま入っている予約は消えません）')) return;
+    (async () => { busy(true, 'やめています…'); try { if (!DEMO) await post({ action: 'standing_stop', name: me().name }); else S.demo.standing = null; S.standingRec = null; } catch (e) {} busy(false); renderKeepScroll(); })(); return; }
+  if (a === 'standing-pat') { S.standing = { on: true, pat: d.v }; return renderKeepScroll(); }
   if (a === 'toggle-cal') { S.addToCal = !S.addToCal; store.set('tr_add_to_cal', S.addToCal); return renderKeepScroll(); }
   if (a === 'g-logout') { S.google = null; S.myHistory = null; try { localStorage.removeItem('teraco_google_user'); } catch (e) {} return renderKeepScroll(); }
   if (a === 'extra-private') { resetPicks(); S.override = { course: 'private', klass: null, usual: null }; S.pickInit = true; S.viewMonth = firstBookableMonth(); return go('extra'); }
